@@ -1,4 +1,5 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
+import { FitSceneCamera } from '../../components/3d/FitSceneCamera';
 import { useState, useMemo, useRef, useEffect, type ComponentRef } from 'react';
 import { useSceneMotion } from '../../hooks/useSceneMotion';
 import { OrbitControls, Line, Html } from '@react-three/drei';
@@ -8,6 +9,10 @@ import { useParams } from 'react-router-dom';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import { Arrow } from '../../components/3d/Arrow';
+import { SceneAxisKey } from '../../components/3d/SceneAxisKey';
+
+const SURFACE_CAMERA = { position: [5, 5, 5] as [number, number, number], fov: 75 };
+const SURFACE_BOUNDS = { minimum: [-4.1, -1.6, -4.1] as const, maximum: [5.3, 5.3, 5.3] as const };
 import { sineCosineSurface as f, sineCosineGradient as getJacobian, sineCosineHessian as getHessian, sineCosineTaylor } from './legacyCalculusMath';
 
 // ... (math functions skipped)
@@ -99,8 +104,8 @@ function Axes() {
     return (
         <group>
             {/* X Axis - Red */}
-            <Line points={[new THREE.Vector3(0, 0, 0), new THREE.Vector3(CONF.axisLength, 0, 0)]} color="red" lineWidth={2} />
-            <Html position={[CONF.axisLength + 0.2, 0, 0]}><div style={{ color: 'red', fontWeight: 'bold' }}>X</div></Html>
+            <Line points={[new THREE.Vector3(0, 0, 0), new THREE.Vector3(CONF.axisLength, 0, 0)]} color="#f87171" lineWidth={2} />
+            <Html position={[CONF.axisLength + 0.2, 0, 0]} center zIndexRange={[40, 0]} pointerEvents="none"><div style={{ color: '#f87171', fontWeight: 'bold' }}>X</div></Html>
 
             {/* Y Axis - Green (Vertical in Three.js usually, but here Z corresponds to Y in user logic f(x,y)) */}
             {/* User said: Axes: X (Red), Y (Green), Z (Blue) */}
@@ -109,11 +114,11 @@ function Axes() {
             {/* Vertices: x, y -> z=f(x,y). This means Y is Up in 3D space, and (x,y) domain is on the XZ plane. */}
             {/* So coordinate 'y' maps to 3D Z-axis. */}
 
-            <Line points={[new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, CONF.axisLength, 0)]} color="blue" lineWidth={2} />
-            <Html position={[0, CONF.axisLength + 0.2, 0]}><div style={{ color: 'blue', fontWeight: 'bold' }}>Z</div></Html>
+            <Line points={[new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, CONF.axisLength, 0)]} color="#60a5fa" lineWidth={2} />
+            <Html position={[0, CONF.axisLength + 0.2, 0]} center zIndexRange={[40, 0]} pointerEvents="none"><div style={{ color: '#60a5fa', fontWeight: 'bold' }}>Z</div></Html>
 
-            <Line points={[new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, CONF.axisLength)]} color="green" lineWidth={2} />
-            <Html position={[0, 0, CONF.axisLength + 0.2]}><div style={{ color: 'green', fontWeight: 'bold' }}>Y</div></Html>
+            <Line points={[new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, CONF.axisLength)]} color="#34d399" lineWidth={2} />
+            <Html position={[0, 0, CONF.axisLength + 0.2]} center zIndexRange={[40, 0]} pointerEvents="none"><div style={{ color: '#34d399', fontWeight: 'bold' }}>Y</div></Html>
         </group>
     );
 }
@@ -140,7 +145,7 @@ export default function JacobianHessian() {
     const [showJacobian, setShowJacobian] = useState(true);
     const [showHessian, setShowHessian] = useState(true);
     const [autoRotate, setAutoRotate] = useState(false); // Default off to allow interaction
-    const [resetCount] = useState(0);
+    const [resetCount, setResetCount] = useState(0);
 
     const [dfdx, dfdy] = getJacobian(coords.x, coords.y);
     const h = getHessian(coords.x, coords.y);
@@ -200,7 +205,7 @@ export default function JacobianHessian() {
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
                 <button onClick={() => setAutoRotate(!autoRotate)} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #334155', background: autoRotate ? '#6366f1' : '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><RotateCw size={14} />{autoRotate ? 'Stop' : 'Rotate'}</button>
-                <button onClick={() => { setCoords({ x: 0.5, y: 0.5 }); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><RefreshCcw size={14} />Reset</button>
+                <button onClick={() => { setCoords({ x: 0.5, y: 0.5 }); setAutoRotate(false); setResetCount(count => count + 1); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><RefreshCcw size={14} />Reset</button>
             </div>
 
         </GlassPane>
@@ -208,7 +213,8 @@ export default function JacobianHessian() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas frameloop={moving && autoRotate ? 'always' : 'demand'} dpr={[1, 1.5]} shadows camera={{ position: [5, 5, 5], fov: 75 }} aria-label="3D visualization comparing Jacobian gradient and Hessian curvature on a surface">
+            <SceneCanvas frameloop={moving && autoRotate ? 'always' : 'demand'} dpr={[1, 1.5]} shadows camera={SURFACE_CAMERA} aria-label="3D visualization comparing Jacobian gradient and Hessian curvature on a surface">
+                <FitSceneCamera bounds={SURFACE_BOUNDS} />
                 <color attach="background" args={['#0b0f19']} />
 
                 <ambientLight intensity={0.6} />
@@ -224,6 +230,7 @@ export default function JacobianHessian() {
 
                 <CameraController autoRotate={autoRotate} reset={resetCount} />
             </SceneCanvas>
+            <SceneAxisKey axes={[{ label: 'X', meaning: 'input x', color: '#f87171' }, { label: 'Y', meaning: 'input y on the floor', color: '#34d399' }, { label: 'Z', meaning: 'vertical f(x, y)', color: '#60a5fa' }]} />
         </SceneContainer>
     );
 }

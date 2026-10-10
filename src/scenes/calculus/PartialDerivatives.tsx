@@ -1,7 +1,8 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
+import { FitSceneCamera } from '../../components/3d/FitSceneCamera';
 import { useState, useMemo, useRef, useEffect, useLayoutEffect, type ComponentRef } from 'react';
 import { useSceneMotion } from '../../hooks/useSceneMotion';
-import { OrbitControls, Line, PerspectiveCamera, Html } from '@react-three/drei';
+import { OrbitControls, Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import {
     RotateCw,
@@ -10,6 +11,10 @@ import {
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import { useParams } from 'react-router-dom';
+import { SceneAxisKey } from '../../components/3d/SceneAxisKey';
+
+const SURFACE_CAMERA = { position: [8, 6, 8] as [number, number, number], fov: 50 };
+const SURFACE_BOUNDS = { minimum: [-4.9, -2.3, -4.9] as const, maximum: [4.9, 3.3, 4.9] as const };
 
 // --- Mathematical Functions ---
 // z = sin(x) * cos(y)
@@ -34,9 +39,9 @@ const CONF = {
 
 function RigorousSurface() {
     const geometry = useMemo(() => {
-        const size = 6; // Range -3 to 3
+        const size = 6; // Domain -3 to 3 in both input directions
         const res = 80;
-        const geo = new THREE.PlaneGeometry(size * 2, size * 2, res, res);
+        const geo = new THREE.PlaneGeometry(size, size, res, res);
         const pos = geo.attributes.position;
         for (let i = 0; i < pos.count; i++) {
             const x = pos.getX(i);
@@ -146,9 +151,9 @@ function RigorousAxes() {
     return (
         <group>
             <Line points={[new THREE.Vector3(-CONF.axisLength, 0, 0), new THREE.Vector3(CONF.axisLength, 0, 0)]} color={CONF.colorX} lineWidth={2} opacity={0.5} transparent />
-            <Html position={[CONF.axisLength + 0.2, 0, 0]} center><div style={{ color: CONF.colorX, fontWeight: 'bold' }}>X</div></Html>
+            <Html position={[CONF.axisLength + 0.2, 0, 0]} center zIndexRange={[40, 0]} pointerEvents="none"><div style={{ color: CONF.colorX, fontWeight: 'bold' }}>X</div></Html>
             <Line points={[new THREE.Vector3(0, 0, -CONF.axisLength), new THREE.Vector3(0, 0, CONF.axisLength)]} color={CONF.colorY} lineWidth={2} opacity={0.5} transparent />
-            <Html position={[0, 0, CONF.axisLength + 0.2]} center><div style={{ color: CONF.colorY, fontWeight: 'bold' }}>Y</div></Html>
+            <Html position={[0, 0, CONF.axisLength + 0.2]} center zIndexRange={[40, 0]} pointerEvents="none"><div style={{ color: CONF.colorY, fontWeight: 'bold' }}>Y</div></Html>
         </group>
     );
 }
@@ -217,8 +222,8 @@ export default function PartialDerivatives() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas frameloop={moving && autoRotate ? 'always' : 'demand'} dpr={[1, 1.5]} shadows aria-label="3D visualization of partial derivatives showing how functions change along individual axes">
-                <PerspectiveCamera makeDefault position={[8, 6, 8]} fov={50} />
+            <SceneCanvas frameloop={moving && autoRotate ? 'always' : 'demand'} dpr={[1, 1.5]} shadows camera={SURFACE_CAMERA} aria-label="3D visualization of partial derivatives showing how functions change along individual axes">
+                <FitSceneCamera bounds={SURFACE_BOUNDS} />
                 <color attach="background" args={['#0b0f19']} />
                 <ambientLight intensity={0.5} />
                 <directionalLight position={[5, 10, 5]} intensity={1.0} />
@@ -230,6 +235,7 @@ export default function PartialDerivatives() {
 
                 <CameraController autoRotate={autoRotate} reset={resetCount} />
             </SceneCanvas>
+            <SceneAxisKey axes={[{ label: 'X', meaning: 'input x', color: CONF.colorX }, { label: 'Y', meaning: 'input y on the floor', color: CONF.colorY }, { label: 'Height', meaning: 'z = f(x, y)', color: CONF.colorSurface }]} />
         </SceneContainer>
     );
 }

@@ -72,6 +72,8 @@ The new ML labs keep controls beside the visualization; older lessons place cont
 
 Focus a 3D canvas to rotate with arrow keys and zoom with +/−. Pause motion stops automatic animation and playback while keeping manual camera changes and Step available. The browser's reduced-motion preference pauses motion by default; explicit choices are saved locally. Formulas, UI fonts, and mathematical fonts are served with the app, without external CDN requests. A failed decorative homepage scene leaves topic navigation available, and failed speculative lesson imports can retry on a subsequent visit.
 
+Full 3D views require WebGL2. Of the 75 lessons, 49 retain native or SVG graphics when WebGL2 is unavailable. The remaining 26 older lessons retain their guide and controls with a rendering notice; use a browser with hardware acceleration to view their geometry.
+
 Trees open in input space. A threshold wall is clipped to the current node's region, a white outline shows the query's active region, and the linked diagram follows the same computed path. Choose two features on a floor or three real features in a cube; x₃ is a feature, not prediction height. The separate prediction view plots output height, with a declared fixed-x₃ slice for three-feature models. Ensemble views distinguish one selected tree's correction/region from the aggregate prediction.
 
 3D lessons default to Light graphics (one pixel per device-independent pixel, without shadows). Select Detailed in Guide for sharper rendering and scene shadows; the preference is saved on this browser. Static scenes render when their controls or camera change. Vector labels use HTML, avoiding external font downloads that the site's content security policy blocks.

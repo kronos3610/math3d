@@ -1796,6 +1796,28 @@ figure > .lab-chart + figcaption { margin-top: 12px; }
 .tree-path-buttons { grid-row: 3; }
 .scene-main { display: flex; flex-direction: column; min-width: 0; }
 .scene-content { flex: 1; min-height: 0; position: relative; }
+.scene-axis-key {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  list-style: none;
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.scene-axis-key li { display: inline-flex; align-items: center; gap: 4px; }
+.scene-axis-key li > span { width: 7px; height: 7px; flex: none; border-radius: 50%; }
+.scene-axis-key strong { color: var(--text-primary); }
 .scene-brief { flex: none; padding: 74px 20px 8px; background: var(--bg-primary); }
 .scene-brief h1 { font-size: 18px; line-height: 1.4; margin: 0 0 4px; }
 .scene-brief p { max-width: 760px; font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin: 0; }

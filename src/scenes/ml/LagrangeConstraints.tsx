@@ -1,4 +1,5 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
+import { FitSceneCamera } from '../../components/3d/FitSceneCamera';
 import { useState, useMemo, useEffect } from 'react';
 import { Html, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -11,6 +12,10 @@ import { QUADRATIC_CENTER, QUADRATIC_CURVATURE, quadraticWeightLoss, solveBudget
 // The chosen diagonal quadratic has this unconstrained minimum.
 const OLS_POS = new THREE.Vector3(...QUADRATIC_CENTER);
 const ORIGIN = new THREE.Vector3(0, 0, 0);
+const CONSTRAINT_CAMERA = { position: [10, 8, 12] as [number, number, number], fov: 50 };
+// Includes all budgets up to eight and the largest quadratic contour (at zero budget).
+const MAX_CONTOUR = QUADRATIC_CURVATURE.map(value => Math.sqrt(2 * quadraticWeightLoss([0, 0, 0]) / value));
+const CONSTRAINT_BOUNDS = { minimum: [-8.2, -8.2, -8.2] as const, maximum: QUADRATIC_CENTER.map((value, axis) => Math.max(8.2, value + MAX_CONTOUR[axis] + 0.2)) as [number, number, number] };
 
 // --- Sub-components ---
 
@@ -65,6 +70,7 @@ function Scene({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: number }) 
 
     return (
         <>
+            <FitSceneCamera bounds={CONSTRAINT_BOUNDS} />
             <color attach="background" args={['#0b0f19']} />
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
@@ -75,17 +81,17 @@ function Scene({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: number }) 
             <axesHelper args={[6]} />
 
             {/* Axis labels */}
-            <Html position={[6.8, 0, 0]} center>
+            <Html position={[6.8, 0, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
                 <div style={{ color: '#ef4444', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
                     Weight 1 (β₁)
                 </div>
             </Html>
-            <Html position={[0, 7.0, 0]} center>
+            <Html position={[0, 7.0, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
                 <div style={{ color: '#22c55e', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
                     Weight 2 (β₂)
                 </div>
             </Html>
-            <Html position={[0, 0, 6.8]} center>
+            <Html position={[0, 0, 6.8]} center zIndexRange={[40, 0]} pointerEvents="none">
                 <div style={{ color: '#3b82f6', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
                     Weight 3 (β₃)
                 </div>
@@ -96,7 +102,7 @@ function Scene({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: number }) 
                 <sphereGeometry args={[0.12, 32, 32]} />
                 <meshPhongMaterial color="#60a5fa" emissive="#001133" />
             </mesh>
-            <Html position={[OLS_POS.x, OLS_POS.y + 0.45, OLS_POS.z]} center>
+            <Html position={[OLS_POS.x, OLS_POS.y + 0.45, OLS_POS.z]} center zIndexRange={[40, 0]} pointerEvents="none">
                 <div style={{ color: '#60a5fa', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', background: 'rgba(15,23,42,0.75)', borderRadius: '4px', padding: '2px 6px', pointerEvents: 'none' }}>
                     Unconstrained minimum
                 </div>
@@ -247,14 +253,14 @@ export default function LagrangeConstraints() {
             </div>
 
             <p style={{ fontSize: '11px', color: '#475569', textAlign: 'center', fontStyle: 'italic' }}>
-                Auto-rotating camera
+                Drag to rotate; focus the view for keyboard camera controls
             </p>
         </GlassPane>
     );
 
     return (
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
-            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} camera={{ position: [10, 8, 12], fov: 50 }} aria-label="Computed minimum of a diagonal quadratic under L2 or L1 weight budgets, with its true loss contour">
+            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} camera={CONSTRAINT_CAMERA} aria-label="Computed minimum of a diagonal quadratic under L2 or L1 weight budgets, with its true loss contour">
                 <Scene mode={mode} budgetT={budgetT} />
             </SceneCanvas>
         </SceneContainer>
