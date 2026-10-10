@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+
 import { OrbitControls } from '@react-three/drei';
 import { Arrow } from '../../components/3d/Arrow';
 import { Label } from '../../components/3d/Label';
@@ -81,7 +82,7 @@ export default function FundamentalSpacesOptimized() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas
+            <SceneCanvas frameloop="demand"
                 camera={{ position: [8, 8, 8], fov: 50 }}
                 dpr={[1, 1.5]}
                 gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
@@ -92,7 +93,7 @@ export default function FundamentalSpacesOptimized() {
                 <OrbitControls />
                 <fog attach="fog" args={['#0b0f19', 10, 30]} />
                 <color attach="background" args={['#0b0f19']} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

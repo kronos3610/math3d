@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { SceneContainer } from '../../components/layout/SceneContainer';
@@ -176,7 +177,7 @@ export default function BanachTarski() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas camera={{ position: [0, 2, 12], fov: 60 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of the Banach-Tarski paradox decomposing a sphere into two">
+            <SceneCanvas camera={{ position: [0, 2, 12], fov: 60 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of the Banach-Tarski paradox decomposing a sphere into two">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 10, 7.5]} intensity={0.8} />
                 <pointLight position={[-5, -5, 5]} color="#3b82f6" intensity={0.5} />
@@ -187,7 +188,7 @@ export default function BanachTarski() {
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 8, 25]} />
                 <color attach="background" args={['#0b0f19']} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

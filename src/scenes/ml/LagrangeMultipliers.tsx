@@ -1,6 +1,7 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Canvas } from '@react-three/fiber';
+
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { SceneContainer } from '../../components/layout/SceneContainer';
@@ -431,9 +432,9 @@ export default function LagrangeMultipliers() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
-            <Canvas dpr={[1, 1.5]} camera={{ position: [14, 10, 14], fov: 45 }} aria-label="Constrained optimization on a bowl with gradient arrows">
+            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} camera={{ position: [14, 10, 14], fov: 45 }} aria-label="Constrained optimization on a bowl with gradient arrows">
                 <Scene3D t={t} showGradients={showGradients} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

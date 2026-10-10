@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useMemo, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
+
 import { OrbitControls, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { SceneContainer } from '../../components/layout/SceneContainer';
@@ -361,12 +362,12 @@ export default function Eigenvalues() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas camera={{ position: [5, 5, 8], fov: 45 }} aria-label="Eigenvalue Visualizer">
+            <SceneCanvas frameloop="demand" camera={{ position: [5, 5, 8], fov: 45 }} aria-label="Eigenvalue Visualizer">
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <color attach="background" args={['#0b0f19']} />
                 <fog attach="fog" args={['#0b0f19', 10, 25]} />
                 <EigenScene matrix={matrix} vector={vector} setEigenState={setEigenState} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

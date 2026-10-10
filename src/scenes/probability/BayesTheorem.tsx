@@ -1,6 +1,8 @@
+import { Label } from '../../components/3d/Label';
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Text, RoundedBox } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import { OrbitControls, RoundedBox } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
 import * as THREE from 'three';
 import { SceneContainer } from '../../components/layout/SceneContainer';
@@ -22,29 +24,29 @@ function BayesBlocks({ prior, likelihood, evidence }: { prior: number; likelihoo
             <RoundedBox args={[1.2, prior * 3, 1.2]} position={[-2.5, (prior * 3) / 2, 0]} radius={0.05}>
                 <meshStandardMaterial color="#fd79a8" roughness={0.3} metalness={0.6} transparent opacity={0.8} />
             </RoundedBox>
-            <Text position={[-2.5, prior * 3 + 0.4, 0]} fontSize={0.2} color="#fd79a8">P(A) = {prior.toFixed(2)}</Text>
-            <Text position={[-2.5, -0.4, 0]} fontSize={0.18} color="#888">Prior</Text>
+            <Label position={[-2.5, prior * 3 + 0.4, 0]} fontSize={0.65} color="#fd79a8" text={`P(A) = ${prior.toFixed(2)}`} />
+            <Label position={[-2.5, -0.4, 0]} fontSize={0.6} color="#888" text={`Prior`} />
 
             {/* Likelihood P(B|A) */}
             <RoundedBox args={[1.2, likelihood * 3, 1.2]} position={[-0.5, (likelihood * 3) / 2, 0]} radius={0.05}>
                 <meshStandardMaterial color="#6c5ce7" roughness={0.3} metalness={0.6} transparent opacity={0.8} />
             </RoundedBox>
-            <Text position={[-0.5, likelihood * 3 + 0.4, 0]} fontSize={0.2} color="#6c5ce7">P(B|A) = {likelihood.toFixed(2)}</Text>
-            <Text position={[-0.5, -0.4, 0]} fontSize={0.18} color="#888">Likelihood</Text>
+            <Label position={[-0.5, likelihood * 3 + 0.4, 0]} fontSize={0.65} color="#6c5ce7" text={`P(B|A) = ${likelihood.toFixed(2)}`} />
+            <Label position={[-0.5, -0.4, 0]} fontSize={0.6} color="#888" text={`Likelihood`} />
 
             {/* Evidence P(B) */}
             <RoundedBox args={[1.2, evidence * 3, 1.2]} position={[1.5, (evidence * 3) / 2, 0]} radius={0.05}>
                 <meshStandardMaterial color="#00cec9" roughness={0.3} metalness={0.6} transparent opacity={0.8} />
             </RoundedBox>
-            <Text position={[1.5, evidence * 3 + 0.4, 0]} fontSize={0.2} color="#00cec9">P(B) = {evidence.toFixed(2)}</Text>
-            <Text position={[1.5, -0.4, 0]} fontSize={0.18} color="#888">Evidence</Text>
+            <Label position={[1.5, evidence * 3 + 0.4, 0]} fontSize={0.65} color="#00cec9" text={`P(B) = ${evidence.toFixed(2)}`} />
+            <Label position={[1.5, -0.4, 0]} fontSize={0.6} color="#888" text={`Evidence`} />
 
             {/* Posterior P(A|B) */}
             <RoundedBox args={[1.2, posterior * 3, 1.2]} position={[3.5, (posterior * 3) / 2, 0]} radius={0.05}>
                 <meshStandardMaterial color="#fdcb6e" roughness={0.3} metalness={0.6} transparent opacity={0.8} />
             </RoundedBox>
-            <Text position={[3.5, posterior * 3 + 0.4, 0]} fontSize={0.2} color="#fdcb6e">P(A|B) = {posterior.toFixed(2)}</Text>
-            <Text position={[3.5, -0.4, 0]} fontSize={0.18} color="#888">Posterior</Text>
+            <Label position={[3.5, posterior * 3 + 0.4, 0]} fontSize={0.65} color="#fdcb6e" text={`P(A|B) = ${posterior.toFixed(2)}`} />
+            <Label position={[3.5, -0.4, 0]} fontSize={0.6} color="#888" text={`Posterior`} />
 
             <gridHelper args={[10, 20, '#222', '#181828']} position={[0.5, -0.01, 0]} />
         </group>
@@ -125,7 +127,7 @@ export default function BayesTheorem() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'probability'}`} controls={controls}>
-            <Canvas camera={{ position: [3, 3, 6], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D bar chart showing Bayes theorem probability components">
+            <SceneCanvas camera={{ position: [3, 3, 6], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D bar chart showing Bayes theorem probability components">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 5, 5]} intensity={0.8} />
                 <pointLight position={[-3, 2, 3]} intensity={0.5} color="#fd79a8" />
@@ -133,7 +135,7 @@ export default function BayesTheorem() {
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 6, 18]} />
                 <color attach="background" args={['#0b0f19']} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

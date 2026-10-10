@@ -28,6 +28,6 @@ export default function Latex({ formula, display = false }: LatexProps) {
                 textAlign: display ? 'center' : 'left',
                 overflowX: 'auto',
             }}
-        />
+        >{formula}</span>
     );
 }

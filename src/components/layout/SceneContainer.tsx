@@ -1,5 +1,8 @@
 import React, { useMemo, useState, useId } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import LessonGuide from '../LessonGuide';
+import GraphicsQualityControl from '../GraphicsQualityControl';
+import { getLessonGuide } from '../../data/lessonGuides';
 import LessonConnections from '../LessonConnections';
 import { getPathNavigation, hasLessonConnections } from '../../data/mlCurriculum';
 import { BookOpen, ChevronLeft, Menu, SlidersHorizontal, X } from 'lucide-react';
@@ -23,16 +26,22 @@ export function SceneContainer({
     const panelId = useId();
     const { topicId, subtopicId } = useParams<{ topicId: string; subtopicId: string }>();
     const [searchParams] = useSearchParams();
+    const guide = topicId && subtopicId ? getLessonGuide(topicId, subtopicId) : undefined;
     const hasConnections = Boolean(topicId && subtopicId && hasLessonConnections(topicId, subtopicId));
     const isFollowingPath = Boolean(topicId && subtopicId && getPathNavigation(searchParams.get('path'), { topicId, subtopicId }));
     const tabs = useMemo(() => {
         const availableTabs: Array<{
-            id: 'controls' | 'explanation' | 'learning';
+            id: 'controls' | 'explanation' | 'learning' | 'guide';
             label: string;
             icon: React.ReactNode;
             content: React.ReactNode;
         }> = [];
 
+        if (guide) {
+            availableTabs.push({ id: 'guide', label: 'Guide', icon: <BookOpen size={15} />,
+                content: <><LessonGuide guide={guide} /><GraphicsQualityControl /></>,
+            });
+        }
         if (controls) {
             availableTabs.push({
                 id: 'controls',
@@ -60,13 +69,13 @@ export function SceneContainer({
             });
         }
         return availableTabs;
-    }, [controls, explanation, hasConnections]);
+    }, [controls, explanation, hasConnections, guide]);
 
     const firstTab = tabs[0]?.id ?? 'controls';
     const requestedPanel = isFollowingPath ? 'learning' : defaultPanel === 'closed' ? firstTab : defaultPanel;
     const initialPanel = tabs.some((tab) => tab.id === requestedPanel) ? requestedPanel : firstTab;
     const [isPanelOpen, setIsPanelOpen] = useState((isFollowingPath || defaultPanel !== 'closed') && tabs.length > 0);
-    const [activePanel, setActivePanel] = useState<'controls' | 'explanation' | 'learning'>(initialPanel);
+    const [activePanel, setActivePanel] = useState<'controls' | 'explanation' | 'learning' | 'guide'>(initialPanel);
     const activeTab = tabs.find((tab) => tab.id === activePanel) ?? tabs[0];
     const hasScenePanel = tabs.length > 0;
 
@@ -129,7 +138,7 @@ export function SceneContainer({
                             aria-label="Scene panel"
                         >
                             {tabs.length > 1 && (
-                                <div className="scene-panel-tabs" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }} role="tablist" aria-label="Scene panel sections">
+                                <div className="scene-panel-tabs" style={{ gridTemplateColumns: `repeat(${tabs.length > 3 ? 2 : tabs.length}, minmax(0, 1fr))` }} role="tablist" aria-label="Scene panel sections">
                                     {tabs.map((tab) => (
                                         <button
                                             key={tab.id}
@@ -165,6 +174,11 @@ export function SceneContainer({
                                 aria-labelledby={tabs.length > 1 ? `${panelId}-${activeTab.id}` : undefined}
                                 tabIndex={tabs.length > 1 ? 0 : undefined}
                             >
+                                {activeTab.id === 'controls' && guide && <div className="scene-quick-guide">
+                                    <p>{guide.meaning}</p>
+                                    <p><strong>Start here:</strong> {guide.steps[0]}</p>
+                                    <button type="button" onClick={() => setActivePanel('guide')}>Read the guide →</button>
+                                </div>}
                                 {activeTab.content}
                             </div>
                         </aside>

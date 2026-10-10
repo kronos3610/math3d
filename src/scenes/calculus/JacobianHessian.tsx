@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useMemo, useRef, useEffect, type ComponentRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { RotateCw, RefreshCcw } from 'lucide-react';
@@ -304,7 +305,7 @@ export default function JacobianHessian() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas dpr={[1, 1.5]} shadows camera={{ position: [5, 5, 5], fov: 75 }} aria-label="3D visualization comparing Jacobian gradient and Hessian curvature on a surface">
+            <SceneCanvas dpr={[1, 1.5]} shadows camera={{ position: [5, 5, 5], fov: 75 }} aria-label="3D visualization comparing Jacobian gradient and Hessian curvature on a surface">
                 <color attach="background" args={['#0b0f19']} />
 
                 <ambientLight intensity={0.6} />
@@ -319,7 +320,7 @@ export default function JacobianHessian() {
                 <HessianSurface x={coords.x} y={coords.y} visible={showHessian} />
 
                 <CameraController autoRotate={autoRotate} reset={resetCount} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

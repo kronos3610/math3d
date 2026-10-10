@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
+import { useState, useMemo, useEffect } from 'react';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { Maximize, Tent, Move3d } from 'lucide-react';
@@ -31,50 +31,30 @@ const calculateScore = (mx: number, mz: number, s: number) => {
 
 // --- Sub-Components ---
 
-function ProbabilityDome({ muX, muZ, sigma }: { muX: number, muZ: number, sigma: number }) {
-    const meshRef = useRef<THREE.Mesh>(null);
-    const wireRef = useRef<THREE.Mesh>(null);
-
-    useFrame(() => {
-        if (!meshRef.current || !wireRef.current) return;
-
-        const positions = meshRef.current.geometry.attributes.position.array as Float32Array;
-        const count = positions.length / 3;
-
-        for (let i = 0; i < count; i++) {
-            const x = positions[i * 3];
-            const z = positions[i * 3 + 1]; // Planegeometry is XY, rotated X-90 -> XZ logic applies locally
-
-            // In local space of a PlaneGeometry(12,12), coords are centered at 0,0. 
-            // We want to evaluate the gaussian based on world coordinates?
-            // User code: const x = positions[i]; const z = positions[i + 1]; 
-            // distSq = (x - muX)^2 + ... 
-            // This implies the mesh is static and we move the "peak" logic relative to it.
-
-            // Wait, the user code is:
-            // positions[i+2] = height;
-            // muX, muZ are variable.
-
-            const distSq = Math.pow(x - muX, 2) + Math.pow(z - muZ, 2);
-            const height = (15 * Math.exp(-distSq / (2 * Math.pow(sigma, 2)))) / sigma;
-
-            positions[i * 3 + 2] = Math.max(0.05, height);
+export function ProbabilityDome({ muX, muZ, sigma }: { muX: number, muZ: number, sigma: number }) {
+    const geometry = useMemo(() => {
+        const dome = new THREE.PlaneGeometry(12, 12, 60, 60);
+        // Work in world XZ coordinates so increasing muZ moves the peak toward +Z.
+        dome.rotateX(-Math.PI / 2);
+        const positions = dome.getAttribute('position');
+        const denominator = 2 * sigma ** 2;
+        const peakHeight = 15 / sigma;
+        for (let i = 0; i < positions.count; i++) {
+            const distanceSquared = (positions.getX(i) - muX) ** 2 + (positions.getZ(i) - muZ) ** 2;
+            positions.setY(i, Math.max(0.05, peakHeight * Math.exp(-distanceSquared / denominator)));
         }
+        positions.needsUpdate = true;
+        dome.computeVertexNormals();
+        dome.computeBoundingSphere();
+        return dome;
+    }, [muX, muZ, sigma]);
 
-        meshRef.current.geometry.attributes.position.needsUpdate = true;
-        meshRef.current.geometry.computeVertexNormals();
-
-        // Sync wireframe
-        const wirePos = wireRef.current.geometry.attributes.position.array as Float32Array;
-        for (let k = 0; k < positions.length; k++) wirePos[k] = positions[k];
-        wireRef.current.geometry.attributes.position.needsUpdate = true;
-    });
-
-    const geo = useMemo(() => new THREE.PlaneGeometry(12, 12, 60, 60), []);
+    // These shared geometries are supplied as mesh props rather than R3F-managed children.
+    useEffect(() => () => geometry.dispose(), [geometry]);
 
     return (
-        <group rotation={[-Math.PI / 2, 0, 0]}>
-            <mesh ref={meshRef} geometry={geo}>
+        <group>
+            <mesh geometry={geometry}>
                 <meshPhongMaterial
                     color="#3b82f6"
                     transparent
@@ -84,7 +64,7 @@ function ProbabilityDome({ muX, muZ, sigma }: { muX: number, muZ: number, sigma:
                     flatShading={false}
                 />
             </mesh>
-            <mesh ref={wireRef} geometry={geo}>
+            <mesh geometry={geometry}>
                 <meshBasicMaterial
                     color="#2563eb"
                     wireframe
@@ -232,7 +212,7 @@ export default function LogLikelihood() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas dpr={[1, 1.5]} shadows camera={{ position: [12, 10, 12], fov: 45 }} aria-label="3D visualization of log-likelihood surface with maximum likelihood estimation">
+            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} shadows camera={{ position: [12, 10, 12], fov: 45 }} aria-label="3D visualization of log-likelihood surface with maximum likelihood estimation">
                 <color attach="background" args={['#0b0f19']} />
                 <fog attach="fog" args={['#0b0f19', 15, 30]} />
 
@@ -254,7 +234,7 @@ export default function LogLikelihood() {
                 <Campers muX={muX} muZ={muZ} sigma={sigma} />
 
                 <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

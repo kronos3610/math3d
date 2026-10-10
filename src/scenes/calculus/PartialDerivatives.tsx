@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useMemo, useRef, useEffect, type ComponentRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Line, PerspectiveCamera, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import {
@@ -213,7 +214,7 @@ export default function PartialDerivatives() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas dpr={[1, 1.5]} shadows aria-label="3D visualization of partial derivatives showing how functions change along individual axes">
+            <SceneCanvas dpr={[1, 1.5]} shadows aria-label="3D visualization of partial derivatives showing how functions change along individual axes">
                 <PerspectiveCamera makeDefault position={[8, 6, 8]} fov={50} />
                 <color attach="background" args={['#0b0f19']} />
                 <ambientLight intensity={0.5} />
@@ -225,7 +226,7 @@ export default function PartialDerivatives() {
                 <VectorSystem x={coords.x} y={coords.y} />
 
                 <CameraController autoRotate={autoRotate} reset={resetCount} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

@@ -1,5 +1,6 @@
+import { SceneCanvas } from './3d/SceneCanvas';
 import { useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { Float, MeshDistortMaterial, Sphere, Torus, Box } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -89,7 +90,7 @@ function Particles() {
 
 export default function HeroScene() {
     return (
-        <Canvas aria-label="Decorative animated mathematical shapes" camera={{ position: [0, 0, 5], fov: 60 }}>
+        <SceneCanvas aria-label="Decorative animated mathematical shapes" camera={{ position: [0, 0, 5], fov: 60 }}>
             <ambientLight intensity={0.3} />
             <directionalLight position={[5, 5, 5]} intensity={1} />
             <pointLight position={[-5, -5, 5]} intensity={0.5} color="#6c5ce7" />
@@ -101,6 +102,6 @@ export default function HeroScene() {
             <Particles />
 
             <fog attach="fog" args={['#050508', 4, 12]} />
-        </Canvas>
+        </SceneCanvas>
     );
 }

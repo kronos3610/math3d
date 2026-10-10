@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls, MeshDistortMaterial } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
 import * as THREE from 'three';
@@ -84,14 +85,14 @@ export default function MatrixTransformations() {
             backUrl={`/${topicId || 'linear-algebra'}`}
             controls={controls}
         >
-            <Canvas camera={{ position: [4, 3, 4], fov: 50 }} aria-label="Matrix Transformation Visualization">
+            <SceneCanvas camera={{ position: [4, 3, 4], fov: 50 }} aria-label="Matrix Transformation Visualization">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 5, 5]} intensity={0.8} />
                 <pointLight position={[-3, -3, 3]} intensity={0.5} color="#6c5ce7" />
                 <TransformingCube />
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#050508', 5, 15]} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

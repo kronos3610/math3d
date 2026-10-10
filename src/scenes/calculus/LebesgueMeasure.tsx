@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { Box, Layers, Minimize2 } from 'lucide-react';
@@ -431,7 +432,7 @@ export default function LebesgueMeasure() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas camera={{ position: [5, 4, 5], fov: 45 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of Lebesgue measure properties including outer measure and covering">
+            <SceneCanvas camera={{ position: [5, 4, 5], fov: 45 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of Lebesgue measure properties including outer measure and covering">
                 <SceneLighting />
                 <gridHelper args={[10, 20, '#1e293b', '#0f172a']} position={[0, -0.01, 0]} />
 
@@ -442,7 +443,7 @@ export default function LebesgueMeasure() {
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 8, 20]} />
                 <color attach="background" args={['#0b0f19']} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

@@ -16,7 +16,7 @@ export function Label({
     fontSize = 0.5,
 }: LabelProps) {
     return (
-        <Html position={position} center>
+        <Html position={position} center zIndexRange={[40, 0]} style={{ pointerEvents: 'none' }}>
             <div style={{
                 color: color,
                 fontFamily: 'Inter, sans-serif',

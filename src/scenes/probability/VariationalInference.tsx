@@ -1,6 +1,7 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { Play, Pause } from 'lucide-react';
@@ -200,7 +201,7 @@ function EquationRoom({ progress }: { progress: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// Auto-play driver (lives inside <Canvas> so it can use useFrame)
+// Auto-play driver (lives inside <SceneCanvas> so it can use useFrame)
 // ---------------------------------------------------------------------------
 
 function AutoPlay({
@@ -290,7 +291,7 @@ export default function VariationalInference() {
     const [progress, setProgress] = useState(0);
     const [playing, setPlaying] = useState(false);
 
-    // Frame tick from inside <Canvas>
+    // Frame tick from inside <SceneCanvas>
     const handleTick = (dProgress: number) => {
         setProgress(prev => Math.min(1, prev + dProgress));
     };
@@ -453,7 +454,7 @@ export default function VariationalInference() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'probability'}`} controls={controls}>
-            <Canvas
+            <SceneCanvas
                 aria-label="Conceptual illustration of approximate inference and the ELBO–KL identity; values are illustrative"
                 shadows
                 dpr={[1, 1.5]}
@@ -464,7 +465,7 @@ export default function VariationalInference() {
                     playing={playing}
                     onTick={handleTick}
                 />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

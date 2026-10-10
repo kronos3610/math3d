@@ -1,12 +1,13 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Line } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
 import * as THREE from 'three';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 
-function Surface() {
+export function DerivativeSurface() {
     const meshRef = useRef<THREE.Mesh>(null!);
     const tangentRef = useRef<THREE.Group>(null!);
 
@@ -31,6 +32,7 @@ function Surface() {
         // Tangent point
         if (tangentRef.current) {
             tangentRef.current.position.set(x, y, z);
+            tangentRef.current.rotation.y = -Math.atan(0.8 * Math.cos(x) * Math.cos(y));
         }
     });
 
@@ -54,7 +56,7 @@ function Surface() {
             </mesh>
 
             {/* Moving tangent point */}
-            <group ref={tangentRef}>
+            <group ref={tangentRef} name="derivative-tangent">
                 <mesh>
                     <sphereGeometry args={[0.08, 16, 16]} />
                     <meshStandardMaterial color="#fdcb6e" emissive="#fdcb6e" emissiveIntensity={0.8} />
@@ -81,7 +83,7 @@ export default function Derivatives() {
                 </h3>
                 <div style={{ fontSize: '14px', color: '#94a3b8', lineHeight: '1.5' }}>
                     <p style={{ margin: 0, marginBottom: '8px' }}>
-                        Function: z = sin(x) × cos(y)
+                        Function: z = 0.8 sin(x) × cos(y)
                     </p>
                     <p style={{ margin: 0, marginBottom: '8px' }}>
                         <span style={{ color: '#fdcb6e' }}>Yellow dot</span>: Moving point on surface
@@ -102,14 +104,14 @@ export default function Derivatives() {
             backUrl={`/${topicId || 'calculus'}`}
             controls={controls}
         >
-            <Canvas camera={{ position: [4, 3, 4], fov: 50 }} aria-label="3D surface showing derivatives as tangent lines on z = sin(x) cos(y)">
+            <SceneCanvas camera={{ position: [4, 3, 4], fov: 50 }} aria-label="3D surface showing the x derivative as a tangent on z = 0.8 sin(x) cos(y)">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 5, 5]} intensity={0.8} />
                 <pointLight position={[-3, 2, 3]} intensity={0.5} color="#00cec9" />
-                <Surface />
+                <DerivativeSurface />
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#050508', 5, 15]} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

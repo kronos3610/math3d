@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useRef, useMemo, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Sphere, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { getNeuronPositions } from '../../utils/neural-network';
@@ -119,14 +120,14 @@ export default function NeuralNetworks() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas camera={{ position: [0, 0, 8], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of a feed-forward neural network with signal propagation">
+            <SceneCanvas camera={{ position: [0, 0, 8], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of a feed-forward neural network with signal propagation">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 10, 5]} intensity={0.8} />
                 <NetworkScene isPlaying={isPlaying} />
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 6, 18]} />
                 <color attach="background" args={['#0b0f19']} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

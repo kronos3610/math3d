@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
+
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useParams } from 'react-router-dom';
@@ -409,13 +410,13 @@ export default function ProbabilityVsLikelihood() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas
+            <SceneCanvas frameloop="demand"
                 dpr={[1, 1.5]}
                 camera={{ position: [10, 8, 10], fov: 55 }}
                 aria-label="3D Gaussian surface showing probability distribution vs likelihood function for linear model"
             >
                 <Scene mode={mode} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

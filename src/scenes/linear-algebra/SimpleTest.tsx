@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
 import * as THREE from 'three';
@@ -43,7 +44,7 @@ export default function SimpleTest() {
             backUrl={`/${topicId || 'linear-algebra'}`}
             controls={controls}
         >
-            <Canvas
+            <SceneCanvas
                 camera={{ position: [5, 5, 5], fov: 45 }}
                 gl={{ antialias: true, alpha: false }}
                 dpr={[1, 2]}
@@ -53,7 +54,7 @@ export default function SimpleTest() {
                 <directionalLight position={[10, 10, 5]} intensity={1} />
                 <RotatingCube />
                 <OrbitControls />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

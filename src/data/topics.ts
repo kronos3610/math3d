@@ -35,13 +35,13 @@ export const topics: Topic[] = [
             {
                 id: 'vector-operations',
                 title: 'Vector Operations',
-                description: 'Visualize vector addition, subtraction, scaling, and dot products in 3D space.',
+                description: 'Add two vectors coordinate by coordinate and explore the parallelogram rule in 3D space.',
                 component: lazyWithPreload(() => import('../scenes/linear-algebra/VectorOperations')),
             },
             {
                 id: 'matrix-transformations',
                 title: 'Matrix Transformations',
-                description: 'See how matrices transform objects through rotation, scaling, and shearing.',
+                description: 'Watch scaling and rotation change an object, its basis vectors, and its transformation matrix.',
                 component: lazyWithPreload(() => import('../scenes/linear-algebra/MatrixTransformations')),
             },
             {
@@ -244,7 +244,7 @@ export const topics: Topic[] = [
             {
                 id: 'linear-models',
                 title: 'Linear Models for Classification',
-                description: 'Draw your own training data and watch Logistic Regression, Least Squares, and the Perceptron learn a decision boundary in real time.',
+                description: 'Compare logistic probabilities, least-squares scores, and perceptron decisions on the same two-class training data.',
                 component: lazyWithPreload(() => import('../scenes/ml/LinearModels')),
             },
             {
