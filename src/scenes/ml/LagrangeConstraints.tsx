@@ -117,7 +117,7 @@ function Scene({ mode, budgetT, view, fitRevision }: { mode: 'ridge' | 'lasso'; 
             {/* Error contour ellipsoid centered at OLS */}
             {loss > 1e-12 && <mesh position={OLS_POS} scale={contourRadii}>
                 <sphereGeometry args={[1, 96, 64]} />
-                <meshPhongMaterial color="#60a5fa" wireframe transparent opacity={0.35} depthWrite={false} clippingPlanes={view === 'detail' ? clippingPlanes : undefined} />
+                <meshPhongMaterial color="#60a5fa" wireframe transparent opacity={0.35} depthWrite={false} clippingPlanes={view === 'detail' ? clippingPlanes : null} />
             </mesh>}
 
             {/* Constrained solution (red dot) */}
