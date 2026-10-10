@@ -8,6 +8,7 @@ Math3D is an interactive educational platform designed to visualize complex math
 - **Topic-Based Organization**: Structured curriculum covering key mathematical fields.
 - **Responsive Design**: Accessible on desktop and mobile devices.
 - **Performance Optimized**: Uses WebGL for high-performance rendering.
+- **Lesson Guides**: Brief meanings, usage steps, observations, and caveats for every lesson.
 
 ## Getting Started
 
@@ -43,6 +44,14 @@ The ML module has Algorithms and Core Concepts sections, with one canonical URL 
 `src/data/mlCurriculum.ts` defines families, learning paths, prerequisites, and related lessons. Four paths connect classification, generalization, mixture estimation, and neural-network optimization to existing math lessons. A scene's Learn panel provides previous/next navigation and links back to its concepts and prerequisites. Path context is retained only when the destination belongs to the selected path.
 
 The Bias–Variance and Signal-to-Noise labs use seeded polynomial-regression experiments with a stable Legendre-basis QR solver and a fixed small ridge penalty. Bias–Variance measures a finite ensemble of independent fits and explains the distinction between its grid decomposition and sampled test MSE. SNR uses centered signal variance over the specified input distribution and handles zero signal and zero noise explicitly. Both include accessible charts, textual measurements, and keyboard-accessible controls.
+
+## Using a lesson
+
+Open the scene panel for controls and a brief introduction. The Guide tab explains what the scene means, how to use it, and what to look for. The Explain tab gives more detail, and Learn links related lessons. Guides are also available while a scene loads or if it fails to start.
+
+3D lessons default to Light graphics (one pixel per device-independent pixel, without shadows). Select Detailed in Guide for sharper rendering and scene shadows; the preference is saved on this browser. Static scenes render when their controls or camera change. Vector and Bayes labels use HTML, avoiding external font downloads that the site's content security policy blocks.
+
+The classification lab starts with an example and identifies each model's output and decision rule. Logistic regression estimates a class probability, least squares fits a raw score to binary targets, and the perceptron learns a signed margin. Ordinary linear regression predicts a continuous number; the lab uses its least-squares method as a classifier. Its SVG plot supports mouse and keyboard point placement.
 
 ## Validation
 

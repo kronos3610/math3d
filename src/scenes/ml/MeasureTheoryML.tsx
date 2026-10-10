@@ -1,6 +1,8 @@
+import { SceneContainer } from '../../components/layout/SceneContainer';
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars, Grid, Line } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import { OrbitControls, Grid, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { Info } from 'lucide-react';
 import Latex from '../../components/Latex';
@@ -36,8 +38,6 @@ function ManifoldScene({ isActive }: SceneProps) {
 
     return (
         <group>
-            <Stars radius={50} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-
             <mesh ref={planeRef} rotation={[-Math.PI / 2, 0, 0]}>
                 <planeGeometry args={[12, 12, 32, 32]} />
                 <meshStandardMaterial
@@ -63,7 +63,7 @@ function ManifoldScene({ isActive }: SceneProps) {
 }
 
 // --- 2. Normalizing Flows Scene ---
-const FLOW_COUNT = 1000;
+const FLOW_COUNT = 500;
 const FLOW_INITIAL_POSITIONS = (() => {
     const pos: THREE.Vector3[] = [];
     for (let i = 0; i < FLOW_COUNT; i++) {
@@ -164,7 +164,7 @@ export default function MeasureTheoryML() {
     const sceneData: Record<SceneType, { title: string; description: string; math: string; color: string }> = {
         manifold: {
             title: "The Manifold Hypothesis",
-            description: "Real-world data (like images of faces) occupies strictly zero volume in the high-dimensional pixel space. It lives on a lower-dimensional structure (a manifold). Probability density is singular with respect to the ambient Lebesgue measure.",
+            description: "The manifold hypothesis says that complex observations often concentrate near a lower-dimensional structure. An ideal distribution confined exactly to a lower-dimensional manifold has zero ambient volume; real noisy data usually has some thickness.",
             math: "P_{\\text{data}}(x) \\approx 0 \\text{ almost everywhere}",
             color: '#f87171'
         },
@@ -176,7 +176,7 @@ export default function MeasureTheoryML() {
         },
         relu: {
             title: "ReLU & Singularity",
-            description: "Neural networks use ReLU: f(x) = max(0, x). It is not differentiable at x = 0. However, the set {0} has Lebesgue measure zero. Gradient descent still works because we never hit exactly 0 in floating-point probability.",
+            description: "ReLU is f(x) = max(0, x), with a corner at zero. That single point has Lebesgue measure zero, but software can reach it exactly. Training implementations choose a derivative convention there, commonly zero.",
             math: "\\lambda(\\{x : f'(x) \\text{ undefined}\\}) = 0",
             color: '#fbbf24'
         }
@@ -185,11 +185,12 @@ export default function MeasureTheoryML() {
     const current = sceneData[scene];
 
     return (
+        <SceneContainer backUrl="/ml" defaultPanel="closed">
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#050508', color: '#e2e8f0' }}>
 
             {/* Header / Controls */}
             <div style={{
-                padding: '24px',
+                padding: '80px 24px 20px',
                 borderBottom: '1px solid #0a0a0f',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -235,7 +236,7 @@ export default function MeasureTheoryML() {
             {/* Main Content: 3D + Info */}
             <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
 
-                <Canvas camera={{ position: [5, 5, 5], fov: 50 }} aria-label="3D visualization of measure theory concepts in machine learning">
+                <SceneCanvas camera={{ position: [5, 5, 5], fov: 50 }} aria-label="3D visualization of measure theory concepts in machine learning">
                     <ambientLight intensity={0.5} />
                     <pointLight position={[10, 10, 10]} intensity={1} />
                     <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
@@ -243,7 +244,7 @@ export default function MeasureTheoryML() {
                     <ManifoldScene isActive={scene === 'manifold'} />
                     <FlowsScene isActive={scene === 'flows'} />
                     <ReLUScene isActive={scene === 'relu'} />
-                </Canvas>
+                </SceneCanvas>
 
                 {/* Overlay Card */}
                 <div style={{
@@ -304,5 +305,6 @@ export default function MeasureTheoryML() {
 
             </div>
         </div>
+        </SceneContainer>
     );
 }

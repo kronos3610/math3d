@@ -51,3 +51,19 @@ test('invalid learning path does not open a lab drawer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open scene panel' }));
     expect(screen.getByRole('tab', { name: 'Learn' })).toBeDefined();
 });
+
+test('a lesson shows a brief before its controls and exposes its complete guide by keyboard', () => {
+    render(<MemoryRouter initialEntries={['/linear-algebra/vector-operations']}>
+        <Routes><Route path="/:topicId/:subtopicId" element={
+            <SceneContainer controls={<label>Example setting<input type="range" /></label>}><div>Scene</div></SceneContainer>
+        } /></Routes>
+    </MemoryRouter>);
+    expect(screen.getByText(/Vector addition combines two displacements/)).toBeDefined();
+    expect(screen.getByRole('slider', { name: 'Example setting' })).toBeDefined();
+    const controls = screen.getByRole('tab', { name: 'Controls' });
+    controls.focus();
+    fireEvent.keyDown(controls, { key: 'Home' });
+    expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'Guide' }));
+    expect(screen.getByRole('heading', { name: 'How to use it' })).toBeDefined();
+    expect(screen.getByRole('combobox', { name: 'Graphics quality' })).toBeDefined();
+});

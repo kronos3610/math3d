@@ -1,6 +1,7 @@
-import { useState, useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Line } from '@react-three/drei';
+import { SceneContainer } from '../../components/layout/SceneContainer';
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
+import { useState, useMemo } from 'react';
+import { Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 /* Math utilities */
@@ -60,6 +61,7 @@ function ErrorRibbon({
 
         for (let x = xMin + step; x <= xMax; x += step) {
             const prevX = x - step;
+            if (func === 'log' && prevX <= -1) continue;
 
             let yF = targetFunc(x, func);
             let yP = polyFunc(x, n, a, func);
@@ -130,6 +132,7 @@ function FunctionLine({
         const step = (xMax - xMin) / resolution;
 
         for (let x = xMin; x <= xMax; x += step) {
+            if (func === 'log' && x <= -1) continue;
             let y = isPolynomial ? polyFunc(x, n, a, func) : targetFunc(x, func);
             if (!isFinite(y)) y = 0;
             y = clamp(y, -10, 10);
@@ -153,20 +156,6 @@ function AnchorSphere({ a, func }: { a: number; func: FunctionType }) {
     );
 }
 
-/* Camera Controller */
-function CameraController() {
-    const controlsRef = useRef(0);
-
-    useFrame(({ camera }) => {
-        controlsRef.current += 0.002;
-        camera.position.x = 12 * Math.cos(controlsRef.current);
-        camera.position.z = 12 * Math.sin(controlsRef.current);
-        camera.lookAt(0, 0, 0);
-    });
-
-    return null;
-}
-
 /* Info Panel */
 function InfoPanel({
     n,
@@ -186,18 +175,12 @@ function InfoPanel({
     return (
         <div
             style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '360px',
-                height: '100%',
                 background: 'rgba(5, 5, 8, 0.8)',
                 backdropFilter: 'blur(12px)',
                 borderRight: '1px solid rgba(255, 255, 255, 0.06)',
                 color: '#f8fafc',
                 fontFamily: 'Inter, system-ui, sans-serif',
                 overflowY: 'auto',
-                zIndex: 20,
                 padding: '28px 24px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -218,7 +201,7 @@ function InfoPanel({
                     Taylor Remainder
                 </h2>
                 <p style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.6 }}>
-                    The <strong>Z-axis (height)</strong> represents the absolute error |f(x) - P_n(x)|. Watch
+                    The <strong>Z-axis (depth)</strong> shows the gap between the displayed function and polynomial. Watch
                     the error "well" form around the expansion point.
                 </p>
             </div>
@@ -249,6 +232,7 @@ function InfoPanel({
                         Function
                     </label>
                     <select
+                        aria-label="Function"
                         value={func}
                         onChange={(e) => onFuncChange(e.target.value as FunctionType)}
                         style={{
@@ -285,6 +269,7 @@ function InfoPanel({
                         <span style={{ color: '#10b981' }}>{n}</span>
                     </label>
                     <input
+                        aria-label="Degree"
                         type="range"
                         min="0"
                         max="10"
@@ -310,8 +295,9 @@ function InfoPanel({
                         <span style={{ color: '#10b981' }}>{a.toFixed(1)}</span>
                     </label>
                     <input
+                        aria-label="Center"
                         type="range"
-                        min="-3"
+                        min={func === 'log' ? -0.9 : -3}
                         max="3"
                         step="0.1"
                         value={a}
@@ -370,11 +356,11 @@ export default function TaylorRemainder() {
     const [func, setFunc] = useState<FunctionType>('sin');
 
     return (
-        <div style={{ width: '100%', height: '100%', position: 'relative', background: '#050508' }}>
-            <Canvas
+        <SceneContainer backUrl="/calculus" controls={<InfoPanel n={n} a={a} func={func} onNChange={setN} onAChange={setA}
+            onFuncChange={value => { setFunc(value); if (value === 'log' && a <= -1) setA(0); }} />}>
+            <SceneCanvas frameloop="demand"
                 camera={{ position: [12, 8, 12], fov: 50 }}
                 dpr={[1, 1.5]}
-                gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
                 aria-label="3D visualization of Taylor series remainder showing error between original function and polynomial approximation"
             >
                 <ambientLight intensity={0.4} />
@@ -387,17 +373,8 @@ export default function TaylorRemainder() {
                 <FunctionLine func={func} n={n} a={a} isPolynomial />
                 <AnchorSphere a={a} func={func} />
 
-                <CameraController />
-            </Canvas>
-
-            <InfoPanel
-                n={n}
-                a={a}
-                func={func}
-                onNChange={setN}
-                onAChange={setA}
-                onFuncChange={setFunc}
-            />
-        </div>
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
+            </SceneCanvas>
+        </SceneContainer>
     );
 }

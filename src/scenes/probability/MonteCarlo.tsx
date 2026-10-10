@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useRef, useState, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Sphere } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
 import * as THREE from 'three';
@@ -123,7 +124,7 @@ export default function MonteCarlo() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'probability'}`} controls={controls}>
-            <Canvas camera={{ position: [4, 3, 4], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D Monte Carlo simulation estimating pi by sampling points inside a sphere">
+            <SceneCanvas camera={{ position: [4, 3, 4], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D Monte Carlo simulation estimating pi by sampling points inside a sphere">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 5, 5]} intensity={0.8} />
                 <pointLight position={[-3, 2, 3]} intensity={0.5} color="#fd79a8" />
@@ -133,7 +134,7 @@ export default function MonteCarlo() {
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 5, 15]} />
                 <color attach="background" args={['#0b0f19']} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

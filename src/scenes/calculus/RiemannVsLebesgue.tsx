@@ -1,5 +1,7 @@
-import { useState, useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
+import { SceneContainer } from '../../components/layout/SceneContainer';
+import { useState, useRef, useMemo, useLayoutEffect, useId } from 'react';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 type IntegrationMode = 'riemann' | 'lebesgue';
@@ -62,8 +64,9 @@ function Surface({ functionType }: SurfaceProps) {
     );
 }
 
-function IntegrationVisualization({ mode, functionType, resolution }: IntegrationVisualizationProps) {
-    const groupRef = useRef<THREE.Group>(null!);
+export function IntegrationVisualization({ mode, functionType, resolution }: IntegrationVisualizationProps) {
+    const meshRef = useRef<THREE.InstancedMesh>(null);
+    const transform = useMemo(() => new THREE.Object3D(), []);
     const f = functionType === 'smooth' ? fSmooth : fSpiky;
 
     const boxes = useMemo(() => {
@@ -121,30 +124,37 @@ function IntegrationVisualization({ mode, functionType, resolution }: Integratio
         return boxData;
     }, [mode, resolution, f]);
 
+    useLayoutEffect(() => {
+        const mesh = meshRef.current;
+        if (!mesh) return;
+        boxes.forEach((box, index) => {
+            transform.position.set(...box.position);
+            transform.scale.set(...box.scale);
+            transform.updateMatrix();
+            mesh.setMatrixAt(index, transform.matrix);
+            mesh.setColorAt(index, box.color);
+        });
+        mesh.count = boxes.length;
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+        mesh.computeBoundingSphere();
+    }, [boxes, transform]);
+
     return (
-        <group ref={groupRef}>
-            {boxes.map((box, i) => (
-                <mesh key={i} position={box.position} scale={box.scale}>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshPhongMaterial color={box.color} transparent opacity={mode === 'riemann' ? 0.8 : 0.7} />
-                </mesh>
-            ))}
-        </group>
+        <instancedMesh
+            ref={meshRef}
+            name="integration-cells"
+            args={[undefined, undefined, boxes.length]}
+        >
+            <boxGeometry args={[1, 1, 1]} />
+            <meshPhongMaterial transparent opacity={mode === 'riemann' ? 0.8 : 0.7} />
+        </instancedMesh>
     );
 }
 
 function Scene({ mode, functionType, resolution }: IntegrationVisualizationProps) {
-    const sceneRef = useRef<THREE.Group>(null!);
-
-    useFrame(() => {
-        // Subtle idle rotation
-        if (sceneRef.current) {
-            sceneRef.current.rotation.y += 0.001;
-        }
-    });
-
     return (
-        <group ref={sceneRef}>
+        <group>
             <gridHelper args={[20, 20, 0x1e293b, 0x0f172a]} />
             <Surface functionType={functionType} />
             <IntegrationVisualization mode={mode} functionType={functionType} resolution={resolution} />
@@ -155,6 +165,7 @@ function Scene({ mode, functionType, resolution }: IntegrationVisualizationProps
 }
 
 export default function RiemannVsLebesgue() {
+    const refinementId = useId();
     const [mode, setMode] = useState<IntegrationMode>('riemann');
     const [functionType, setFunctionType] = useState<FunctionType>('smooth');
     const [resolution, setResolution] = useState(12);
@@ -162,13 +173,13 @@ export default function RiemannVsLebesgue() {
     const getModeDescription = () => {
         if (mode === 'riemann') {
             return {
-                title: 'Riemann & Spikes',
-                text: 'Riemann checks specific points on the floor. If a spike is narrower than the grid square, Riemann misses the "volume" of that spike entirely.',
+                title: 'Riemann column approximation',
+                text: 'Each column samples the function at the midpoint of a floor cell. A coarse grid can miss narrow peaks. Increasing refinement makes the floor cells smaller.',
             };
         } else {
             return {
-                title: 'Lebesgue & Spikes',
-                text: 'Lebesgue asks: "Does the height 8.0 exist anywhere?" It finds the spikes regardless of position because it slices by value, not location.',
+                title: 'Lebesgue layer illustration',
+                text: 'Horizontal layers group regions above each height. This illustration still samples a fixed 40 × 40 floor grid and can miss peaks. Refinement makes the height layers thinner, without changing that floor grid.',
             };
         }
     };
@@ -179,23 +190,13 @@ export default function RiemannVsLebesgue() {
         : 'linear-gradient(to bottom, #ef4444, #f59e0b)';
     const legendText = mode === 'riemann' ? 'Riemann (Vertical Slicing)' : 'Lebesgue (Horizontal Slicing)';
 
-    return (
-        <div style={{ width: '100%', height: '100%', position: 'relative', background: '#050508' }}>
+    const controls = (
+        <>
             {/* Controls Panel */}
             <div
                 style={{
-                    position: 'absolute',
-                    top: '20px',
-                    left: '20px',
-                    zIndex: 10,
-                    background: 'rgba(15, 23, 42, 0.95)',
-                    padding: '24px',
-                    borderRadius: '16px',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    maxWidth: '340px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
-                    color: '#fff',
+                    padding: '20px',
+                    color: 'var(--text-primary)',
                     fontFamily: 'Inter, system-ui, sans-serif',
                 }}
             >
@@ -239,6 +240,8 @@ export default function RiemannVsLebesgue() {
                     </p>
                     <div style={{ display: 'flex', gap: '4px' }}>
                         <button
+                            type="button"
+                            aria-pressed={functionType === 'smooth'}
                             onClick={() => setFunctionType('smooth')}
                             style={{
                                 background: functionType === 'smooth' ? '#334155' : '#0a0a0f',
@@ -254,6 +257,8 @@ export default function RiemannVsLebesgue() {
                             Smooth Hills
                         </button>
                         <button
+                            type="button"
+                            aria-pressed={functionType === 'spiky'}
                             onClick={() => setFunctionType('spiky')}
                             style={{
                                 background: functionType === 'spiky' ? '#334155' : '#0a0a0f',
@@ -283,6 +288,8 @@ export default function RiemannVsLebesgue() {
                     }}
                 >
                     <button
+                        type="button"
+                        aria-pressed={mode === 'riemann'}
                         onClick={() => setMode('riemann')}
                         style={{
                             flex: 1,
@@ -301,6 +308,8 @@ export default function RiemannVsLebesgue() {
                         Riemann
                     </button>
                     <button
+                        type="button"
+                        aria-pressed={mode === 'lebesgue'}
                         onClick={() => setMode('lebesgue')}
                         style={{
                             flex: 1,
@@ -324,6 +333,7 @@ export default function RiemannVsLebesgue() {
                 <div style={{ marginBottom: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '8px' }}>
                         <label
+                            htmlFor={refinementId}
                             style={{
                                 fontSize: '12px',
                                 textTransform: 'uppercase',
@@ -337,6 +347,7 @@ export default function RiemannVsLebesgue() {
                         <span style={{ color: '#60a5fa', fontFamily: 'monospace', fontSize: '14px' }}>{resolution}</span>
                     </div>
                     <input
+                        id={refinementId}
                         type="range"
                         min="2"
                         max="30"
@@ -371,16 +382,17 @@ export default function RiemannVsLebesgue() {
                     </span>
                     <span>{description.text}</span>
                 </div>
+                <p style={{ marginTop: '12px', fontSize: '12px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+                    Both displayed functions are smooth and integrable by either method. Missing a peak at finite resolution is a sampling error, not a failure of Riemann integration.
+                </p>
             </div>
 
             {/* Legend */}
             <div
                 style={{
-                    position: 'absolute',
-                    bottom: '20px',
-                    left: '20px',
                     background: 'rgba(15, 23, 42, 0.9)',
                     padding: '15px',
+                    margin: '0 20px 20px',
                     borderRadius: '12px',
                     fontSize: '14px',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -413,16 +425,21 @@ export default function RiemannVsLebesgue() {
                     Drag: Rotate | Scroll: Zoom
                 </p>
             </div>
+        </>
+    );
 
-            {/* 3D Canvas */}
-            <Canvas
+    return (
+        <SceneContainer backUrl="/calculus" controls={controls}>
+            <SceneCanvas
+                frameloop="demand"
                 camera={{ position: [20, 18, 20], fov: 60 }}
                 style={{ width: '100%', height: '100%' }}
                 aria-label="3D comparison of Riemann and Lebesgue integration approaches with vertical and horizontal slicing"
             >
                 <color attach="background" args={['#050508']} />
                 <Scene mode={mode} functionType={functionType} resolution={resolution} />
-            </Canvas>
-        </div>
+                <OrbitControls enableDamping dampingFactor={0.05} />
+            </SceneCanvas>
+        </SceneContainer>
     );
 }

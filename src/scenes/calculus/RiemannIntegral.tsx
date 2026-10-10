@@ -1,5 +1,6 @@
+import { SceneContainer } from '../../components/layout/SceneContainer';
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useRef, useMemo, useLayoutEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Activity, Info } from 'lucide-react';
@@ -41,13 +42,8 @@ function RiemannScene({ nPartitions }: RiemannSceneProps) {
             meshRef.current.setMatrixAt(i, tempObject.matrix);
         }
         meshRef.current.instanceMatrix.needsUpdate = true;
+        meshRef.current.computeBoundingSphere();
     }, [boxes]);
-
-    useFrame(() => {
-        if (meshRef.current) {
-            meshRef.current.rotation.y += 0.005;
-        }
-    });
 
     return (
         <>
@@ -81,22 +77,15 @@ function RiemannScene({ nPartitions }: RiemannSceneProps) {
 export default function RiemannIntegral() {
     const [riemannN, setRiemannN] = useState(12);
 
-    return (
-        <div style={{ width: '100%', height: '100%', position: 'relative', background: '#050508' }}>
+    const controls = (
             <div
                 style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '400px',
-                    height: '100%',
                     background: 'rgba(5, 5, 8, 0.8)',
                     backdropFilter: 'blur(12px)',
                     borderRight: '1px solid rgba(255, 255, 255, 0.06)',
                     color: '#f8fafc',
                     fontFamily: 'Inter, system-ui, sans-serif',
                     overflowY: 'auto',
-                    zIndex: 20,
                     padding: '28px 24px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -192,6 +181,7 @@ export default function RiemannIntegral() {
                         <span style={{ color: '#00cec9', fontWeight: 700 }}>{riemannN}</span>
                     </label>
                     <input
+                        aria-label="Number of partitions"
                         type="range"
                         min="4"
                         max="80"
@@ -230,11 +220,12 @@ export default function RiemannIntegral() {
                         }}
                     >
                         <Info size={16} />
-                        <span>Why does it fail?</span>
+                        <span>When does Riemann integration fail?</span>
                     </h4>
                     <p style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: 1.6, fontStyle: 'italic' }}>
-                        If a function is too &quot;jagged&quot; (like one that is 1 at rational numbers and 0 at
-                        irrationals), your boxes will never stabilize. We need a better way to measure sets.
+                        The smooth curve shown here is Riemann integrable. A function that is 1 at rational
+                        numbers and 0 at irrationals is not: its upper and lower sums stay apart. Lebesgue
+                        integration can handle that example.
                     </p>
                 </div>
 
@@ -276,21 +267,14 @@ export default function RiemannIntegral() {
                     </div>
                 </div>
             </div>
+    );
 
-            <div
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: '400px',
-                    right: 0,
-                    bottom: 0,
-                }}
-            >
-                <Canvas camera={{ position: [0, 4, 8], fov: 75 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of Riemann integral with domain partitioning">
-                    <color attach="background" args={['#050508']} />
-                    <RiemannScene nPartitions={riemannN} />
-                </Canvas>
-            </div>
-        </div>
+    return (
+        <SceneContainer backUrl="/calculus" controls={controls}>
+            <SceneCanvas frameloop="demand" camera={{ position: [0, 4, 8], fov: 75 }} aria-label="3D Riemann sum: rectangles approximate the area under sin(x) + 2">
+                <color attach="background" args={['#050508']} />
+                <RiemannScene nPartitions={riemannN} />
+            </SceneCanvas>
+        </SceneContainer>
     );
 }

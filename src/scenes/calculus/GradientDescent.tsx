@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useMemo, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Play, Pause, RefreshCcw } from 'lucide-react';
@@ -80,7 +81,7 @@ export default function GradientDescent() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas camera={{ position: [5, 5, 5], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of gradient descent on a quadratic loss surface">
+            <SceneCanvas camera={{ position: [5, 5, 5], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of gradient descent on a quadratic loss surface">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 10, 5]} intensity={1.0} />
                 <pointLight position={[-3, 5, 3]} intensity={0.5} color="#00cec9" />
@@ -92,7 +93,7 @@ export default function GradientDescent() {
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 5, 15]} />
                 <color attach="background" args={['#0b0f19']} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

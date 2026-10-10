@@ -1,8 +1,10 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ShieldCheck, Zap, BookOpen, Scale } from 'lucide-react';
 import Latex from '../../components/Latex';
+import { SceneContainer } from '../../components/layout/SceneContainer';
 
 // --- Types ---
 type SigmaMode = 'atoms' | 'complement' | 'union' | 'universe';
@@ -155,23 +157,11 @@ export default function SigmaAlgebra() {
         }
     };
 
-    return (
-        <div style={{ width: '100%', height: '100%', position: 'relative', background: '#050508', overflowY: 'auto' }}>
-            {/* Side Panel */}
+    const controls = (
             <div
                 style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '400px',
-                    height: '100%',
-                    background: '#050508',
-                    borderRight: '1px solid #0a0a0f',
                     color: '#f8fafc',
                     fontFamily: 'Inter, system-ui, sans-serif',
-                    overflowY: 'auto',
-                    zIndex: 20,
-                    padding: '28px 24px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '20px',
@@ -263,6 +253,7 @@ export default function SigmaAlgebra() {
                         }}
                     >
                         <label
+                            htmlFor="sigma-granularity"
                             style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
@@ -278,6 +269,7 @@ export default function SigmaAlgebra() {
                             </span>
                         </label>
                         <input
+                            id="sigma-granularity"
                             type="range"
                             min="0"
                             max="4"
@@ -296,23 +288,32 @@ export default function SigmaAlgebra() {
                     </div>
                 )}
             </div>
+    );
 
+    return (
+        <SceneContainer backUrl="/calculus" controls={controls} defaultPanel="closed">
+            <div style={{ width: '100%', height: '100%', position: 'relative', background: '#050508', overflowY: 'auto' }}>
             {/* 3D View */}
             <div
                 style={{
                     position: 'absolute',
                     top: 0,
-                    left: '400px',
+                    left: 0,
                     right: 0,
                     height: '50vh',
                 }}
             >
-                <Canvas camera={{ position: [0, 0, 6], fov: 75 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of sigma-algebra and measure theory concepts">
+                <SceneCanvas camera={{ position: [0, 0, 6], fov: 75 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of sigma-algebra and measure theory concepts">
                     <color attach="background" args={['#0a0a0f']} />
                     <SigmaScene level={sigmaLevel} mode={sigmaMode} />
-                </Canvas>
+                </SceneCanvas>
                 <div
                     style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        pointerEvents: 'none',
                         padding: '16px 20px',
                         background: 'rgba(15, 23, 42, 0.6)',
                         border: '1px solid #334155',
@@ -332,7 +333,7 @@ export default function SigmaAlgebra() {
                 style={{
                     position: 'absolute',
                     top: '50vh',
-                    left: '400px',
+                    left: 0,
                     right: 0,
                     bottom: 0,
                     overflowY: 'auto',
@@ -643,7 +644,8 @@ export default function SigmaAlgebra() {
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+        </SceneContainer>
     );
 }
 
@@ -658,6 +660,8 @@ interface RuleButtonProps {
 function RuleButton({ active, onClick, number, title, formula }: RuleButtonProps) {
     return (
         <button
+            type="button"
+            aria-pressed={active}
             onClick={onClick}
             style={{
                 width: '100%',

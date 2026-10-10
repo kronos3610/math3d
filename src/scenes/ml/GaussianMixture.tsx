@@ -1,6 +1,7 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { SceneContainer } from '../../components/layout/SceneContainer';
@@ -516,9 +517,9 @@ export default function GaussianMixture() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
-            <Canvas dpr={[1, 1.5]} camera={{ position: [25, 20, 35], fov: 60 }} aria-label="Gaussian mixture with axis-aligned covariance ellipsoids and points colored by cluster responsibility">
+            <SceneCanvas dpr={[1, 1.5]} camera={{ position: [25, 20, 35], fov: 60 }} aria-label="Gaussian mixture with axis-aligned covariance ellipsoids and points colored by cluster responsibility">
                 <Scene3D gmmRef={gmmRef} onAnimDone={onAnimDone} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

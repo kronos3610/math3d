@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
 import * as THREE from 'three';
@@ -80,14 +81,14 @@ export default function Integrals() {
             backUrl={`/${topicId || 'calculus'}`}
             controls={controls}
         >
-            <Canvas camera={{ position: [3, 3, 4], fov: 50 }} aria-label="3D animated Riemann sum bars approximating area under a curve">
+            <SceneCanvas camera={{ position: [3, 3, 4], fov: 50 }} aria-label="3D animated Riemann sum bars approximating area under a curve">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 5, 5]} intensity={0.8} />
                 <pointLight position={[-3, 2, 3]} intensity={0.5} color="#00cec9" />
                 <IntegralBars />
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#050508', 5, 15]} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

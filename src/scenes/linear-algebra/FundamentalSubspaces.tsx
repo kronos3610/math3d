@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Arrow } from '../../components/3d/Arrow';
@@ -172,7 +173,7 @@ export default function FundamentalSubspaces() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <Canvas
+            <SceneCanvas
                 camera={{ position: [20, 14, 20], fov: 45 }}
                 style={{ width: '100%', height: '100%' }}
                 dpr={[1, 1.5]}
@@ -181,7 +182,7 @@ export default function FundamentalSubspaces() {
                 <SceneBase />
                 {mode === 'domain' ? <DomainView /> : <CodomainView />}
                 <OrbitControls enableDamping dampingFactor={0.05} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

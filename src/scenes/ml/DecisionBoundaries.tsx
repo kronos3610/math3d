@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useMemo, useRef, useLayoutEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
+
 import { OrbitControls } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
 import * as THREE from 'three';
@@ -136,7 +137,7 @@ export default function DecisionBoundaries() {
             backUrl={`/${topicId || 'ml'}`}
             controls={controls}
         >
-            <Canvas camera={{ position: [4, 3, 4], fov: 50 }} aria-label="3D visualization of classifier decision boundary separating two point clusters">
+            <SceneCanvas frameloop="demand" camera={{ position: [4, 3, 4], fov: 50 }} aria-label="3D visualization of classifier decision boundary separating two point clusters">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 5, 5]} intensity={0.8} />
                 <pointLight position={[-3, 2, 3]} intensity={0.5} color="#fdcb6e" />
@@ -146,7 +147,7 @@ export default function DecisionBoundaries() {
                 <gridHelper args={[8, 16, '#222', '#181828']} position={[0, -3, 0]} />
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#050508', 5, 15]} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

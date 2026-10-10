@@ -1,5 +1,6 @@
+import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useParams } from 'react-router-dom';
@@ -280,9 +281,9 @@ export default function LagrangeConstraints() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
-            <Canvas dpr={[1, 1.5]} camera={{ position: [10, 8, 12], fov: 50 }} aria-label="3D visualization of Ridge and Lasso regularization constraints on model weights">
+            <SceneCanvas dpr={[1, 1.5]} camera={{ position: [10, 8, 12], fov: 50 }} aria-label="3D visualization of Ridge and Lasso regularization constraints on model weights">
                 <Scene mode={mode} budgetT={budgetT} />
-            </Canvas>
+            </SceneCanvas>
         </SceneContainer>
     );
 }

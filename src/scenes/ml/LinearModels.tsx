@@ -1,528 +1,230 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useId, useMemo, useState } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import Latex from '../../components/Latex';
+import { SceneContainer } from '../../components/layout/SceneContainer';
+import {
+    classificationRegion, decisionBoundary, exampleClassificationPoints, fitLinearClassifier,
+    linearScore, predictClass, sigmoid,
+} from '../../utils/linear-models';
+import type { BinaryClass, ClassificationPoint, LinearAlgorithm, PlotPoint } from '../../utils/linear-models';
 
-// --- Types ---
-
-type AlgoKey = 'logistic' | 'least-squares' | 'perceptron';
-
-interface DataPoint {
-    nx: number;
-    ny: number;
-    t: number; // 1 = C1, 0 = C2
+interface ModelBriefing {
+    title: string;
+    purpose: string;
+    output: string;
+    rule: string;
+    formula: string;
+    experiment: string;
 }
 
-// --- Math helpers ---
-
-function sigmoid(a: number): number {
-    return 1 / (1 + Math.exp(-a));
-}
-
-function solve3x3(A: number[][], B: number[]): number[] {
-    const det =
-        A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
-        A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]) +
-        A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
-
-    const det0 =
-        B[0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) -
-        A[0][1] * (B[1] * A[2][2] - A[1][2] * B[2]) +
-        A[0][2] * (B[1] * A[2][1] - A[1][1] * B[2]);
-    const det1 =
-        A[0][0] * (B[1] * A[2][2] - A[1][2] * B[2]) -
-        B[0] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]) +
-        A[0][2] * (A[1][0] * B[2] - B[1] * A[2][0]);
-    const det2 =
-        A[0][0] * (A[1][1] * B[2] - B[1] * A[2][1]) -
-        A[0][1] * (A[1][0] * B[2] - B[1] * A[2][0]) +
-        B[0] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
-
-    const d = det === 0 ? 1 : det;
-    return [det0 / d, det1 / d, det2 / d];
-}
-
-function trainLeastSquares(points: DataPoint[]): number[] {
-    const XtX: number[][] = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-    const XtT: number[] = [0, 0, 0];
-
-    points.forEach((p) => {
-        const x = [1, p.nx, p.ny];
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 3; j++) XtX[i][j] += x[i] * x[j];
-            XtT[i] += x[i] * p.t;
-        }
-    });
-    for (let i = 0; i < 3; i++) XtX[i][i] += 0.01;
-    return solve3x3(XtX, XtT);
-}
-
-function trainLogisticIRLS(points: DataPoint[]): number[] {
-    let w = [0, 0, 0];
-    for (let iter = 0; iter < 20; iter++) {
-        const gradient = [0, 0, 0];
-        const Hessian: number[][] = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-
-        points.forEach((p) => {
-            const x = [1, p.nx, p.ny];
-            const a = w[0] * x[0] + w[1] * x[1] + w[2] * x[2];
-            const y = sigmoid(a);
-            const wt = y * (1 - y);
-            for (let i = 0; i < 3; i++) {
-                gradient[i] += (y - p.t) * x[i];
-                for (let j = 0; j < 3; j++) Hessian[i][j] += wt * x[i] * x[j];
-            }
-        });
-        for (let i = 0; i < 3; i++) Hessian[i][i] += 0.1;
-
-        const delta = solve3x3(Hessian, gradient);
-        w = [w[0] - delta[0], w[1] - delta[1], w[2] - delta[2]];
-
-        const mag = Math.sqrt(delta[0] ** 2 + delta[1] ** 2 + delta[2] ** 2);
-        if (mag < 0.001) break;
-    }
-    return w;
-}
-
-function trainPerceptron(points: DataPoint[]): number[] {
-    const w = [0, 0, 0];
-    const lr = 0.1;
-    for (let iter = 0; iter < 1000; iter++) {
-        let errors = 0;
-        points.forEach((p) => {
-            const target = p.t === 1 ? 1 : -1;
-            const a = w[0] + w[1] * p.nx + w[2] * p.ny;
-            if (a * target <= 0) {
-                w[0] += lr * target;
-                w[1] += lr * target * p.nx;
-                w[2] += lr * target * p.ny;
-                errors++;
-            }
-        });
-        if (errors === 0) break;
-    }
-    return w;
-}
-
-function train(points: DataPoint[], algo: AlgoKey): number[] {
-    if (points.length < 2) return [0, 0, 0];
-    if (algo === 'least-squares') return trainLeastSquares(points);
-    if (algo === 'logistic') return trainLogisticIRLS(points);
-    return trainPerceptron(points);
-}
-
-// --- Canvas drawing ---
-
-function drawScene(
-    canvas: HTMLCanvasElement,
-    points: DataPoint[],
-    weights: number[],
-    algo: AlgoKey,
-) {
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.width / dpr;
-    const h = canvas.height / dpr;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width / dpr * dpr, canvas.height / dpr * dpr);
-
-    const normX = (px: number) => (px / w) * 2 - 1;
-    const normY = (py: number) => (py / h) * 2 - 1;
-    const fromNX = (nx: number) => ((nx + 1) / 2) * w;
-    const fromNY = (ny: number) => ((ny + 1) / 2) * h;
-
-    // Background region shading
-    if (points.length > 0) {
-        const step = 8;
-        for (let i = 0; i < w; i += step) {
-            for (let j = 0; j < h; j += step) {
-                const nx = normX(i);
-                const ny = normY(j);
-                const a = weights[0] + weights[1] * nx + weights[2] * ny;
-
-                let color: string;
-                if (algo === 'logistic') {
-                    const p = sigmoid(a);
-                    const alpha = Math.abs(p - 0.5) * 0.55;
-                    color = p > 0.5
-                        ? `rgba(59,130,246,${alpha})`
-                        : `rgba(239,68,68,${alpha})`;
-                } else if (algo === 'least-squares') {
-                    color = a > 0.5
-                        ? 'rgba(59,130,246,0.10)'
-                        : 'rgba(239,68,68,0.10)';
-                } else {
-                    color = a > 0
-                        ? 'rgba(59,130,246,0.10)'
-                        : 'rgba(239,68,68,0.10)';
-                }
-                ctx.fillStyle = color;
-                ctx.fillRect(i, j, step, step);
-            }
-        }
-    }
-
-    // Decision boundary line
-    if (points.length > 1 && (weights[1] !== 0 || weights[2] !== 0)) {
-        const offset = algo === 'least-squares' ? 0.5 : 0;
-        const nx1 = -1.1;
-        const ny1 = (offset - weights[0] - weights[1] * nx1) / weights[2];
-        const nx2 = 1.1;
-        const ny2 = (offset - weights[0] - weights[1] * nx2) / weights[2];
-
-        ctx.beginPath();
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = 'rgba(226,232,240,0.4)';
-        ctx.shadowBlur = 6;
-        ctx.moveTo(fromNX(nx1), fromNY(ny1));
-        ctx.lineTo(fromNX(nx2), fromNY(ny2));
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-    }
-
-    // Data points
-    points.forEach((p) => {
-        const x = fromNX(p.nx);
-        const y = fromNY(p.ny);
-        const fillColor = p.t === 1 ? '#3b82f6' : '#ef4444';
-        const glowColor = p.t === 1 ? 'rgba(59,130,246,0.5)' : 'rgba(239,68,68,0.5)';
-
-        ctx.beginPath();
-        ctx.arc(x, y, 8, 0, Math.PI * 2);
-        ctx.fillStyle = glowColor;
-        ctx.shadowColor = glowColor;
-        ctx.shadowBlur = 12;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        ctx.beginPath();
-        ctx.arc(x, y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = fillColor;
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-    });
-
-    if (points.length === 0) {
-        ctx.fillStyle = '#475569';
-        ctx.font = '500 15px system-ui,sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Click or tap to add training data', w / 2, h / 2);
-    }
-}
-
-// --- Info cards data ---
-
-const INFO_CARDS = [
-    {
-        color: '#3b82f6',
-        bg: 'rgba(59,130,246,0.08)',
-        border: 'rgba(59,130,246,0.2)',
-        title: 'Activation Function',
-        desc: 'Logistic regression uses the sigmoid to map the linear predictor to a probability in (0, 1).',
-        formula: 'f(a) = \\sigma(a) = \\tfrac{1}{1+e^{-a}}',
+const BRIEFINGS: Record<LinearAlgorithm, ModelBriefing> = {
+    logistic: {
+        title: 'Logistic regression',
+        purpose: 'Binary classification: estimate the probability that an observation belongs to blue class C₁.',
+        output: 'The sigmoid turns a linear score into a model probability between 0 and 1.',
+        rule: 'Predict blue C₁ when p(C₁ | x) ≥ 0.5. The white line marks p = 0.5.',
+        formula: 'p(C_1\\mid\\mathbf{x}) = \\sigma(w_0 + w_1x_1 + w_2x_2)',
+        experiment: 'Move the cursor away from the white line and watch its probability approach 0 or 1. Add overlapping classes to make confidence less decisive.',
     },
-    {
-        color: '#94a3b8',
-        bg: 'rgba(148,163,184,0.06)',
-        border: 'rgba(148,163,184,0.15)',
-        title: 'Decision Surface',
-        desc: 'Boundaries occur where the linear predictor equals a threshold value.',
-        formula: 'w_1 x_1 + w_2 x_2 + w_0 = 0',
+    'least-squares': {
+        title: 'Least squares classification',
+        purpose: 'Linear regression fitted to binary targets: blue C₁ = 1 and red C₂ = 0.',
+        output: 'The raw prediction is a numeric score. It can fall below 0 or above 1 and is not a calibrated probability.',
+        rule: 'For this classification experiment, predict blue C₁ when the score ≥ 0.5. The white line marks score = 0.5.',
+        formula: '\\hat{t}(\\mathbf{x}) = w_0 + w_1x_1 + w_2x_2,\\quad \\hat{t}\\geq 0.5 \\Rightarrow C_1',
+        experiment: 'Add a blue point far inside the red region, then switch to logistic regression using the same data. Compare how the boundary changes.',
     },
-    {
-        color: '#ef4444',
-        bg: 'rgba(239,68,68,0.08)',
-        border: 'rgba(239,68,68,0.2)',
-        title: 'Least Squares Masking',
-        desc: 'Unlike Logistic, LS penalises high-confidence correct predictions — outliers can "drag" the boundary.',
-        formula: '\\mathbf{w} = (\\mathbf{X}^T\\mathbf{X})^{-1}\\mathbf{X}^T\\mathbf{t}',
+    perceptron: {
+        title: 'Perceptron',
+        purpose: 'Binary classification using mistake-driven updates to a linear score.',
+        output: 'The sign of the score selects a class; the score is not a probability.',
+        rule: 'Predict blue C₁ when the score ≥ 0. The white line marks score = 0.',
+        formula: 'a(\\mathbf{x}) = w_0 + w_1x_1 + w_2x_2,\\quad a\\geq 0 \\Rightarrow C_1',
+        experiment: 'First separate the two classes, then add conflicting points at the same location. A perceptron cannot converge on data with no linear separator.',
     },
-];
-
-// --- Style helpers ---
-
-const BTN_BASE: React.CSSProperties = {
-    padding: '8px 18px',
-    borderRadius: '8px',
-    border: '1px solid',
-    cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: 700,
-    transition: 'all 0.15s',
 };
 
-// --- Main Component ---
+const PLOT = { width: 800, height: 440, left: 60, right: 774, top: 20, bottom: 395 };
+const toX = (x: number) => PLOT.left + (x + 1) * (PLOT.right - PLOT.left) / 2;
+const toY = (y: number) => PLOT.bottom - (y + 1) * (PLOT.bottom - PLOT.top) / 2;
+const clamp = (value: number) => Math.max(-1, Math.min(1, value));
 
 export default function LinearModels() {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [points, setPoints] = useState<DataPoint[]>([]);
-    const [weights, setWeights] = useState<number[]>([0, 0, 0]);
-    const [algo, setAlgo] = useState<AlgoKey>('logistic');
-    const [currentClass, setCurrentClass] = useState<number>(1);
+    const id = useId();
+    const [points, setPoints] = useState<ClassificationPoint[]>(() => exampleClassificationPoints(3610));
+    const [algorithm, setAlgorithm] = useState<LinearAlgorithm>('logistic');
+    const [currentClass, setCurrentClass] = useState<BinaryClass>(1);
+    const [cursor, setCursor] = useState<PlotPoint>({ x1: 0, x2: 0 });
+    const [exampleSeed, setExampleSeed] = useState(3610);
+    const fit = useMemo(() => fitLinearClassifier(points, algorithm), [points, algorithm]);
+    const briefing = BRIEFINGS[algorithm];
+    const hasBothClasses = points.some(point => point.target === 1) && points.some(point => point.target === 0);
+    const blueRegion = useMemo(() => classificationRegion(fit.weights, algorithm, 1), [fit.weights, algorithm]);
+    const redRegion = useMemo(() => classificationRegion(fit.weights, algorithm, 0), [fit.weights, algorithm]);
+    const boundary = useMemo(() => decisionBoundary(fit.weights, algorithm), [fit.weights, algorithm]);
+    const correct = points.filter(point => predictClass(fit.weights, algorithm, point) === point.target).length;
+    const blueCount = points.filter(point => point.target === 1).length;
+    const score = linearScore(fit.weights, cursor);
+    const cursorClass = predictClass(fit.weights, algorithm, cursor);
+    const prediction = algorithm === 'logistic'
+        ? 'p(C₁ | x) = ' + sigmoid(score).toFixed(3)
+        : (algorithm === 'least-squares' ? 'Raw numeric score' : 'Signed score') + ' = ' + score.toFixed(3);
 
-    // Resize canvas to match display size with DPR
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const observer = new ResizeObserver(() => {
-            const dpr = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            const ctx = canvas.getContext('2d');
-            if (ctx) ctx.scale(dpr, dpr);
-        });
-        observer.observe(canvas);
-        return () => observer.disconnect();
-    }, []);
-
-    // Redraw whenever state changes
-    useEffect(() => {
-        if (canvasRef.current) {
-            drawScene(canvasRef.current, points, weights, algo);
+    const addPoint = (point: PlotPoint) => setPoints(current => [...current, { ...point, target: currentClass }]);
+    const handlePlotClick = (event: MouseEvent<SVGSVGElement>) => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+        const x = (event.clientX - rect.left) / rect.width * PLOT.width;
+        const y = (event.clientY - rect.top) / rect.height * PLOT.height;
+        if (x < PLOT.left || x > PLOT.right || y < PLOT.top || y > PLOT.bottom) return;
+        const point = {
+            x1: clamp((x - PLOT.left) / (PLOT.right - PLOT.left) * 2 - 1),
+            x2: clamp(1 - (y - PLOT.top) / (PLOT.bottom - PLOT.top) * 2),
+        };
+        setCursor(point);
+        addPoint(point);
+        event.currentTarget.focus();
+    };
+    const handlePlotKeyDown = (event: KeyboardEvent<SVGSVGElement>) => {
+        const step = event.shiftKey ? 0.02 : 0.1;
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            addPoint(cursor);
+        } else if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home'].includes(event.key)) {
+            event.preventDefault();
+            setCursor(current => event.key === 'Home' ? { x1: 0, x2: 0 } : {
+                x1: clamp(current.x1 + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0)),
+                x2: clamp(current.x2 + (event.key === 'ArrowUp' ? step : event.key === 'ArrowDown' ? -step : 0)),
+            });
         }
-    }, [points, weights, algo]);
+    };
 
-    const retrain = useCallback((pts: DataPoint[], currentAlgo: AlgoKey) => {
-        const w = train(pts, currentAlgo);
-        setWeights(w);
-    }, []);
-
-    const handleAlgoChange = useCallback((value: AlgoKey) => {
-        setAlgo(value);
-        retrain(points, value);
-    }, [points, retrain]);
-
-    const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-        const newPoints = [...points, { nx, ny, t: currentClass }];
-        setPoints(newPoints);
-        retrain(newPoints, algo);
-    }, [points, currentClass, algo, retrain]);
-
-    const handleClear = useCallback(() => {
-        setPoints([]);
-        setWeights([0, 0, 0]);
-    }, []);
-
-    const handleRandom = useCallback(() => {
-        const newPoints: DataPoint[] = [];
-        for (let i = 0; i < 12; i++) {
-            newPoints.push({ nx: Math.random() * 0.6 - 0.7, ny: Math.random() * 0.6 - 0.7, t: 1 });
-            newPoints.push({ nx: Math.random() * 0.6 + 0.1, ny: Math.random() * 0.6 + 0.1, t: 0 });
-        }
-        setPoints(newPoints);
-        retrain(newPoints, algo);
-    }, [algo, retrain]);
-
-    const c1Active = currentClass === 1;
+    const explanation = (
+        <div className="linear-models-explanation">
+            <h3>{briefing.title}</h3>
+            <p>{briefing.purpose}</p>
+            <p>{briefing.output}</p>
+            <p>{briefing.rule}</p>
+            <Latex formula={briefing.formula} />
+            <h3>Linear regression versus logistic regression</h3>
+            <p>Linear regression normally predicts a numeric target, such as a price or temperature. Logistic regression predicts a binary class probability. Both use a linear combination of the input features, but their outputs and training objectives differ.</p>
+            <p>The least squares option here applies linear regression to labels 0 and 1, then adds a 0.5 classification threshold. This is a classification comparison; the plot’s vertical axis is input feature x₂, rather than a continuous regression target.</p>
+            <h3>What the plot means</h3>
+            <p>Each point contains two features, x₁ and x₂, and a known class label. Blue circles are C₁; red triangles are C₂. The faint background shows the predicted class, and the white line separates the two predictions.</p>
+            <p>The three coefficients determine the line: w₀ is its intercept term, while w₁ and w₂ weight the two features. The intercept is sometimes called a bias parameter; this differs from statistical bias in the bias–variance tradeoff.</p>
+            <h3>Try this</h3>
+            <p>{briefing.experiment}</p>
+            <p>Switch algorithms without clearing the data to make a fair visual comparison. Training accuracy only describes these entered points; it does not estimate performance on unseen data.</p>
+            <p>Least squares uses a small ridge penalty of 0.01 on its three coefficients. Logistic regression minimizes binary cross-entropy with small L2 penalties (0.001 on the intercept and 0.05 on the feature weights) to keep separable examples finite. Perceptron training stops after at most 1,000 passes and reports if it fails to converge.</p>
+        </div>
+    );
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#050508', color: '#e2e8f0', overflow: 'hidden' }}>
+        <SceneContainer backUrl="/ml" explanation={explanation} defaultPanel="closed">
+            <section className="linear-models-lab" aria-labelledby={id + '-title'}>
+                <div className="linear-models-content">
+                    <header className="linear-models-header">
+                        <p className="linear-models-eyebrow">Algorithms · Binary classification lab</p>
+                        <h1 id={id + '-title'}>Linear Models for Classification</h1>
+                        <p>Compare logistic regression, least squares, and the perceptron on the same two-feature dataset.</p>
+                    </header>
 
-            {/* Header bar */}
-            <div style={{
-                padding: '16px 24px',
-                borderBottom: '1px solid #0f172a',
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: '16px',
-                flexShrink: 0,
-            }}>
-                <div style={{ flex: 1, minWidth: 200 }}>
-                    <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Linear Models for Classification</h2>
-                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>
-                        <Latex formula="y(\mathbf{x}) = f(\mathbf{w}^T\mathbf{x} + w_0)" /> — click the canvas to place points
-                    </p>
-                </div>
-
-                {/* Class selector */}
-                <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                        style={{
-                            ...BTN_BASE,
-                            background: c1Active ? '#2563eb' : '#0f172a',
-                            borderColor: c1Active ? '#3b82f6' : '#1e293b',
-                            color: c1Active ? 'white' : '#64748b',
-                            boxShadow: c1Active ? '0 0 12px rgba(59,130,246,0.4)' : 'none',
-                        }}
-                        onClick={() => setCurrentClass(1)}
-                    >
-                        C₁ (t=1)
-                    </button>
-                    <button
-                        style={{
-                            ...BTN_BASE,
-                            background: !c1Active ? '#be123c' : '#0f172a',
-                            borderColor: !c1Active ? '#ef4444' : '#1e293b',
-                            color: !c1Active ? 'white' : '#64748b',
-                            boxShadow: !c1Active ? '0 0 12px rgba(239,68,68,0.4)' : 'none',
-                        }}
-                        onClick={() => setCurrentClass(0)}
-                    >
-                        C₂ (t=0)
-                    </button>
-                </div>
-
-                {/* Algorithm selector */}
-                <select
-                    value={algo}
-                    onChange={(e) => handleAlgoChange(e.target.value as AlgoKey)}
-                    style={{
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid #1e293b',
-                        background: '#0f172a',
-                        color: '#e2e8f0',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        outline: 'none',
-                    }}
-                >
-                    <option value="logistic">Logistic Regression (IRLS)</option>
-                    <option value="least-squares">Least Squares</option>
-                    <option value="perceptron">Perceptron</option>
-                </select>
-
-                {/* Action buttons */}
-                <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                        style={{ ...BTN_BASE, background: '#0f172a', borderColor: '#1e293b', color: '#94a3b8' }}
-                        onClick={handleRandom}
-                    >
-                        Random
-                    </button>
-                    <button
-                        style={{ ...BTN_BASE, background: '#0f172a', borderColor: '#1e293b', color: '#94a3b8' }}
-                        onClick={handleClear}
-                    >
-                        Clear
-                    </button>
-                </div>
-            </div>
-
-            {/* Canvas + stats row */}
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
-
-                {/* Canvas */}
-                <div style={{ flex: 1, position: 'relative' }}>
-                    <canvas
-                        ref={canvasRef}
-                        onClick={handleCanvasClick}
-                        style={{ width: '100%', height: '100%', cursor: 'crosshair', display: 'block' }}
-                    />
-
-                    {/* Legend overlay */}
-                    <div style={{
-                        position: 'absolute',
-                        top: 16,
-                        right: 16,
-                        background: 'rgba(15,23,42,0.85)',
-                        backdropFilter: 'blur(8px)',
-                        border: '1px solid #1e293b',
-                        borderRadius: '10px',
-                        padding: '10px 14px',
-                        fontSize: '12px',
-                        pointerEvents: 'none',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '6px',
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#3b82f6', boxShadow: '0 0 6px #3b82f6' }} />
-                            <span style={{ color: '#94a3b8' }}>Class C₁ (t=1)</span>
+                    <div className="linear-models-controls">
+                        <div className="linear-models-field">
+                            <label htmlFor={id + '-algorithm'}>Learning algorithm</label>
+                            <select id={id + '-algorithm'} value={algorithm}
+                                onChange={event => setAlgorithm(event.target.value as LinearAlgorithm)}>
+                                <option value="logistic">Logistic regression</option>
+                                <option value="least-squares">Least squares: linear regression on 0/1</option>
+                                <option value="perceptron">Perceptron</option>
+                            </select>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 6px #ef4444' }} />
-                            <span style={{ color: '#94a3b8' }}>Class C₂ (t=0)</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: 20, height: 2, background: '#e2e8f0' }} />
-                            <span style={{ color: '#94a3b8' }}>Decision boundary</span>
+                        <fieldset className="linear-models-class-choice">
+                            <legend>Class for new points</legend>
+                            <button type="button" className="linear-models-class-button linear-models-blue" aria-pressed={currentClass === 1}
+                                onClick={() => setCurrentClass(1)}>● Blue class C₁ (target 1)</button>
+                            <button type="button" className="linear-models-class-button linear-models-red" aria-pressed={currentClass === 0}
+                                onClick={() => setCurrentClass(0)}>▲ Red class C₂ (target 0)</button>
+                        </fieldset>
+                        <div className="linear-models-actions">
+                            <button type="button" className="lab-button" onClick={() => {
+                                const nextSeed = exampleSeed + 1;
+                                setExampleSeed(nextSeed);
+                                setPoints(exampleClassificationPoints(nextSeed));
+                            }}>New example</button>
+                            <button type="button" className="lab-button" onClick={() => setPoints([])}>Clear points</button>
                         </div>
                     </div>
-                </div>
 
-                {/* Stats sidebar */}
-                <div style={{
-                    width: '180px',
-                    flexShrink: 0,
-                    borderLeft: '1px solid #0f172a',
-                    background: 'rgba(15,23,42,0.5)',
-                    padding: '20px 16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px',
-                }}>
-                    <div>
-                        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#475569', marginBottom: '10px' }}>
-                            Model Weights
-                        </div>
-                        {[
-                            { label: 'w₀ (bias)', val: weights[0] },
-                            { label: 'w₁', val: weights[1] },
-                            { label: 'w₂', val: weights[2] },
-                        ].map(({ label, val }) => (
-                            <div key={label} style={{ marginBottom: '8px' }}>
-                                <div style={{ fontSize: '10px', color: '#64748b', marginBottom: '2px' }}>{label}</div>
-                                <div style={{ fontFamily: 'monospace', fontSize: '13px', color: '#60a5fa' }}>
-                                    {val.toFixed(4)}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <div style={{ borderTop: '1px solid #0f172a', paddingTop: '16px' }}>
-                        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#475569', marginBottom: '8px' }}>
-                            Dataset
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-                            <div>Total: <span style={{ color: '#e2e8f0', fontFamily: 'monospace' }}>{points.length}</span></div>
-                            <div>C₁: <span style={{ color: '#3b82f6', fontFamily: 'monospace' }}>{points.filter(p => p.t === 1).length}</span></div>
-                            <div>C₂: <span style={{ color: '#ef4444', fontFamily: 'monospace' }}>{points.filter(p => p.t === 0).length}</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                    <section className="linear-models-briefing" aria-labelledby={id + '-model-heading'}>
+                        <h2 id={id + '-model-heading'}>Selected model: {briefing.title}</h2>
+                        <p>{briefing.purpose} {briefing.output}</p>
+                        <p className="linear-models-rule">{briefing.rule}</p>
+                        <p className="linear-models-regression-note">Linear regression usually predicts a numeric target. Here, the least squares option fits numeric values to class labels 0 and 1, then classifies them at 0.5.</p>
+                    </section>
 
-            {/* Info cards */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '12px',
-                padding: '12px 20px 16px',
-                borderTop: '1px solid #0f172a',
-                flexShrink: 0,
-            }}>
-                {INFO_CARDS.map((card) => (
-                    <div
-                        key={card.title}
-                        style={{
-                            background: card.bg,
-                            border: `1px solid ${card.border}`,
-                            borderRadius: '10px',
-                            padding: '12px 14px',
-                        }}
-                    >
-                        <div style={{ fontSize: '12px', fontWeight: 700, color: card.color, marginBottom: '4px' }}>
-                            {card.title}
-                        </div>
-                        <p style={{ fontSize: '11px', color: '#94a3b8', margin: '0 0 6px', lineHeight: 1.5 }}>
-                            {card.desc}
-                        </p>
-                        <div style={{ fontSize: '11px', background: 'rgba(0,0,0,0.25)', borderRadius: '6px', padding: '4px 8px', textAlign: 'center' }}>
-                            <Latex formula={card.formula} />
-                        </div>
+                    <ol className="linear-models-steps" aria-label="How to use this lab">
+                        <li>Choose a learning algorithm.</li>
+                        <li>Select blue or red, then click or tap the plot to add training points.</li>
+                        <li>Switch algorithms using the same points; compare the white boundary and cursor prediction.</li>
+                    </ol>
+                    <p id={id + '-keyboard'} className="linear-models-keyboard-help">Keyboard: focus the plot, use arrow keys to move the cursor, and press Enter or Space to add the selected class. Hold Shift for smaller steps; Home returns to the origin.</p>
+
+                    {!hasBothClasses && <p className="linear-models-status" role="status">Add at least one point from each class to compare a decision boundary.</p>}
+                    {hasBothClasses && !fit.converged && <p className="linear-models-status" role="status">{algorithm === 'perceptron' ? 'Perceptron did not converge after 1,000 passes. Overlapping or conflicting classes can have no linear separator.' : 'The numerical fit reached its iteration limit. Try a different arrangement of training points.'}</p>}
+
+                    <svg className="linear-models-plot" viewBox={'0 0 ' + PLOT.width + ' ' + PLOT.height} preserveAspectRatio="none"
+                        role="application" aria-label="Interactive classification plot" aria-describedby={id + '-plot-description ' + id + '-keyboard'}
+                        tabIndex={0} onClick={handlePlotClick} onKeyDown={handlePlotKeyDown}>
+                        <desc id={id + '-plot-description'}>A two-feature classification plot using {briefing.title}. There are {blueCount} blue circles labeled C₁ and {points.length - blueCount} red triangles labeled C₂. Faint colored regions show predictions; the white line marks the decision threshold. The gold cursor can place a new training point.</desc>
+                        <g aria-hidden="true">
+                            <rect x={PLOT.left} y={PLOT.top} width={PLOT.right - PLOT.left} height={PLOT.bottom - PLOT.top} fill="var(--bg-secondary)" />
+                            {hasBothClasses && <>
+                                <polygon points={blueRegion.map(point => toX(point.x1) + ',' + toY(point.x2)).join(' ')} fill="var(--linear-class-blue)" opacity={0.12} />
+                                <polygon points={redRegion.map(point => toX(point.x1) + ',' + toY(point.x2)).join(' ')} fill="var(--linear-class-red)" opacity={0.12} />
+                            </>}
+                            {[-1, -0.5, 0, 0.5, 1].map(value => <g key={value}>
+                                <line x1={toX(value)} x2={toX(value)} y1={PLOT.top} y2={PLOT.bottom} stroke="var(--border-glass-hover)" />
+                                <line x1={PLOT.left} x2={PLOT.right} y1={toY(value)} y2={toY(value)} stroke="var(--border-glass-hover)" />
+                                <text x={toX(value)} y={PLOT.bottom + 21} textAnchor="middle">{value}</text>
+                                <text x={PLOT.left - 12} y={toY(value) + 4} textAnchor="end">{value}</text>
+                            </g>)}
+                            {hasBothClasses && boundary && <line x1={toX(boundary[0].x1)} y1={toY(boundary[0].x2)} x2={toX(boundary[1].x1)} y2={toY(boundary[1].x2)} stroke="var(--text-primary)" strokeWidth={2.5} />}
+                            {points.map((point, index) => point.target === 1
+                                ? <circle key={index} cx={toX(point.x1)} cy={toY(point.x2)} r={6} fill="var(--linear-class-blue)" stroke="var(--text-primary)" strokeWidth={1} />
+                                : <polygon key={index} points={toX(point.x1) + ',' + (toY(point.x2) - 7) + ' ' + (toX(point.x1) - 6.5) + ',' + (toY(point.x2) + 5) + ' ' + (toX(point.x1) + 6.5) + ',' + (toY(point.x2) + 5)} fill="var(--linear-class-red)" stroke="var(--text-primary)" strokeWidth={1} />)}
+                            <g className="linear-models-cursor">
+                                <circle cx={toX(cursor.x1)} cy={toY(cursor.x2)} r={10} fill="none" stroke="var(--color-ml)" strokeWidth={2} strokeDasharray="3 2" />
+                                <line x1={toX(cursor.x1) - 14} x2={toX(cursor.x1) + 14} y1={toY(cursor.x2)} y2={toY(cursor.x2)} stroke="var(--color-ml)" />
+                                <line x1={toX(cursor.x1)} x2={toX(cursor.x1)} y1={toY(cursor.x2) - 14} y2={toY(cursor.x2) + 14} stroke="var(--color-ml)" />
+                            </g>
+                            <text x={(PLOT.left + PLOT.right) / 2} y={PLOT.height - 5} textAnchor="middle">Input feature x₁</text>
+                            <text transform={'translate(16 ' + (PLOT.top + PLOT.bottom) / 2 + ') rotate(-90)'} textAnchor="middle">Input feature x₂</text>
+                            {points.length === 0 && <text x={PLOT.width / 2} y={PLOT.height / 2} textAnchor="middle">Add blue and red training points to begin</text>}
+                        </g>
+                    </svg>
+
+                    <div className="linear-models-legend" aria-label="Plot legend">
+                        <span className="linear-models-blue">● Blue C₁: target 1</span>
+                        <span className="linear-models-red">▲ Red C₂: target 0</span>
+                        <span>━ White: decision boundary</span>
+                        <span>Faint regions: predicted class</span>
+                        <span>⊕ Gold: keyboard cursor</span>
                     </div>
-                ))}
-            </div>
-        </div>
+                    <div className="linear-models-cursor-readout" aria-live="polite">
+                        <p>Cursor: x₁ = {cursor.x1.toFixed(2)}, x₂ = {cursor.x2.toFixed(2)}. {hasBothClasses ? prediction + '; predicted ' + (cursorClass === 1 ? 'blue C₁' : 'red C₂') + '.' : 'Add both classes to inspect predictions.'}</p>
+                        <button type="button" className="lab-button" onClick={() => addPoint(cursor)}>Add point at cursor</button>
+                    </div>
+                    <dl className="linear-models-metrics" aria-label="Training dataset and model coefficients">
+                        <div><dt>Training points</dt><dd>{points.length} ({blueCount} blue, {points.length - blueCount} red)</dd></div>
+                        <div><dt>Training accuracy</dt><dd>{hasBothClasses ? (100 * correct / points.length).toFixed(1) + '%' : 'Needs both classes'}</dd></div>
+                        <div><dt>Intercept w₀</dt><dd>{fit.weights[0].toFixed(3)}</dd></div>
+                        <div><dt>Feature weight w₁</dt><dd>{fit.weights[1].toFixed(3)}</dd></div>
+                        <div><dt>Feature weight w₂</dt><dd>{fit.weights[2].toFixed(3)}</dd></div>
+                    </dl>
+                    <p className="linear-models-footnote">The two axes are input features, not the predicted target. Training accuracy measures only these points. Open Explain for the current model’s formula and a suggested experiment.</p>
+                </div>
+            </section>
+        </SceneContainer>
     );
 }
