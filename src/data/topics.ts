@@ -155,7 +155,7 @@ export const topics: Topic[] = [
             {
                 id: 'bayes-theorem',
                 title: "Bayes' Theorem",
-                description: 'Visualize prior, likelihood, and posterior probabilities interactively.',
+                description: 'Follow a spam-filter example to see how a clue changes a chance, and why false alarms matter.',
                 component: lazyWithPreload(() => import('../scenes/probability/BayesTheorem')),
             },
             {

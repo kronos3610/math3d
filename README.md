@@ -49,7 +49,9 @@ The Bias–Variance and Signal-to-Noise labs use seeded polynomial-regression ex
 
 Open the scene panel for controls and a brief introduction. The Guide tab explains what the scene means, how to use it, and what to look for. The Explain tab gives more detail, and Learn links related lessons. Guides are also available while a scene loads or if it fails to start.
 
-3D lessons default to Light graphics (one pixel per device-independent pixel, without shadows). Select Detailed in Guide for sharper rendering and scene shadows; the preference is saved on this browser. Static scenes render when their controls or camera change. Vector and Bayes labels use HTML, avoiding external font downloads that the site's content security policy blocks.
+3D lessons default to Light graphics (one pixel per device-independent pixel, without shadows). Select Detailed in Guide for sharper rendering and scene shadows; the preference is saved on this browser. Static scenes render when their controls or camera change. Vector labels use HTML, avoiding external font downloads that the site's content security policy blocks.
+
+Bayes' theorem uses a beginner walkthrough of a fictional spam filter. It follows 1,000 emails into the flagged group, explains false alarms and the changing denominator, then connects the counts to prior, likelihood, evidence, and posterior. Sliders and presets update the worked example; evidence is calculated from the catch rate and false alarm rate. No flags gives an undefined conditional probability. This lesson uses HTML and SVG without requiring WebGL.
 
 The classification lab starts with an example and identifies each model's output and decision rule. Logistic regression estimates a class probability, least squares fits a raw score to binary targets, and the perceptron learns a signed margin. Ordinary linear regression predicts a continuous number; the lab uses its least-squares method as a classifier. Its SVG plot supports mouse and keyboard point placement.
 
