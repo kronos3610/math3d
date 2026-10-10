@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useId } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import LessonConnections from '../LessonConnections';
+import { getPathNavigation, hasLessonConnections } from '../../data/mlCurriculum';
 import { BookOpen, ChevronLeft, Menu, SlidersHorizontal, X } from 'lucide-react';
 
 interface SceneContainerProps {
@@ -19,9 +21,13 @@ export function SceneContainer({
     backUrl
 }: SceneContainerProps) {
     const panelId = useId();
+    const { topicId, subtopicId } = useParams<{ topicId: string; subtopicId: string }>();
+    const [searchParams] = useSearchParams();
+    const hasConnections = Boolean(topicId && subtopicId && hasLessonConnections(topicId, subtopicId));
+    const isFollowingPath = Boolean(topicId && subtopicId && getPathNavigation(searchParams.get('path'), { topicId, subtopicId }));
     const tabs = useMemo(() => {
         const availableTabs: Array<{
-            id: 'controls' | 'explanation';
+            id: 'controls' | 'explanation' | 'learning';
             label: string;
             icon: React.ReactNode;
             content: React.ReactNode;
@@ -45,19 +51,27 @@ export function SceneContainer({
             });
         }
 
+        if (hasConnections) {
+            availableTabs.push({
+                id: 'learning',
+                label: 'Learn',
+                icon: <BookOpen size={15} />,
+                content: <LessonConnections />,
+            });
+        }
         return availableTabs;
-    }, [controls, explanation]);
+    }, [controls, explanation, hasConnections]);
 
     const firstTab = tabs[0]?.id ?? 'controls';
-    const requestedPanel = defaultPanel === 'closed' ? firstTab : defaultPanel;
+    const requestedPanel = isFollowingPath ? 'learning' : defaultPanel === 'closed' ? firstTab : defaultPanel;
     const initialPanel = tabs.some((tab) => tab.id === requestedPanel) ? requestedPanel : firstTab;
-    const [isPanelOpen, setIsPanelOpen] = useState(defaultPanel !== 'closed' && tabs.length > 0);
-    const [activePanel, setActivePanel] = useState<'controls' | 'explanation'>(initialPanel);
+    const [isPanelOpen, setIsPanelOpen] = useState((isFollowingPath || defaultPanel !== 'closed') && tabs.length > 0);
+    const [activePanel, setActivePanel] = useState<'controls' | 'explanation' | 'learning'>(initialPanel);
     const activeTab = tabs.find((tab) => tab.id === activePanel) ?? tabs[0];
     const hasScenePanel = tabs.length > 0;
 
     return (
-        <div className="scene-shell">
+        <div className={`scene-shell ${isPanelOpen ? 'scene-panel-is-open' : ''}`}>
             {/* 1. Global Navigation Overlay (Top Left) */}
             <nav className="scene-nav" aria-label="Scene navigation">
                 {backUrl && (
@@ -115,7 +129,7 @@ export function SceneContainer({
                             aria-label="Scene panel"
                         >
                             {tabs.length > 1 && (
-                                <div className="scene-panel-tabs" role="tablist" aria-label="Scene panel sections">
+                                <div className="scene-panel-tabs" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }} role="tablist" aria-label="Scene panel sections">
                                     {tabs.map((tab) => (
                                         <button
                                             key={tab.id}

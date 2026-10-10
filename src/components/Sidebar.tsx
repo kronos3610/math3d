@@ -1,6 +1,6 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { Fragment, useEffect, useRef, type RefObject } from 'react';
 import { useIsMobile } from '../hooks/useIsMobile';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { topics } from '../data/topics';
 import { X } from 'lucide-react';
 
@@ -12,6 +12,8 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose, returnFocusRef }: SidebarProps) {
     const isMobile = useIsMobile();
+    const location = useLocation();
+    const selectedSection = new URLSearchParams(location.search).get('section');
     const sidebarRef = useRef<HTMLElement>(null);
     const closeRef = useRef<HTMLButtonElement>(null);
     useEffect(() => {
@@ -114,6 +116,7 @@ export default function Sidebar({ isOpen, onClose, returnFocusRef }: SidebarProp
                     </NavLink>
 
                     {topics.map((topic) => (
+                        <Fragment key={topic.id}>
                         <NavLink
                             key={topic.id}
                             to={`/${topic.id}`}
@@ -127,6 +130,21 @@ export default function Sidebar({ isOpen, onClose, returnFocusRef }: SidebarProp
                             <span className="sidebar-nav-label">{topic.title}</span>
                             <span className="sidebar-nav-count">{topic.subtopics.length}</span>
                         </NavLink>
+                        {topic.id === 'ml' && (
+                            <div className="sidebar-learning-links" aria-label="Machine learning sections">
+                                {[
+                                    { id: 'algorithms', label: 'Algorithms' },
+                                    { id: 'concepts', label: 'Core Concepts' },
+                                ].map(section => {
+                                    const active = location.pathname === '/ml' && selectedSection === section.id;
+                                    return <Link key={section.id} to={`/ml?section=${section.id}`} onClick={onClose}
+                                        className={`sidebar-learning-link ${active ? 'active' : ''}`}
+                                        aria-current={active ? 'page' : undefined}
+                                    >{section.label}</Link>;
+                                })}
+                            </div>
+                        )}
+                        </Fragment>
                     ))}
                 </nav>
 
