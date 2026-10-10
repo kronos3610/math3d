@@ -36,6 +36,14 @@ Math3D is an interactive educational platform designed to visualize complex math
 
 4. Open your browser at `http://localhost:5173`.
 
+## Machine learning curriculum
+
+The ML module has Algorithms and Core Concepts sections, with one canonical URL per lesson. Browse `/ml`, `/ml?section=algorithms`, or `/ml?section=concepts`.
+
+`src/data/mlCurriculum.ts` defines families, learning paths, prerequisites, and related lessons. Four paths connect classification, generalization, mixture estimation, and neural-network optimization to existing math lessons. A scene's Learn panel provides previous/next navigation and links back to its concepts and prerequisites. Path context is retained only when the destination belongs to the selected path.
+
+The Bias–Variance and Signal-to-Noise labs use seeded polynomial-regression experiments with a stable Legendre-basis QR solver and a fixed small ridge penalty. Bias–Variance measures a finite ensemble of independent fits and explains the distinction between its grid decomposition and sampled test MSE. SNR uses centered signal variance over the specified input distribution and handles zero signal and zero noise explicitly. Both include accessible charts, textual measurements, and keyboard-accessible controls.
+
 ## Validation
 
 Install the locked dependencies with `npm ci`, then run:

@@ -75,7 +75,7 @@ function getTopicDescription(topicId: string): string {
         probability:
             'Distributions, Bayes\' theorem, and Monte Carlo simulations in three dimensions.',
         ml:
-            'Neural networks, decision boundaries, and gradient descent visualized interactively.',
+            'Explore algorithms and core concepts through learning paths, interactive models, and experiments with noise and generalization.',
     };
     return descriptions[topicId] ?? '';
 }

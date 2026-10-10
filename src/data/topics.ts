@@ -5,6 +5,7 @@ export interface Subtopic {
     id: string;
     title: string;
     description: string;
+    visualization?: '3d' | 'experiment';
     component: PreloadableComponent<ComponentType>;
 }
 
@@ -190,6 +191,20 @@ export const topics: Topic[] = [
         color: '#fdcb6e',
         gradient: 'linear-gradient(135deg, #fdcb6e, #f39c12)',
         subtopics: [
+            {
+                id: 'bias-variance',
+                title: 'Bias–Variance Tradeoff',
+                description: 'Fit models to repeated training samples. Adjust complexity, sample size, and noise to compare bias, variance, and prediction error.',
+                visualization: 'experiment',
+                component: lazyWithPreload(() => import('../scenes/ml/BiasVariance')),
+            },
+            {
+                id: 'signal-to-noise',
+                title: 'Signal-to-Noise Ratio',
+                description: 'Separate the underlying signal from observation noise and see how their variance ratio changes the data and prediction error.',
+                visualization: 'experiment',
+                component: lazyWithPreload(() => import('../scenes/ml/SignalToNoise')),
+            },
             {
                 id: 'neural-networks',
                 title: 'Neural Networks',
