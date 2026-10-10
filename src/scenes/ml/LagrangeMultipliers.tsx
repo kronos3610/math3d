@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
@@ -60,6 +60,10 @@ function ConstraintPath() {
             new THREE.LineBasicMaterial({ color: '#3b82f6' }),
         );
     });
+    useEffect(() => () => {
+        line.geometry.dispose();
+        line.material.dispose();
+    }, [line]);
     return <primitive object={line} />;
 }
 
@@ -71,26 +75,41 @@ function MovingPoint({ t, showGradients }: { t: number; showGradients: boolean }
     const cZ = (cX * cX + cY * cY) * Z_SCALE;
     const isOptimal = Math.abs(t - 0.5) < 0.02;
 
+    const dropLineRef = useRef<THREE.Line<THREE.BufferGeometry, THREE.LineDashedMaterial>>(null);
+    const arrowFRef = useRef<THREE.ArrowHelper>(null);
+    const arrowGRef = useRef<THREE.ArrowHelper>(null);
+
     // Drop dashed line
-    const [dropLine] = useState(() => {
+    const dropLine = useMemo(() => {
         const geo = new THREE.BufferGeometry().setFromPoints([
             new THREE.Vector3(), new THREE.Vector3(),
         ]);
         const mat = new THREE.LineDashedMaterial({ color: '#475569', dashSize: 0.18, gapSize: 0.18 });
         const ln = new THREE.Line(geo, mat);
         return ln;
-    });
+    }, []);
 
     // Gradient arrows (created once, updated imperatively)
-    const [arrowF] = useState(() =>
-        new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, 0xef4444, 0.5, 0.3)
+    const arrowF = useMemo(() =>
+        new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1, 0xef4444, 0.5, 0.3), []
     );
-    const [arrowG] = useState(() =>
-        new THREE.ArrowHelper(new THREE.Vector3(1, 0, 1).normalize(), new THREE.Vector3(), 2.1, 0x2563eb, 0.5, 0.3)
+    const arrowG = useMemo(() =>
+        new THREE.ArrowHelper(new THREE.Vector3(1, 0, 1).normalize(), new THREE.Vector3(), 2.1, 0x2563eb, 0.5, 0.3), []
     );
+
+    useEffect(() => () => {
+        dropLine.geometry.dispose();
+        dropLine.material.dispose();
+        arrowF.dispose();
+        arrowG.dispose();
+    }, [dropLine, arrowF, arrowG]);
 
     // Update drop line, arrows imperatively whenever t changes
     useEffect(() => {
+        const dropLine = dropLineRef.current;
+        const arrowF = arrowFRef.current;
+        const arrowG = arrowGRef.current;
+        if (!dropLine || !arrowF || !arrowG) return;
         // Drop line
         const positions = dropLine.geometry.attributes.position as THREE.BufferAttribute;
         if (!positions) {
@@ -134,9 +153,9 @@ function MovingPoint({ t, showGradients }: { t: number; showGradients: boolean }
 
     return (
         <>
-            <primitive object={dropLine} />
-            <primitive object={arrowF} />
-            <primitive object={arrowG} />
+            <primitive ref={dropLineRef} object={dropLine} />
+            <primitive ref={arrowFRef} object={arrowF} />
+            <primitive ref={arrowGRef} object={arrowG} />
 
             {/* Floor shadow dot */}
             <mesh position={[cX, 0.01, cY]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -412,7 +431,7 @@ export default function LagrangeMultipliers() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
-            <Canvas dpr={[1, 1.5]} camera={{ position: [14, 10, 14], fov: 45 }}>
+            <Canvas dpr={[1, 1.5]} camera={{ position: [14, 10, 14], fov: 45 }} aria-label="Constrained optimization on a bowl with gradient arrows">
                 <Scene3D t={t} showGradients={showGradients} />
             </Canvas>
         </SceneContainer>

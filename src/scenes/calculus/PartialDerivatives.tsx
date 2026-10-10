@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, type ComponentRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Line, PerspectiveCamera, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -152,7 +152,7 @@ function RigorousAxes() {
 }
 
 function CameraController({ autoRotate, reset }: { autoRotate: boolean, reset: number }) {
-    const controlsRef = useRef<any>(null);
+    const controlsRef = useRef<ComponentRef<typeof OrbitControls>>(null);
     useEffect(() => {
         if (reset > 0 && controlsRef.current) controlsRef.current.reset();
     }, [reset]);

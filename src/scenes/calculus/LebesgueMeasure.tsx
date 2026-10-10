@@ -110,13 +110,19 @@ function OuterMeasureScene({ resolution }: { resolution: number }) {
         const boxSize = [1.0, 0.7, 0.45, 0.32][resolution];
         const result: { pos: [number, number, number]; size: number }[] = [];
 
+        // Deterministic jitter keeps the cover stable across renders.
+        let seed = 12345;
+        const jitter = () => {
+            seed = (1664525 * seed + 1013904223) >>> 0;
+            return seed / 4294967296 - 0.5;
+        };
         // Place boxes around a torus-knot-like path
         for (let i = 0; i < count; i++) {
             const t = (i / count) * Math.PI * 4;
             const r = 1.2 + 0.4 * Math.cos(t * 1.5);
-            const x = r * Math.cos(t) + (Math.random() - 0.5) * spread * 0.4;
-            const y = 0.5 * Math.sin(t * 1.5) + (Math.random() - 0.5) * spread * 0.4;
-            const z = r * Math.sin(t) + (Math.random() - 0.5) * spread * 0.4;
+            const x = r * Math.cos(t) + jitter() * spread * 0.4;
+            const y = 0.5 * Math.sin(t * 1.5) + jitter() * spread * 0.4;
+            const z = r * Math.sin(t) + jitter() * spread * 0.4;
             result.push({ pos: [x, y, z], size: boxSize });
         }
         return result;

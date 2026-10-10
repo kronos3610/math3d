@@ -461,7 +461,7 @@ export default function LinearDiscriminants() {
             </div>
 
             <p style={{ fontSize: '11px', color: '#475569', textAlign: 'center', fontStyle: 'italic' }}>
-                Drag the green dot · Adjust sliders
+                Drag the green dot or focus the canvas and use arrow keys · Adjust sliders
             </p>
         </GlassPane>
     );
@@ -470,6 +470,20 @@ export default function LinearDiscriminants() {
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
             <canvas
                 ref={canvasRef}
+                tabIndex={0}
+                aria-label="Linear discriminant boundary. Use arrow keys to move the test point; hold Shift for larger steps."
+                onKeyDown={event => {
+                    const directions: Record<string, [number, number]> = {
+                        ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1],
+                    };
+                    const direction = directions[event.key];
+                    if (!direction) return;
+                    event.preventDefault();
+                    const amount = event.shiftKey ? 20 : 5;
+                    const point = testPointRef.current;
+                    testPointRef.current = { x: point.x + direction[0] * amount, y: point.y + direction[1] * amount };
+                    draw();
+                }}
                 style={{ width: '100%', height: '100%', display: 'block', cursor: 'crosshair' }}
             />
         </SceneContainer>

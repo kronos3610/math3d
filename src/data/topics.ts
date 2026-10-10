@@ -175,6 +175,12 @@ export const topics: Topic[] = [
                 description: 'Explore the 3D Gaussian surface f(b|x) for b = Ax + ε. Slice it as a probability distribution (forward) or a likelihood function (inverse) to find the MLE.',
                 component: lazyWithPreload(() => import('../scenes/probability/ProbabilityVsLikelihood')),
             },
+            {
+                id: 'variational-inference',
+                title: 'Variational Inference',
+                description: 'Explore a conceptual illustration of the ELBO–KL identity. Move an approximate hill toward a multi-peaked posterior; schematic values show a remaining approximation gap.',
+                component: lazyWithPreload(() => import('../scenes/probability/VariationalInference')),
+            },
         ],
     },
     {
@@ -249,6 +255,12 @@ export const topics: Topic[] = [
                 title: "Fisher's Linear Discriminant",
                 description: 'Step-by-step derivation of Fisher\'s LDA: see why w ∝ S_W⁻¹(m₂ − m₁) maximises class separation, project data onto the optimal axis, and classify new points interactively.',
                 component: lazyWithPreload(() => import('../scenes/ml/FisherLDA')),
+            },
+            {
+                id: 'gaussian-mixture',
+                title: 'Gaussian Mixture Models',
+                description: 'Watch Expectation–Maximization fit K=3 Gaussians to 3D data. Step through E (responsibilities) and M (refit means & variances), or auto-run ten iterations.',
+                component: lazyWithPreload(() => import('../scenes/ml/GaussianMixture')),
             },
         ],
     },

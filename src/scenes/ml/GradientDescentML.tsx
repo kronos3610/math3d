@@ -1,10 +1,15 @@
-import { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Sphere, Line } from '@react-three/drei';
+import { useMemo, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
 import * as THREE from 'three';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
+
+import { DescentTrajectory } from '../../components/3d/DescentTrajectory';
+import { gradientDescentPath, nonconvexLoss, nonconvexGradient } from '../../utils/optimization';
+
+const descentPath = gradientDescentPath(nonconvexGradient, [3, 2]);
 
 function LossLandscape() {
     const geometry = useMemo(() => {
@@ -13,10 +18,7 @@ function LossLandscape() {
         for (let i = 0; i < pos.count; i++) {
             const x = pos.getX(i);
             const y = pos.getY(i);
-            const z =
-                (x * x + y * y) * 0.08 +
-                Math.sin(x * 1.5) * Math.cos(y * 1.5) * 0.4 +
-                Math.sin(x * 0.3) * 0.5;
+            const z = nonconvexLoss(x, y);
             pos.setZ(i, z);
         }
         geo.computeVertexNormals();
@@ -42,73 +44,11 @@ function LossLandscape() {
     );
 }
 
-function DescentPath() {
-    const ballRef = useRef<THREE.Mesh>(null!);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const lineRef = useRef<any>(null);
-    const trailRef = useRef<[number, number, number][]>([]);
-
-    const flatPointsRef = useRef(new Float32Array(61 * 3));
-    const initialPoints = useMemo(
-        () => new Array(61).fill([0, 0, 0]) as [number, number, number][],
-        []
-    );
-
-    useFrame((state) => {
-        const t = state.clock.elapsedTime * 0.4;
-        const progress = t % 6;
-        const radius = Math.max(0.1, 3 - progress * 0.5);
-        const angle = progress * 2;
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-        const y =
-            (x * x + z * z) * 0.08 +
-            Math.sin(x * 1.5) * Math.cos(z * 1.5) * 0.4 +
-            Math.sin(x * 0.3) * 0.5 +
-            0.15;
-
-        ballRef.current.position.set(x, y, z);
-
-        if (Math.floor(t * 10) % 2 === 0) {
-            trailRef.current = [...trailRef.current.slice(-60), [x, y, z]];
-
-            if (lineRef.current) {
-                const points = trailRef.current;
-                const len = points.length;
-                const fillCount = 61 - len;
-                const firstPoint = points[0] || [x, y, z];
-
-                for (let i = 0; i < 61; i++) {
-                    const p = i < fillCount ? firstPoint : points[i - fillCount];
-                    flatPointsRef.current[i * 3] = p[0];
-                    flatPointsRef.current[i * 3 + 1] = p[1];
-                    flatPointsRef.current[i * 3 + 2] = p[2];
-                }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (lineRef.current as any).geometry.setPositions(flatPointsRef.current);
-            }
-        }
-    });
-
-    return (
-        <>
-            <Sphere ref={ballRef} args={[0.12, 16, 16]}>
-                <meshStandardMaterial color="#fd79a8" emissive="#fd79a8" emissiveIntensity={1} />
-            </Sphere>
-            <Line
-                ref={lineRef}
-                points={initialPoints}
-                color="#fd79a8"
-                lineWidth={2}
-                transparent
-                opacity={0.5}
-            />
-        </>
-    );
-}
-
 export default function GradientDescentML() {
     const { topicId } = useParams<{ topicId: string }>();
+
+    const [playing, setPlaying] = useState(true);
+    const [resetCount, setResetCount] = useState(0);
 
     const controls = (
         <GlassPane>
@@ -121,14 +61,18 @@ export default function GradientDescentML() {
                         <span style={{ color: '#fdcb6e' }}>Gold surface</span>: Multi-modal loss landscape with local minima
                     </p>
                     <p style={{ margin: 0, marginBottom: '8px' }}>
-                        <span style={{ color: '#fd79a8' }}>Pink ball</span>: Parameter vector spiraling toward the minimum
+                        <span style={{ color: '#fd79a8' }}>Pink ball</span>: Parameter vector following gradient descent
                     </p>
                     <p style={{ margin: 0, marginBottom: '8px' }}>
-                        <span style={{ color: '#fd79a8' }}>Pink trail</span>: Optimization path taken
+                        <span style={{ color: '#fd79a8' }}>Pink trail</span>: Computed optimization trajectory
                     </p>
                     <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#64748b' }}>
-                        The ball navigates a non-convex landscape, illustrating how gradient descent can get trapped in local minima
+                        Each update subtracts 0.1 times the gradient. The path converges to a stationary point of this non-convex loss; it is not guaranteed to find the global minimum.
                     </p>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <button type="button" className="scene-panel-tab" onClick={() => setPlaying(p => !p)}>{playing ? 'Pause' : 'Resume'}</button>
+                    <button type="button" className="scene-panel-tab" onClick={() => setResetCount(n => n + 1)}>Reset</button>
                 </div>
             </div>
         </GlassPane>
@@ -141,7 +85,7 @@ export default function GradientDescentML() {
                 <directionalLight position={[5, 5, 5]} intensity={0.8} />
                 <pointLight position={[-3, 2, 3]} intensity={0.5} color="#fdcb6e" />
                 <LossLandscape />
-                <DescentPath />
+                <DescentTrajectory key={resetCount} path={descentPath} loss={nonconvexLoss} playing={playing} color="#fd79a8" />
                 <OrbitControls enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 6, 18]} />
                 <color attach="background" args={['#0b0f19']} />

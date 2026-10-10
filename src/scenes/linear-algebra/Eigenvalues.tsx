@@ -45,16 +45,9 @@ const isEigenvector = (v: THREE.Vector3, av: THREE.Vector3): { isEigen: boolean;
 
 // --- Components ---
 
-function MathEquation({ matrix, vector, result, lambda, isEigen }: {
-    matrix: Matrix3Tuple;
-    vector: THREE.Vector3;
-    result: THREE.Vector3;
-    lambda: number | null;
-    isEigen: boolean;
-}) {
-    const format = (n: number) => n.toFixed(1).replace(/\.0$/, '');
+const format = (n: number) => n.toFixed(1).replace(/\.0$/, '');
 
-    const MatrixDisplay = ({ data, cols = 3 }: { data: number[], cols: number }) => (
+const MatrixDisplay = ({ data, cols = 3 }: { data: number[], cols: number }) => (
         <div style={{
             display: 'grid',
             gridTemplateColumns: `repeat(${cols}, 1fr)`,
@@ -70,6 +63,15 @@ function MathEquation({ matrix, vector, result, lambda, isEigen }: {
             {data.map((n, i) => <span key={i}>{format(n)}</span>)}
         </div>
     );
+
+
+function MathEquation({ matrix, vector, result, lambda, isEigen }: {
+    matrix: Matrix3Tuple;
+    vector: THREE.Vector3;
+    result: THREE.Vector3;
+    lambda: number | null;
+    isEigen: boolean;
+}) {
 
     return (
         <div style={{
@@ -197,7 +199,7 @@ export default function Eigenvalues() {
 
     const autoFind = () => {
         // Power Iteration
-        let v = new THREE.Vector3(1, 1, 1).normalize();
+        const v = new THREE.Vector3(1, 1, 1).normalize();
         const m = new THREE.Matrix3();
         m.set(...matrix);
 
@@ -302,15 +304,15 @@ export default function Eigenvalues() {
 
             {/* Presets */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                {[
+                {([
                     { id: 'scale', label: 'Scale', icon: Scaling },
                     { id: 'shear', label: 'Shear', icon: MoveDiagonal },
                     { id: 'rotation', label: 'Rotation', icon: RotateCcw },
                     { id: 'random', label: 'Random', icon: Shuffle },
-                ].map((p) => (
+                ] as const).map((p) => (
                     <button
                         key={p.id}
-                        onClick={() => setPreset(p.id as any)}
+                        onClick={() => setPreset(p.id)}
                         style={{
                             padding: '8px',
                             borderRadius: '6px',

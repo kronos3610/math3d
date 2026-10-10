@@ -13,7 +13,7 @@ Math3D is an interactive educational platform designed to visualize complex math
 
 ### Prerequisites
 
-- Node.js (v18 or higher recommended)
+- Node.js 20.19+, 22.12+, or 24+ (supported even-numbered releases)
 - npm or pnpm
 
 ### Installation
@@ -35,6 +35,20 @@ Math3D is an interactive educational platform designed to visualize complex math
    ```
 
 4. Open your browser at `http://localhost:5173`.
+
+## Validation
+
+Install the locked dependencies with `npm ci`, then run:
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Vitest discovers both `.test.ts` and `.test.tsx` files recursively, including numerical, DOM accessibility, and Three.js animation tests. DOM tests do not replace a visual browser check of WebGL scenes on desktop and mobile.
+
+The variational-inference scene is a conceptual illustration. Its unnormalized shapes and illustrative values do not represent a numerical optimizer or calculated ELBO/KL estimates.
 
 ## Project Structure
 
@@ -59,7 +73,7 @@ src/
 - **React Three Fiber (R3F)**: React renderer for Three.js.
 - **Three.js**: 3D graphics library.
 - **TypeScript**: Static typing for safer code.
-- **Tailwind CSS / CSS Modules**: (Inferred usage based on class names, though `index.css` suggests custom CSS).
+- **CSS**: Custom styles and theme variables in `src/index.css`.
 
 ## Contributing
 

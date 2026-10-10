@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sphere } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
@@ -8,39 +8,40 @@ import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 
 function MonteCarloPoints({ onUpdate }: { onUpdate: (inside: number, total: number) => void }) {
-    const [points, setPoints] = useState<{ pos: [number, number, number]; inside: boolean }[]>([]);
-    const frameCount = useRef(0);
+    const meshRef = useRef<THREE.InstancedMesh>(null);
+    const total = useRef(0);
     const insideCount = useRef(0);
+    const elapsed = useRef(0);
+    const dummy = useMemo(() => new THREE.Object3D(), []);
+    const color = useMemo(() => new THREE.Color(), []);
 
-    useFrame(() => {
-        frameCount.current++;
-        if (frameCount.current % 5 === 0 && points.length < 500) {
-            const x = (secureRandom() - 0.5) * 4;
-            const y = (secureRandom() - 0.5) * 4;
-            const z = (secureRandom() - 0.5) * 4;
-            const inside = Math.sqrt(x * x + y * y + z * z) <= 2;
-            if (inside) insideCount.current++;
-            const newPoints = [...points, { pos: [x, y, z] as [number, number, number], inside }];
-            setPoints(newPoints);
-            onUpdate(insideCount.current, newPoints.length);
-        }
+    useFrame((_, delta) => {
+        const mesh = meshRef.current;
+        if (!mesh || total.current >= 500) return;
+        elapsed.current += Math.min(delta, 0.1);
+        if (elapsed.current < 1 / 12) return;
+        elapsed.current -= 1 / 12;
+        const x = (secureRandom() - 0.5) * 4;
+        const y = (secureRandom() - 0.5) * 4;
+        const z = (secureRandom() - 0.5) * 4;
+        const inside = x * x + y * y + z * z <= 4;
+        if (inside) insideCount.current++;
+        dummy.position.set(x, y, z);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(total.current, dummy.matrix);
+        mesh.setColorAt(total.current, color.set(inside ? '#fd79a8' : '#555555'));
+        total.current++;
+        mesh.count = total.current;
+        mesh.instanceMatrix.needsUpdate = true;
+        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+        onUpdate(insideCount.current, total.current);
     });
 
     return (
-        <>
-            {points.map((point, i) => (
-                <mesh key={i} position={point.pos}>
-                    <sphereGeometry args={[0.04, 8, 8]} />
-                    <meshStandardMaterial
-                        color={point.inside ? '#fd79a8' : '#333'}
-                        emissive={point.inside ? '#fd79a8' : '#111'}
-                        emissiveIntensity={point.inside ? 0.5 : 0}
-                        transparent
-                        opacity={point.inside ? 0.9 : 0.3}
-                    />
-                </mesh>
-            ))}
-        </>
+        <instancedMesh ref={meshRef} args={[undefined, undefined, 500]} count={0} frustumCulled={false}>
+            <sphereGeometry args={[0.04, 8, 8]} />
+            <meshStandardMaterial transparent opacity={0.9} />
+        </instancedMesh>
     );
 }
 
@@ -60,10 +61,10 @@ function BoundingSphere() {
 
 function BoundingBox() {
     return (
-        <lineSegments>
-            <edgesGeometry args={[new THREE.BoxGeometry(4, 4, 4)]} />
-            <lineBasicMaterial color="#333" transparent opacity={0.5} />
-        </lineSegments>
+        <mesh>
+            <boxGeometry args={[4, 4, 4]} />
+            <meshBasicMaterial wireframe color="#333" transparent opacity={0.5} />
+        </mesh>
     );
 }
 
