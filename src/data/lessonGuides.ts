@@ -193,9 +193,9 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
         },
         'lagrange-constraints': {
             meaning: 'An L2 or L1 budget constrains the weights of a stated diagonal quadratic. The red marker is its computed constrained minimum.',
-            steps: ['Switch between Ridge (L2) and Lasso (L1) and inspect the true loss ellipsoid touching the feasible shape.', 'Change Allowed Budget; compare computed loss, weights, and zero coordinates, then increase the budget until the unconstrained minimum is allowed.'],
-            observe: 'L1 can set coordinates to exactly zero. With unequal quadratic curvature, L2 generally shrinks the coordinates unequally.',
-            limitations: 'This solves one explicitly chosen three-weight quadratic using optimality conditions. The budget is an L2 radius or L1 norm, rather than a penalty coefficient; it is not a fit to observed data.',
+            steps: ['Begin in Constraint detail and compare the allowed shape with the red computed minimum. Choose Full objective to reveal the entire current loss contour and its center.', 'Switch Ridge/Lasso and change Allowed Budget; compare the original-unit radius/budget, axis scale, weights, loss, and zero coordinates. Fit view recenters after orbiting or panning.'],
+            observe: 'L1 can set coordinates to exactly zero. With unequal quadratic curvature, L2 generally shrinks the coordinates unequally. Once the unconstrained minimum is feasible, the minima coincide and the zero-loss contour is a point.',
+            limitations: 'This solves one explicitly chosen three-weight quadratic using optimality conditions. The control t is the L2 radius (squared budget t²) or L1 norm, rather than a penalty coefficient. Detail clips the true contour to a stated local window; camera fitting changes zoom, never weight coordinates. The red point glyph is enlarged for visibility in the overview. This is not a fit to observed data.',
         },
         'lp-regularization': {
             meaning: 'Lp norms define different weight budgets, from the pointed L1 ball to the round L2 ball and box-like L∞ region.',

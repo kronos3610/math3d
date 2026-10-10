@@ -4,7 +4,7 @@ export type CameraPoint = readonly [number, number, number];
 export interface SceneBounds { minimum: CameraPoint; maximum: CameraPoint; }
 
 /** Distance along a fixed view direction that fits every box corner, including its depth. */
-export function perspectiveFitDistance(bounds: SceneBounds, direction: CameraPoint, target: CameraPoint, fov: number, width: number, height: number, padding = 64, cameraUp: CameraPoint = [0, 1, 0]): number {
+export function perspectiveFitDistance(bounds: SceneBounds, direction: CameraPoint, target: CameraPoint, fov: number, width: number, height: number, padding = 64, cameraUp: CameraPoint = [0, 1, 0], verticalPadding = padding): number {
     if (!(width > 0 && height > 0 && fov > 0 && fov < 180)) throw new Error('Use positive viewport dimensions and a perspective field of view.');
     const outward = new Vector3(...direction).normalize();
     if (outward.lengthSq() === 0) throw new Error('The viewing direction must be nonzero.');
@@ -19,7 +19,7 @@ export function perspectiveFitDistance(bounds: SceneBounds, direction: CameraPoi
     const verticalOffset = outward.dot(up);
     const tangent = Math.tan(fov * Math.PI / 360);
     const horizontal = tangent * width / height * (1 - 2 * Math.min(padding, width / 4) / width);
-    const vertical = tangent * (1 - 2 * Math.min(padding, height / 4) / height);
+    const vertical = tangent * (1 - 2 * Math.min(verticalPadding, height / 4) / height);
     const center = new Vector3(...target);
     let distance = 0.1;
     for (const x of [bounds.minimum[0], bounds.maximum[0]]) for (const y of [bounds.minimum[1], bounds.maximum[1]]) for (const z of [bounds.minimum[2], bounds.maximum[2]]) {

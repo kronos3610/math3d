@@ -1818,6 +1818,37 @@ figure > .lab-chart + figcaption { margin-top: 12px; }
 .scene-axis-key li { display: inline-flex; align-items: center; gap: 4px; }
 .scene-axis-key li > span { width: 7px; height: 7px; flex: none; border-radius: 50%; }
 .scene-axis-key strong { color: var(--text-primary); }
+.constraint-view { position: relative; width: 100%; height: 100%; }
+.constraint-view-toolbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 50;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+.constraint-view-toolbar button {
+  min-height: 40px;
+  padding: 7px 12px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-glass-hover);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  cursor: pointer;
+}
+.constraint-view-toolbar button[aria-pressed='true'] { color: var(--color-ml); border-color: var(--color-ml); }
+.constraint-view-toolbar > [role='group'] { display: flex; flex-wrap: wrap; gap: 6px; }
+.constraint-view-toolbar button:focus-visible { outline: 2px solid var(--color-ml); outline-offset: 3px; }
+.constraint-view-toolbar p { flex-basis: 100%; margin: 0; color: var(--text-secondary); line-height: 1.5; }
+.constraint-view .scene-axis-key { top: auto; bottom: 12px; }
 .scene-brief { flex: none; padding: 74px 20px 8px; background: var(--bg-primary); }
 .scene-brief h1 { font-size: 18px; line-height: 1.4; margin: 0 0 4px; }
 .scene-brief p { max-width: 760px; font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin: 0; }

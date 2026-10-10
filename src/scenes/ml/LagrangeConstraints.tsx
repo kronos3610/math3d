@@ -1,5 +1,7 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { FitSceneCamera } from '../../components/3d/FitSceneCamera';
+import { SceneAxisKey } from '../../components/3d/SceneAxisKey';
+import { constraintViewGeometry, type ConstraintView } from './constraintViewModel';
 import { useState, useMemo, useEffect } from 'react';
 import { Html, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -7,15 +9,12 @@ import { useParams } from 'react-router-dom';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import Latex from '../../components/Latex';
-import { QUADRATIC_CENTER, QUADRATIC_CURVATURE, quadraticWeightLoss, solveBudgetQuadratic } from './regularizationModel';
+import { QUADRATIC_CENTER, quadraticWeightLoss, solveBudgetQuadratic } from './regularizationModel';
 
 // The chosen diagonal quadratic has this unconstrained minimum.
 const OLS_POS = new THREE.Vector3(...QUADRATIC_CENTER);
 const ORIGIN = new THREE.Vector3(0, 0, 0);
-const CONSTRAINT_CAMERA = { position: [10, 8, 12] as [number, number, number], fov: 50 };
-// Includes all budgets up to eight and the largest quadratic contour (at zero budget).
-const MAX_CONTOUR = QUADRATIC_CURVATURE.map(value => Math.sqrt(2 * quadraticWeightLoss([0, 0, 0]) / value));
-const CONSTRAINT_BOUNDS = { minimum: [-8.2, -8.2, -8.2] as const, maximum: QUADRATIC_CENTER.map((value, axis) => Math.max(8.2, value + MAX_CONTOUR[axis] + 0.2)) as [number, number, number] };
+const CONSTRAINT_CAMERA = { position: [-9, 6, 10] as [number, number, number], fov: 50 };
 
 // --- Sub-components ---
 
@@ -37,7 +36,7 @@ function ConstraintShape({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: 
                 <meshPhongMaterial
                     color={color}
                     transparent
-                    opacity={0.35}
+                    opacity={0.26}
                     shininess={60}
                     flatShading={mode === 'lasso'}
                     side={THREE.DoubleSide}
@@ -62,65 +61,69 @@ function DashedLine({ start, end }: { start: THREE.Vector3; end: THREE.Vector3 }
     return <primitive object={lineObj} />;
 }
 
-function Scene({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: number }) {
-    const solution = useMemo(() => solveBudgetQuadratic(mode, budgetT), [mode, budgetT]);
+function Scene({ mode, budgetT, view, fitRevision }: { mode: 'ridge' | 'lasso'; budgetT: number; view: ConstraintView; fitRevision: number }) {
+    const geometry = useMemo(() => constraintViewGeometry(mode, budgetT, view), [mode, budgetT, view]);
+    const { solution, loss, contourRadii, bounds, target, axisExtent, axisLabelPosition, cropLimit, markerRadius } = geometry;
     const solutionPoint = useMemo(() => new THREE.Vector3(...solution), [solution]);
-    const loss = quadraticWeightLoss(solution);
-    const contourScale = QUADRATIC_CURVATURE.map(value => Math.sqrt(2 * loss / value)) as [number, number, number];
+    const clippingPlanes = useMemo(() => [
+        new THREE.Plane(new THREE.Vector3(1, 0, 0), cropLimit), new THREE.Plane(new THREE.Vector3(-1, 0, 0), cropLimit),
+        new THREE.Plane(new THREE.Vector3(0, 1, 0), cropLimit), new THREE.Plane(new THREE.Vector3(0, -1, 0), cropLimit),
+        new THREE.Plane(new THREE.Vector3(0, 0, 1), cropLimit), new THREE.Plane(new THREE.Vector3(0, 0, -1), cropLimit),
+    ], [cropLimit]);
 
     return (
         <>
-            <FitSceneCamera bounds={CONSTRAINT_BOUNDS} />
+            <FitSceneCamera bounds={bounds} padding={48} verticalPadding={150} fitRevision={fitRevision} fitTarget={target} />
             <color attach="background" args={['#0b0f19']} />
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
 
             <OrbitControls makeDefault />
 
-            <gridHelper args={[10, 10, 0x334155, 0x1e293b]} />
-            <axesHelper args={[6]} />
+            <gridHelper args={[axisExtent * 2, 10, 0x334155, 0x1e293b]} />
+            <axesHelper args={[axisExtent]} />
 
             {/* Axis labels */}
-            <Html position={[6.8, 0, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
+            <Html position={[axisLabelPosition, 0, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
                 <div style={{ color: '#ef4444', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
-                    Weight 1 (β₁)
+                    β₁
                 </div>
             </Html>
-            <Html position={[0, 7.0, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
+            <Html position={[0, axisLabelPosition, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
                 <div style={{ color: '#22c55e', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
-                    Weight 2 (β₂)
+                    β₂
                 </div>
             </Html>
-            <Html position={[0, 0, 6.8]} center zIndexRange={[40, 0]} pointerEvents="none">
+            <Html position={[0, 0, axisLabelPosition]} center zIndexRange={[40, 0]} pointerEvents="none">
                 <div style={{ color: '#3b82f6', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
-                    Weight 3 (β₃)
+                    β₃
                 </div>
             </Html>
 
-            {/* OLS point — best unconstrained fit */}
-            <mesh position={OLS_POS}>
+            {/* The full view locates the objective's actual unconstrained minimum. */}
+            {view === 'objective' && <><mesh position={OLS_POS}>
                 <sphereGeometry args={[0.12, 32, 32]} />
                 <meshPhongMaterial color="#60a5fa" emissive="#001133" />
             </mesh>
             <Html position={[OLS_POS.x, OLS_POS.y + 0.45, OLS_POS.z]} center zIndexRange={[40, 0]} pointerEvents="none">
                 <div style={{ color: '#60a5fa', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', background: 'rgba(15,23,42,0.75)', borderRadius: '4px', padding: '2px 6px', pointerEvents: 'none' }}>
-                    Unconstrained minimum
+                    {loss <= 1e-12 ? 'Coincident minimum' : 'Unconstrained minimum'}
                 </div>
-            </Html>
+            </Html></>}
 
             {/* Constraint region (sphere for Ridge, octahedron for Lasso) */}
             <ConstraintShape mode={mode} budgetT={budgetT} />
 
             {/* Error contour ellipsoid centered at OLS */}
-            {loss > 1e-12 && <mesh position={OLS_POS} scale={contourScale}>
-                <sphereGeometry args={[1, 32, 32]} />
-                <meshPhongMaterial color="#3b82f6" wireframe transparent opacity={0.15} />
+            {loss > 1e-12 && <mesh position={OLS_POS} scale={contourRadii}>
+                <sphereGeometry args={[1, 96, 64]} />
+                <meshPhongMaterial color="#60a5fa" wireframe transparent opacity={0.35} depthWrite={false} clippingPlanes={view === 'detail' ? clippingPlanes : undefined} />
             </mesh>}
 
             {/* Constrained solution (red dot) */}
             <mesh position={solutionPoint}>
-                <sphereGeometry args={[0.15, 32, 32]} />
-                <meshPhongMaterial color="#ef4444" emissive="#330000" />
+                <sphereGeometry args={[markerRadius, 24, 16]} />
+                <meshBasicMaterial color="#ef4444" toneMapped={false} />
             </mesh>
 
             {/* Dashed lines: OLS → solution, origin → solution */}
@@ -134,10 +137,15 @@ function Scene({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: number }) 
 
 export default function LagrangeConstraints() {
     const { topicId } = useParams<{ topicId: string }>();
+    const [view, setView] = useState<ConstraintView>('detail');
+    const [fitRevision, setFitRevision] = useState(0);
     const [mode, setMode] = useState<'ridge' | 'lasso'>('ridge');
     const [budgetT, setBudgetT] = useState(1.5);
     const solution = useMemo(() => solveBudgetQuadratic(mode, budgetT), [mode, budgetT]);
     const loss = quadraticWeightLoss(solution);
+    const viewGeometry = constraintViewGeometry(mode, budgetT, view);
+    const inactive = loss <= 1e-12;
+    const lossText = inactive ? '0' : loss < 0.01 ? loss.toExponential(2) : loss.toFixed(2);
 
     const latexEq = mode === 'ridge'
         ? `\\beta_1^2 + \\beta_2^2 + \\beta_3^2 \\leq ${(budgetT ** 2).toFixed(2)}`
@@ -253,16 +261,31 @@ export default function LagrangeConstraints() {
             </div>
 
             <p style={{ fontSize: '11px', color: '#475569', textAlign: 'center', fontStyle: 'italic' }}>
-                Drag to rotate; focus the view for keyboard camera controls
+                The camera fits the current view as the budget changes; weight coordinates stay unchanged. Fit view recenters after panning or zooming. Drag to rotate; focus the view for keyboard camera controls.
             </p>
         </GlassPane>
     );
 
     return (
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
-            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} camera={CONSTRAINT_CAMERA} aria-label="Computed minimum of a diagonal quadratic under L2 or L1 weight budgets, with its true loss contour">
-                <Scene mode={mode} budgetT={budgetT} />
-            </SceneCanvas>
+            <div className="constraint-view">
+                <SceneCanvas frameloop="demand" dpr={[1, 1.5]} camera={CONSTRAINT_CAMERA}
+                    onCreated={({ gl }) => { gl.localClippingEnabled = true; }}
+                    aria-label="Computed constrained quadratic minimum in original weight coordinates. Constraint detail crops the loss contour; Full objective shows its entire current contour and center.">
+                    <Scene mode={mode} budgetT={budgetT} view={view} fitRevision={fitRevision} />
+                </SceneCanvas>
+                <div className="constraint-view-toolbar">
+                    <div role="group" aria-label="Constraint visualization view">
+                        <button type="button" aria-pressed={view === 'detail'} onClick={() => { setView('detail'); setFitRevision(value => value + 1); }}>Constraint detail</button>
+                        <button type="button" aria-pressed={view === 'objective'} onClick={() => { setView('objective'); setFitRevision(value => value + 1); }}>Full objective</button>
+                        <button type="button" onClick={() => setFitRevision(value => value + 1)}>Fit view</button>
+                    </div>
+                    <p>{inactive ? 'Unconstrained minimum is feasible; the minima coincide. Zero-loss contour: a point, with no blue ellipsoid.' : view === 'detail' ? `Local contour crop: ±${viewGeometry.cropLimit.toFixed(2)} weights. Full objective shows its center.` : 'Complete current loss contour and its unconstrained center.'}</p>
+                    <p>{mode === 'ridge' ? `L2 radius ${budgetT.toFixed(2)} · t² budget ${(budgetT ** 2).toFixed(2)}` : `L1 budget ${budgetT.toFixed(2)}`} · axes +{viewGeometry.axisExtent.toFixed(2)} weight units.</p>
+                    <p className="constraint-minimum-readout">{inactive ? 'Coincident minimum' : 'Red minimum'}: ({solution.map(value => value.toFixed(2)).join(', ')}); loss {lossText}.</p>
+                </div>
+                <SceneAxisKey axes={[{ label: 'β₁', meaning: 'weight 1', color: '#ef4444' }, { label: 'β₂', meaning: 'weight 2', color: '#22c55e' }, { label: 'β₃', meaning: 'weight 3', color: '#3b82f6' }]} />
+            </div>
         </SceneContainer>
     );
 }
