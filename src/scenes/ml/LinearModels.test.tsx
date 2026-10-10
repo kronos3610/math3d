@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { MemoryRouter } from 'react-router-dom';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import LinearModels from './LinearModels';
 
 afterEach(cleanup);
@@ -52,4 +52,20 @@ test('pointer clicks map both features correctly and can place points on a verti
     expect(screen.getByText('2 (1 blue, 1 red)')).toBeDefined();
     expect(plot.innerHTML).not.toContain('Infinity');
     expect(plot.innerHTML).not.toContain('NaN');
+});
+
+test('pointer mapping supports a browser SVGMatrix without DOMMatrix.transformPoint', () => {
+    render(<MemoryRouter><LinearModels /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Clear points' }));
+    const plot = screen.getByRole('application', { name: 'Interactive classification plot' });
+    plot.getBoundingClientRect = () => ({ x: 0, y: 0, top: 0, left: 0, width: 400, height: 220, right: 400, bottom: 220, toJSON: () => ({}) });
+    const inverse = { a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 };
+    const point = { x: 0, y: 0, matrixTransform: vi.fn(() => ({ x: 431, y: 207.5 })) };
+    Object.defineProperty(plot, 'getScreenCTM', { value: () => ({ inverse: () => inverse }) });
+    Object.defineProperty(plot, 'createSVGPoint', { value: () => point });
+    fireEvent.click(plot, { clientX: 215.5, clientY: 103.75 });
+    expect([point.x, point.y]).toEqual([215.5, 103.75]);
+    expect(point.matrixTransform).toHaveBeenCalledWith(inverse);
+    expect(screen.getByText(/Cursor: x₁ = 0.00, x₂ = 0.00/)).toBeDefined();
+    expect(screen.getByText('1 (1 blue, 0 red)')).toBeDefined();
 });

@@ -75,7 +75,11 @@ export default function LinearModels() {
         const rect = event.currentTarget.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return;
         const transform = event.currentTarget.getScreenCTM?.();
-        const mapped = transform?.inverse().transformPoint({ x: event.clientX, y: event.clientY });
+        const screenPoint = event.currentTarget.createSVGPoint?.();
+        if (screenPoint) { screenPoint.x = event.clientX; screenPoint.y = event.clientY; }
+        // getScreenCTM may return SVGMatrix rather than DOMMatrix. SVGPoint
+        // supports both, including viewBox scaling and CSS transformations.
+        const mapped = transform && screenPoint ? screenPoint.matrixTransform(transform.inverse()) : undefined;
         const x = mapped?.x ?? (event.clientX - rect.left) * PLOT.width / rect.width;
         const y = mapped?.y ?? (event.clientY - rect.top) * PLOT.height / rect.height;
         if (x < PLOT.left || x > PLOT.right || y < PLOT.top || y > PLOT.bottom) return;
