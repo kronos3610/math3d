@@ -90,7 +90,7 @@ function SpherePiece({ pieceId, setIndex, animationProgress }: SpherePieceProps)
     );
 }
 
-function Scene({ animationProgress }: { animationProgress: React.MutableRefObject<number> }) {
+export function BanachTarskiScene({ animationProgress }: { animationProgress: React.MutableRefObject<number> }) {
     const sceneRef = useRef<THREE.Group>(null!);
 
     useFrame(() => {
@@ -119,7 +119,7 @@ function Scene({ animationProgress }: { animationProgress: React.MutableRefObjec
     );
 }
 
-function AnimationController({
+export function AnimationController({
     isSplit,
     progressRef,
 }: {
@@ -181,7 +181,7 @@ export default function BanachTarski() {
                 <directionalLight position={[5, 10, 7.5]} intensity={0.8} />
                 <pointLight position={[-5, -5, 5]} color="#3b82f6" intensity={0.5} />
 
-                <Scene animationProgress={animationProgressRef} />
+                <BanachTarskiScene animationProgress={animationProgressRef} />
                 <AnimationController isSplit={isSplit} progressRef={animationProgressRef} />
 
                 <OrbitControls enableDamping dampingFactor={0.05} />

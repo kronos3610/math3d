@@ -1,3 +1,5 @@
+import { useEffect, useRef, type RefObject } from 'react';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { NavLink } from 'react-router-dom';
 import { topics } from '../data/topics';
 import { X } from 'lucide-react';
@@ -5,15 +7,49 @@ import { X } from 'lucide-react';
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
+    returnFocusRef?: RefObject<HTMLButtonElement | null>;
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, returnFocusRef }: SidebarProps) {
+    const isMobile = useIsMobile();
+    const sidebarRef = useRef<HTMLElement>(null);
+    const closeRef = useRef<HTMLButtonElement>(null);
+    useEffect(() => {
+        if (!isMobile || !isOpen) return;
+        const previousFocus = returnFocusRef?.current ?? document.activeElement;
+        closeRef.current?.focus();
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                onClose();
+            }
+            if (event.key !== 'Tab') return;
+            const items = sidebarRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+            if (!items?.length) return;
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+            if (previousFocus instanceof HTMLElement) previousFocus.focus();
+        };
+    }, [isMobile, isOpen, onClose, returnFocusRef]);
+
     return (
         <>
             {/* Overlay for mobile */}
             {isOpen && (
                 <div
                     className="sidebar-overlay"
+                    aria-hidden="true"
                     onClick={onClose}
                     style={{
                         position: 'fixed',
@@ -25,7 +61,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 />
             )}
 
-            <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+            <aside
+                ref={sidebarRef}
+                id="topic-navigation"
+                className={`sidebar ${isOpen ? 'open' : ''}`}
+                inert={isMobile && !isOpen}
+                aria-hidden={isMobile && !isOpen ? true : undefined}
+                role={isMobile && isOpen ? 'dialog' : undefined}
+                aria-modal={isMobile && isOpen ? true : undefined}
+                aria-label="Topic navigation"
+            >
                 <div className="sidebar-header">
                     <NavLink to="/" className="sidebar-logo" onClick={onClose}>
                         <div className="sidebar-logo-icon">M³</div>
@@ -37,6 +82,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                     {/* Close button for mobile */}
                     <button
+                        ref={closeRef}
+                        type="button"
                         className="sidebar-close-btn"
                         onClick={onClose}
                         aria-label="Close sidebar"
@@ -45,7 +92,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             border: 'none',
                             color: 'var(--text-secondary)',
                             cursor: 'pointer',
-                            display: 'none', // Hidden by default, shown in media query
                             marginLeft: 'auto'
                         }}
                     >
@@ -53,7 +99,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     </button>
                 </div>
 
-                <nav className="sidebar-nav">
+                <nav className="sidebar-nav" aria-label="Mathematics topics">
                     <NavLink
                         to="/"
                         end

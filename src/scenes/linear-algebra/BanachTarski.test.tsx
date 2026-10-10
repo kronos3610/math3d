@@ -1,104 +1,38 @@
-// @vitest-environment jsdom
-import { render, fireEvent, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import BanachTarski from './BanachTarski';
-import React, { Profiler, useEffect, useRef } from 'react';
+import { Profiler } from 'react';
+import { create } from '@react-three/test-renderer';
+import { expect, test, vi } from 'vitest';
+import { AnimationController, BanachTarskiScene } from './BanachTarski';
 
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-};
+vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
-// Mock @react-three/fiber
-vi.mock('@react-three/fiber', async () => {
-  const actual = await vi.importActual('@react-three/fiber');
-  return {
-    ...actual,
-    // Mock Canvas to just render children, avoiding WebGL issues in jsdom
-    Canvas: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    // Mock useFrame to simulate animation loop
-    useFrame: (callback: (state: any, delta: number) => void) => {
-      const savedCallback = useRef(callback);
-
-      // Remember the latest callback.
-      useEffect(() => {
-        savedCallback.current = callback;
-      }, [callback]);
-
-      useEffect(() => {
-        const interval = setInterval(() => {
-          try {
-            savedCallback.current({ clock: { elapsedTime: 0 } } as any, 0.016);
-          } catch (e) {
-            // Ignore errors
-          }
-        }, 16);
-        return () => clearInterval(interval);
-      }, []);
-    },
-    useThree: () => ({ camera: {}, gl: {}, scene: {} }),
-  };
-});
-
-// Mock @react-three/drei
-vi.mock('@react-three/drei', () => ({
-  OrbitControls: () => null,
-}));
-
-describe('BanachTarski Performance', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('should have low render count during animation (optimized)', async () => {
-    let renderCount = 0;
-    const onRender = (
-      id: string,
-      phase: 'mount' | 'update' | 'nested-update',
-      actualDuration: number,
-      baseDuration: number,
-      startTime: number,
-      commitTime: number
-    ) => {
-      renderCount++;
-    };
-
-    const { getByText } = render(
-      <Profiler id="BanachTarski" onRender={onRender}>
-        <BanachTarski />
-      </Profiler>
+test('decomposition moves real Three.js meshes without React commits on each frame', async () => {
+    const progress = { current: 0 };
+    let renders = 0;
+    const scene = (split: boolean) => (
+        <Profiler id="decomposition" onRender={() => { renders++; }}>
+            <BanachTarskiScene animationProgress={progress} />
+            <AnimationController isSplit={split} progressRef={progress} />
+        </Profiler>
     );
+    const renderer = await create(scene(true));
+    try {
+        const initialRenders = renders;
+        await renderer.advanceFrames(90, 1 / 60);
+        // The renderer advances each subscription in turn, so apply the updated
+        // controller value to the piece subscriptions on the following pass.
+        await renderer.advanceFrames(1, 1 / 60);
+        expect(progress.current).toBeGreaterThan(0.99);
+        const meshes = renderer.scene.findAllByType('Mesh');
+        expect(meshes).toHaveLength(10);
+        expect(Math.abs(meshes[0].instance.position.x)).toBeGreaterThan(4.4);
+        expect(renders).toBe(initialRenders);
 
-    // Initial render count
-    const initialRenderCount = renderCount;
-    console.log('Initial render count:', initialRenderCount);
-
-    // Click the split button to start animation
-    const splitButton = getByText('Decompose & Double');
-
-    await act(async () => {
-        fireEvent.click(splitButton);
-    });
-
-    console.log('Render count after click:', renderCount);
-
-    // Advance time frame by frame
-    for (let i = 0; i < 20; i++) {
-        await act(async () => {
-            vi.advanceTimersByTime(20);
-        });
+        await renderer.update(scene(false));
+        await renderer.advanceFrames(90, 1 / 60);
+        await renderer.advanceFrames(1, 1 / 60);
+        expect(progress.current).toBeLessThan(0.01);
+        expect(Math.abs(meshes[0].instance.position.x)).toBeLessThan(0.05);
+    } finally {
+        await renderer.unmount();
     }
-
-    console.log('Final render count:', renderCount);
-
-    // We expect MINIMAL renders (e.g. initial + 1 for split toggle)
-    // The animation should happen via refs and not trigger React renders.
-    expect(renderCount).toBeLessThan(initialRenderCount + 5);
-  });
 });

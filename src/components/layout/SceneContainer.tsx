@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState, useId } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, Menu } from 'lucide-react';
+import { BookOpen, ChevronLeft, Menu, SlidersHorizontal, X } from 'lucide-react';
 
 interface SceneContainerProps {
     children: React.ReactNode;
     controls?: React.ReactNode;
+    explanation?: React.ReactNode;
+    defaultPanel?: 'controls' | 'explanation' | 'closed';
     onBack?: () => void; // Optional override, defaults to Link
     backUrl?: string;    // Defaults to '/topicId'
 }
@@ -12,47 +14,56 @@ interface SceneContainerProps {
 export function SceneContainer({
     children,
     controls,
+    explanation,
+    defaultPanel = 'controls',
     backUrl
 }: SceneContainerProps) {
-    const [showControls, setShowControls] = useState(true);
+    const panelId = useId();
+    const tabs = useMemo(() => {
+        const availableTabs: Array<{
+            id: 'controls' | 'explanation';
+            label: string;
+            icon: React.ReactNode;
+            content: React.ReactNode;
+        }> = [];
+
+        if (controls) {
+            availableTabs.push({
+                id: 'controls',
+                label: 'Controls',
+                icon: <SlidersHorizontal size={15} />,
+                content: controls,
+            });
+        }
+
+        if (explanation) {
+            availableTabs.push({
+                id: 'explanation',
+                label: 'Explain',
+                icon: <BookOpen size={15} />,
+                content: explanation,
+            });
+        }
+
+        return availableTabs;
+    }, [controls, explanation]);
+
+    const firstTab = tabs[0]?.id ?? 'controls';
+    const requestedPanel = defaultPanel === 'closed' ? firstTab : defaultPanel;
+    const initialPanel = tabs.some((tab) => tab.id === requestedPanel) ? requestedPanel : firstTab;
+    const [isPanelOpen, setIsPanelOpen] = useState(defaultPanel !== 'closed' && tabs.length > 0);
+    const [activePanel, setActivePanel] = useState<'controls' | 'explanation'>(initialPanel);
+    const activeTab = tabs.find((tab) => tab.id === activePanel) ?? tabs[0];
+    const hasScenePanel = tabs.length > 0;
 
     return (
-        <div style={{
-            width: '100%',
-            height: '100%',
-            position: 'relative',
-            background: '#0b0f19',
-            overflow: 'hidden'
-        }}>
+        <div className="scene-shell">
             {/* 1. Global Navigation Overlay (Top Left) */}
-            <nav style={{
-                position: 'absolute',
-                top: 20,
-                left: 20,
-                zIndex: 50,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                pointerEvents: 'none' // Let clicks pass through to canvas when not on buttons
-            }}>
+            <nav className="scene-nav" aria-label="Scene navigation">
                 {backUrl && (
                     <Link
                         to={backUrl}
-                        style={{
-                            pointerEvents: 'auto',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '12px',
-                            background: 'rgba(15, 23, 42, 0.8)',
-                            backdropFilter: 'blur(8px)',
-                            border: '1px solid rgba(148, 163, 184, 0.1)',
-                            color: 'white',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
+                        className="scene-icon-button"
                         aria-label="Back"
                     >
                         <ChevronLeft size={20} />
@@ -79,53 +90,72 @@ export function SceneContainer({
             </nav>
 
             {/* 2. Main Content (Canvas) */}
-            <main style={{ width: '100%', height: '100%' }}>
+            <div className="scene-main">
                 {children}
-            </main>
+            </div>
 
-            {/* 3. Controls Sidebar (Top Right / Right Slide-in) */}
-            {controls && (
-                <>
-                    {/* Toggle Button (Mobile/Desktop) */}
+            {/* 3. Scene Drawer (Top Right / Right Slide-in) */}
+            {hasScenePanel && (
+                <div className="scene-panel-region">
                     <button
-                        onClick={() => setShowControls(!showControls)}
-                        style={{
-                            position: 'absolute',
-                            top: 20,
-                            right: 20,
-                            zIndex: 50,
-                            width: '40px',
-                            height: '40px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '12px',
-                            background: showControls ? 'rgba(99, 102, 241, 1)' : 'rgba(15, 23, 42, 0.8)',
-                            backdropFilter: 'blur(8px)',
-                            border: '1px solid rgba(148, 163, 184, 0.1)',
-                            color: 'white',
-                            cursor: 'pointer'
-                        }}
+                        type="button"
+                        onClick={() => setIsPanelOpen((isOpen) => !isOpen)}
+                        className={`scene-icon-button scene-panel-toggle ${isPanelOpen ? 'active' : ''}`}
+                        aria-label={isPanelOpen ? 'Close scene panel' : 'Open scene panel'}
+                        aria-expanded={isPanelOpen}
+                        aria-controls={panelId}
                     >
-                        <Menu size={20} />
+                        {isPanelOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
 
-                    {/* Sidebar Content */}
-                    {showControls && (
-                        <aside style={{
-                            position: 'absolute',
-                            top: 70, // Below the toggle button
-                            right: 20,
-                            width: '320px',
-                            maxHeight: 'calc(100vh - 90px)',
-                            zIndex: 40,
-                            overflowY: 'auto',
-                            // Animation could be added here
-                        }}>
-                            {controls}
+                    {isPanelOpen && activeTab && (
+                        <aside
+                            id={panelId}
+                            className="scene-panel-drawer"
+                            aria-label="Scene panel"
+                        >
+                            {tabs.length > 1 && (
+                                <div className="scene-panel-tabs" role="tablist" aria-label="Scene panel sections">
+                                    {tabs.map((tab) => (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            role="tab"
+                                            id={`${panelId}-${tab.id}`}
+                                            aria-controls={`${panelId}-content`}
+                                            tabIndex={activeTab.id === tab.id ? 0 : -1}
+                                            onKeyDown={event => {
+                                                const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+                                                if (!keys.includes(event.key)) return;
+                                                event.preventDefault();
+                                                const current = tabs.findIndex(item => item.id === tab.id);
+                                                const index = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
+                                                    : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+                                                setActivePanel(tabs[index].id);
+                                                document.getElementById(`${panelId}-${tabs[index].id}`)?.focus();
+                                            }}
+                                            aria-selected={activeTab.id === tab.id}
+                                            className={`scene-panel-tab ${activeTab.id === tab.id ? 'active' : ''}`}
+                                            onClick={() => setActivePanel(tab.id)}
+                                        >
+                                            {tab.icon}
+                                            <span>{tab.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="scene-panel-content"
+                                id={`${panelId}-content`}
+                                role={tabs.length > 1 ? 'tabpanel' : undefined}
+                                aria-labelledby={tabs.length > 1 ? `${panelId}-${activeTab.id}` : undefined}
+                                tabIndex={tabs.length > 1 ? 0 : undefined}
+                            >
+                                {activeTab.content}
+                            </div>
                         </aside>
                     )}
-                </>
+                </div>
             )}
         </div>
     );

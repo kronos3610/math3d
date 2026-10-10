@@ -1,15 +1,16 @@
-import { useRef, useMemo, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Sphere } from '@react-three/drei';
+import { useMemo, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Play, Pause, RefreshCcw } from 'lucide-react';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import { useParams } from 'react-router-dom';
 
-function calculateLoss(x: number, y: number) {
-    return 0.5 * (x * x + y * y); // Simple quadratic loss
-}
+import { DescentTrajectory } from '../../components/3d/DescentTrajectory';
+import { gradientDescentPath, quadraticLoss as calculateLoss, quadraticGradient } from '../../utils/optimization';
+
+const descentPath = gradientDescentPath(quadraticGradient, [3, 2]);
 
 // --- Scene Components ---
 
@@ -46,41 +47,6 @@ function LossSurface() {
     );
 }
 
-function DescentBall({ isPlaying, onReset }: { isPlaying: boolean, onReset: number }) {
-    const ref = useRef<THREE.Mesh>(null!);
-    const timeRef = useRef(0);
-
-    useFrame((_, delta) => {
-        if (isPlaying) {
-            timeRef.current += delta;
-        }
-
-        // Reset check
-        if (onReset !== ref.current.userData.lastReset) {
-            timeRef.current = 0;
-            ref.current.userData.lastReset = onReset;
-        }
-
-        const t = timeRef.current;
-        // Spiral descent path
-        const progress = Math.min(t * 0.15, 1);
-        const radius = 3 * (1 - progress);
-        const angle = t * 2.0;
-
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-        const y = calculateLoss(x, z) + 0.15; // Lift slightly above surface
-
-        ref.current.position.set(x, y, z);
-    });
-
-    return (
-        <Sphere ref={ref} args={[0.15, 32, 32]} position={[3, 1, 3]}>
-            <meshStandardMaterial color="#fdcb6e" emissive="#fdcb6e" emissiveIntensity={0.8} />
-        </Sphere>
-    );
-}
-
 // --- Main Component ---
 
 export default function GradientDescent() {
@@ -96,7 +62,7 @@ export default function GradientDescent() {
             </div>
 
             <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5' }}>
-                Visualizing the optimization path on a convex error surface. The ball represents the model parameters rolling down to the global minimum (lowest error).
+                Gradient descent updates the parameters by subtracting 0.1 times the gradient at each step. The line shows the computed trajectory to the global minimum; the ball follows those iterates.
             </div>
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
@@ -120,7 +86,7 @@ export default function GradientDescent() {
                 <pointLight position={[-3, 5, 3]} intensity={0.5} color="#00cec9" />
 
                 <LossSurface />
-                <DescentBall isPlaying={isPlaying} onReset={resetCount} />
+                <DescentTrajectory key={resetCount} path={descentPath} loss={calculateLoss} playing={isPlaying} color="#fdcb6e" />
 
                 <gridHelper args={[10, 20, '#475569', '#1e293b']} position={[0, -0.01, 0]} />
                 <OrbitControls enableDamping dampingFactor={0.05} />

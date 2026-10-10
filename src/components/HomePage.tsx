@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
 import { topics } from '../data/topics';
-import HeroScene from './HeroScene';
+import { lazy, Suspense } from 'react';
+
+const HeroScene = lazy(() => import('./HeroScene'));
 
 export default function HomePage() {
     return (
         <>
             <div className="hero">
                 <div className="hero-canvas">
-                    <HeroScene />
+                    <Suspense fallback={null}><HeroScene /></Suspense>
                 </div>
                 <div className="hero-overlay" />
                 <div className="hero-content">

@@ -11,8 +11,6 @@ import Latex from '../../components/Latex';
 const CHART_W = 560;
 const CHART_H = 400;
 
-function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
-lerp; // suppress unused warning — kept for potential future use
 
 function gauss(x: number, mu: number, sigma: number) {
     return (1 / (sigma * Math.sqrt(2 * Math.PI))) *
@@ -378,7 +376,8 @@ function drawGaussian(canvas: HTMLCanvasElement, step: number) {
         for (let i = 0; i <= NSTEPS; i++) {
             const xv = minP + (i / NSTEPS) * (maxP - minP);
             const px = toX(xv), py = toY(gauss(xv, mu, sig));
-            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
         }
         ctx.stroke();
 
@@ -431,8 +430,10 @@ export default function FisherLDA() {
     // Keep refs current for stable draw callbacks
     const stepRef = useRef(step);
     const testPointRef = useRef(testPoint);
-    stepRef.current = step;
-    testPointRef.current = testPoint;
+    useEffect(() => {
+        stepRef.current = step;
+        testPointRef.current = testPoint;
+    }, [step, testPoint]);
 
     const redrawScatter = useCallback(() => {
         if (scatterRef.current)
