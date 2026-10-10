@@ -1,4 +1,5 @@
 /** Short guidance is available before a scene loads, without importing its renderer. */
+import { mlVisualLessons } from './mlVisualLessons';
 export interface LessonGuide {
     meaning: string;
     steps: readonly string[];
@@ -167,10 +168,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'Test error varies with the sampled observations. Zero signal and zero noise make the ratio undefined; positive signal with zero noise gives infinite SNR.',
         },
         'neural-networks': {
-            meaning: 'Neural networks compose layers of units. Connections carry information from inputs through hidden layers toward outputs.',
-            steps: ['Follow the moving pulse through the displayed layers.', 'Use Pause Animation to inspect the connections, then Resume Animation.'],
-            observe: 'Each layer connects to the next, illustrating the structure of a fully connected network.',
-            limitations: 'This is a schematic architecture animation. The pulse is not a computed activation; the scene does not train weights or run backpropagation.',
+            meaning: 'A neural network transforms actual inputs through weighted connections and nonlinear activations into a prediction.',
+            steps: ['Change the input coordinates and inspect the hidden/output activations.','The full computation is initially visible; use Reset then Step to reveal layers, or Train 200 steps to fit the tiny XOR task.','Compare actual predictions and training loss with the same four XOR examples.'],
+            observe: 'Connection weights and activation values determine the output. Real gradient updates change those weights.',
+            limitations: 'The network and XOR task are deliberately small. This lesson computes activations and trains weights; it does not imply performance on unrelated data.',
         },
         'decision-boundaries': {
             meaning: 'A decision boundary separates regions assigned to different classes. A linear classifier uses a plane in three-dimensional feature space.',
@@ -238,6 +239,7 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             observe: 'The E-step updates responsibilities; the M-step updates means, variances, and mixture weights. Higher log-likelihood indicates a better fit to these data.',
             limitations: 'This example fixes three components and diagonal covariances. EM depends on initialization and does not guarantee a global optimum.',
         },
+        ...Object.fromEntries(mlVisualLessons.map(lesson => [lesson.id, lesson.guide])),
     },
 };
 
