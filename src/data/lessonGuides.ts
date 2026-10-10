@@ -119,10 +119,14 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'The surface height is rescaled for display. Density height at a point is not that point’s probability, and these graphics are illustrative.',
         },
         'bayes-theorem': {
-            meaning: 'Bayes’ theorem updates a prior using evidence: posterior = likelihood × prior ÷ evidence.',
-            steps: ['Change Prior or Likelihood and compare the posterior readout.', 'Adjust Evidence and use Reset Values to restore the example.'],
-            observe: 'The likelihood weights the prior; evidence normalizes the result.',
-            limitations: 'The inputs must describe a consistent probability model. Independent slider choices can produce invalid combinations; heed the warning rather than interpreting a value above 1 as a probability.',
+            meaning: 'A filter flag is a clue, not certainty. Bayes’ theorem tells you how likely an email is spam after you learn the filter flagged it.',
+            steps: [
+                'Choose Reset example: of 1,000 emails, 100 are spam and 900 are ordinary. The filter flags 90 from each group.',
+                'Move Spam before filtering, Spam caught by the filter, or Ordinary emails wrongly flagged. Compare flagged spam with all flagged emails.',
+                'Try Rare spam and No false alarms. See who remains in the flagged group before reading the updated chance.',
+            ],
+            observe: 'A 90% catch rate means catching 90 of 100 spam emails. In the default example, only 90 of the 180 flagged emails are spam, so their chance is 50%, not 90%.',
+            limitations: 'These fictional rates give expected counts, so fractions are possible. If no emails are flagged, the chance of spam among flagged emails is undefined.',
         },
         'monte-carlo': {
             meaning: 'Monte Carlo estimates quantities using random samples. The fraction of cube samples inside a sphere estimates its volume ratio and therefore π.',
