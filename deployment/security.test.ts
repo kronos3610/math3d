@@ -21,6 +21,7 @@ test('SPA rewrites preserve missing asset errors and cover deep lesson addresses
     expect(source.test('/unknown/deep/address')).toBe(true);
     expect(source.test('/assets/deleted-chunk.js')).toBe(false);
     expect(source.test('/favicon.svg')).toBe(false);
+    expect(source.test('/THIRD-PARTY-NOTICES.txt')).toBe(false);
     expect(config.rewrites[0].destination).toBe('/index.html');
     const htmlCache = new RegExp(`^${config.headers[1].source}$`);
     expect(htmlCache.test('/ml/decision-trees')).toBe(true);

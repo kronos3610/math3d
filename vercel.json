@@ -55,7 +55,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets/|favicon.svg|404.html).*)",
+      "source": "/((?!assets/|favicon.svg|404.html|THIRD-PARTY-NOTICES.txt).*)",
       "destination": "/index.html"
     }
   ]

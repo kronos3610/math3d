@@ -132,7 +132,7 @@ Please refer to `AGENTS.md` for coding standards and architectural guidelines.
 
 ## Static hosting
 
-Build with Node.js 24 and `npm ci && npm run build`. Deploy the contents of `dist` at the domain root. `npm run preview` is a local inspection server, not a production hosting service.
+Build with Node.js 24 and `npm ci && npm run build`. Deploy the contents of `dist` at the domain root, including generated `THIRD-PARTY-NOTICES.txt` with the bundled library and font notices. `npm run preview` is a local inspection server, not a production hosting service.
 
 Netlify reads `netlify.toml` for the build, publish directory, and SPA fallback. The build emits `dist/_headers` from `deployment/security.ts`. Vercel reads `vercel.json`; select Node.js 24 in its project settings. Both configurations preserve real asset files and exclude missing `/assets/*` files from the lesson rewrite, so a deleted chunk produces an asset error rather than HTML served as JavaScript. HTML revalidates; hashed assets can be cached for a year.
 
