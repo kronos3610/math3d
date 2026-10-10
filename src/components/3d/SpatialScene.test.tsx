@@ -112,3 +112,26 @@ test('fallback groups annotations that overlap in projection even when separated
     expect(annotations).toHaveLength(1);
     expect(annotations[0].textContent).toBe('Nearby: First vector / Second vector');
 });
+test('static vector labels have room for readable names at nearby projected endpoints', () => {
+    const { container } = render(<SpatialScene description="Nearby vector names" points={[
+        {position:[0,0,0],label:'First value'},
+        {position:[0.2,0,0],label:'Second value'},
+        {position:[1,0,0],label:'Distant value'},
+    ]} vectors={[{from:[0,0,0],to:[1,0,0]}]} />);
+    const annotations = container.querySelectorAll('svg > text');
+    expect(annotations).toHaveLength(2);
+    expect(annotations[0].textContent).toBe('Nearby: First value / Second value');
+    expect(container.querySelectorAll('circle')).toHaveLength(3);
+});
+test('long static annotations merge when their text overlaps despite distant projected anchors', () => {
+    const { container } = render(<SpatialScene description="Descriptive vector annotations" points={[
+        {position:[0,0,0],label:'Long descriptive retained vector'},
+        {position:[0.45,0,0],label:'Another descriptive hidden vector'},
+        {position:[1,0,0]},
+    ]} vectors={[{from:[0,0,0],to:[1,0,0]}]} />);
+    const annotations = container.querySelectorAll('svg > text');
+    expect(annotations).toHaveLength(1);
+    expect(annotations[0].textContent).toContain('Long descriptive retained vector / Another descriptive hidden vector');
+    expect(annotations[0].querySelectorAll('tspan')).toHaveLength(2);
+    expect(container.querySelectorAll('circle')).toHaveLength(3);
+});

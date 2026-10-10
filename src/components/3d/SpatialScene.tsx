@@ -140,8 +140,34 @@ function AccessibleOrbitControls({ description }: { description: string }) {
 function SpatialFallback({ props }: { props: SpatialSceneProps }) {
     const id = useId();
     const transform = spatialTransform(props);
+    // Vector names need more room than short index/weight annotations in a static projection.
+    const labelScale = props.vectors?.length ? 600 : 240;
     const project = (point: LabVector) => { const [x, y, z] = transform.map(point); return [400 + 48 * x + 25 * z, 240 - 48 * y - 15 * z]; };
     const pathData = (points: readonly LabVector[], close = false) => points.map((point, index) => `${index === 0 ? 'M' : 'L'}${project(point).join(',')}`).join(' ') + (close ? ' Z' : '');
+    const labels = mergeLabels([...(props.points ?? []),...(props.vectors ?? []).map(vector => ({position:vector.to,label:vector.label,color:vector.color})),...(props.boxes ?? []).map(box => ({position:box.position,label:box.label,color:box.color}))],point => {
+        const [x,y] = project(point); return [x / labelScale,y / labelScale,0];
+    });
+    const labelLayout = (point: SpatialPoint) => {
+        const lines = point.label!.split(' / '); const [x,y] = project(point.position);
+        const labelY = Math.max(30,Math.min(470 - (lines.length - 1) * 32,y - 9 - (lines.length - 1) * 32));
+        // Allow for the larger mobile font, including the full width of descriptive vector names.
+        const halfWidth = Math.max(...lines.map(line => line.length)) * 7 + 8;
+        return { lines,x,labelY,left:x - halfWidth,right:x + halfWidth,top:labelY - 28,bottom:labelY + (lines.length - 1) * 32 + 6 };
+    };
+    if (props.vectors?.length) {
+        // Stacked names can overlap a distant anchor. Merge intersecting text rectangles as well.
+        let changed = true;
+        while (changed) {
+            changed = false;
+            for (let a = 0; a < labels.length && !changed; a++) for (let b = a + 1; b < labels.length; b++) {
+                const first = labelLayout(labels[a]); const second = labelLayout(labels[b]);
+                if (first.left < second.right && first.right > second.left && first.top < second.bottom && first.bottom > second.top) {
+                    labels[a] = {...labels[a],label:`Nearby: ${labels[a].label!.replace(/^Nearby: /,'')} / ${labels[b].label!.replace(/^Nearby: /,'')}`};
+                    labels.splice(b,1); changed = true; break;
+                }
+            }
+        }
+    }
     return <figure className="spatial-fallback"><svg viewBox="0 0 800 480" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
         <title id={`${id}-title`}>Spatial model — 2D projection</title><desc id={`${id}-desc`}>{props.description} This is an oblique 2D projection of the same computed coordinates.</desc>
         <defs><marker id={`${id}-arrow`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="context-stroke" /></marker></defs>
@@ -160,11 +186,8 @@ function SpatialFallback({ props }: { props: SpatialSceneProps }) {
         {(props.vectors ?? []).map((vector, index) => <path key={index} d={pathData([vector.from, vector.to])} fill="none" stroke={vector.color ?? COLORS.line} strokeWidth={3} markerEnd={`url(#${id}-arrow)`} />)}
         {(props.points ?? []).map((point, index) => <g key={index}><circle cx={project(point.position)[0]} cy={project(point.position)[1]} r={Math.max(3, (point.radius ?? 0.09) * 35)} fill={point.color ?? COLORS.point} />
             </g>)}
-        {mergeLabels([...(props.points ?? []),...(props.vectors ?? []).map(vector => ({position:vector.to,label:vector.label,color:vector.color})),...(props.boxes ?? []).map(box => ({position:box.position,label:box.label,color:box.color}))],point => {
-            const [x,y] = project(point); return [x / 240,y / 240,0];
-        }).map((point,index) => {
-            const lines = point.label!.split(' / '); const [x,y] = project(point.position);
-            const labelY = Math.max(30,Math.min(470 - (lines.length - 1) * 32,y - 9 - (lines.length - 1) * 32));
+        {labels.map((point,index) => {
+            const { lines,x,labelY } = labelLayout(point);
             return <text key={index} x={x} y={labelY} textAnchor="middle" fill={point.color ?? 'var(--text-primary)'} fontSize={12}>{lines.map((line,i) => <tspan key={i} x={x} dy={i === 0 ? 0 : 32}>{i > 0 ? ' ' : ''}{line}{i < lines.length - 1 ? ' /' : ''}</tspan>)}</text>;
         })}
     </svg><figcaption>2D projection · identical model calculations</figcaption></figure>;
