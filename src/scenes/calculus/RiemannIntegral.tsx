@@ -68,7 +68,7 @@ function RiemannScene({ nPartitions }: RiemannSceneProps) {
 
             <directionalLight position={[5, 5, 5]} intensity={1} />
             <ambientLight intensity={0.4} />
-            <OrbitControls enableDamping dampingFactor={0.05} />
+            <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
             <fog attach="fog" args={['#050508', 5, 15]} />
         </>
     );

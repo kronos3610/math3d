@@ -1,5 +1,4 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState } from 'react';
 
 import { OrbitControls } from '@react-three/drei';
 import { Arrow } from '../../components/3d/Arrow';
@@ -9,13 +8,7 @@ import { GlassPane } from '../../components/layout/GlassPane';
 import { useParams } from 'react-router-dom';
 
 /* Simplified data */
-const DATA = {
-    x: [3, 3, 3] as [number, number, number],
-    x_row: [1, 4, 2] as [number, number, number],
-    x_null: [2, -1, 1] as [number, number, number],
-};
-
-type ViewMode = 'domain' | 'codomain';
+import { SUBSPACE_EXAMPLE as DATA } from './legacyLinearMath';
 
 /* Domain view - simplified */
 function DomainView() {
@@ -50,7 +43,6 @@ function SceneBase() {
 /* Main component */
 export default function FundamentalSpacesOptimized() {
     const { topicId } = useParams();
-    const [mode, setMode] = useState<ViewMode>('domain');
 
     const controls = (
         <GlassPane className="scene-controls" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -69,14 +61,7 @@ export default function FundamentalSpacesOptimized() {
                 </p>
             </GlassPane>
 
-            <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                    onClick={() => setMode('domain')}
-                    style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: mode === 'domain' ? '#4f46e5' : '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-                >
-                    Domain (ℝ³)
-                </button>
-            </div>
+            <p style={{ color: '#cbd5e1', fontSize: '12px' }}>x = xᵣ + xₙ and xᵣ·xₙ = 0. This fixed example shows the domain decomposition; the full lesson adds the codomain view.</p>
         </GlassPane>
     );
 
@@ -90,7 +75,7 @@ export default function FundamentalSpacesOptimized() {
             >
                 <SceneBase />
                 <DomainView />
-                <OrbitControls />
+                <OrbitControls makeDefault />
                 <fog attach="fog" args={['#0b0f19', 10, 30]} />
                 <color attach="background" args={['#0b0f19']} />
             </SceneCanvas>

@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { Label } from '../../components/3d/Label';
 import type { BayesParameters } from '../../utils/bayes';
 import { createBayesPopulationLayout } from './bayesPopulationLayout';
+import { useSceneMotion } from '../../hooks/useSceneMotion';
 import type { BayesBoard, BayesPopulationLayout, BayesView } from './bayesPopulationLayout';
 
 export type { BayesView } from './bayesPopulationLayout';
@@ -81,7 +82,9 @@ export function BayesPopulation({ parameters, view }: BayesPopulationProps) {
         spam: new THREE.Color('#fbbf24'), ordinary: new THREE.Color('#60a5fa'),
         dimSpam: new THREE.Color('#806327'), dimOrdinary: new THREE.Color('#24405c'),
     }), []);
-    const reducedMotion = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, () => false);
+    const moving = useSceneMotion();
+    const systemReducedMotion = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, () => false);
+    const reducedMotion = systemReducedMotion || !moving;
     const transition = useRef<TileTransition>({ start: new Float32Array(0), target: new Float32Array(0), elapsed: 0, active: false });
 
     useLayoutEffect(() => {

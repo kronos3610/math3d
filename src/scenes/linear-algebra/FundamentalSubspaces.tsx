@@ -1,8 +1,6 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useState } from 'react';
 import { OrbitControls } from '@react-three/drei';
-import * as THREE from 'three';
 import { Arrow } from '../../components/3d/Arrow';
 import { Label } from '../../components/3d/Label';
 import { SubspacePlane, SubspaceLine } from '../../components/3d/Subspace';
@@ -11,29 +9,14 @@ import { GlassPane } from '../../components/layout/GlassPane';
 import { useParams } from 'react-router-dom';
 
 /* ========== Data ========== */
-const DATA = {
-    x: [3, 3, 3] as [number, number, number],
-    x_row: [1, 4, 2] as [number, number, number],
-    x_null: [2, -1, 1] as [number, number, number],
-    b: [9, 6, 15] as [number, number, number],
-    rowNormal: [2, -1, 1] as [number, number, number],
-    colNormal: [-1, -1, 1] as [number, number, number],
-    c1: [1, 0, 1] as [number, number, number],
-    c2: [2, 1, 3] as [number, number, number],
-};
+import { SUBSPACE_EXAMPLE as DATA } from './legacyLinearMath';
 
 type ViewMode = 'domain' | 'codomain';
 
 /* ========== Domain Scene ========== */
 function DomainView() {
-    const groupRef = useRef<THREE.Group>(null!);
-
-    useFrame((state) => {
-        groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.08) * 0.15;
-    });
-
     return (
-        <group ref={groupRef}>
+        <group>
             <SubspacePlane normal={DATA.rowNormal} color="#10b981" />
             <Label text="Row Space C(Aᵀ)" position={[4, 6, 0]} color="#34d399" />
 
@@ -57,14 +40,8 @@ function DomainView() {
 
 /* ========== Codomain Scene ========== */
 function CodomainView() {
-    const groupRef = useRef<THREE.Group>(null!);
-
-    useFrame((state) => {
-        groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.08) * 0.15;
-    });
-
     return (
-        <group ref={groupRef}>
+        <group>
             <SubspacePlane normal={DATA.colNormal} color="#3b82f6" />
             <Label text="Column Space C(A)" position={[6, -4, 4]} color="#60a5fa" />
 
@@ -79,7 +56,7 @@ function CodomainView() {
 
             <Arrow direction={DATA.b} color="#d946ef" thickness={0.15} />
             <Label text="b = Ax = [9,6,15]" position={[10, 7, 16]} color="#e879f9" />
-            <Label text="b = 3c₁ + 3c₂" position={[5, -1, 8]} color="#a78bfa" />
+            <Label text="b = −3c₁ + 6c₂" position={[5, -1, 8]} color="#a78bfa" />
         </group>
     );
 }
@@ -145,13 +122,13 @@ export default function FundamentalSubspaces() {
             {/* Mode Toggle */}
             <div style={{ display: 'flex', gap: '8px' }}>
                 <button
-                    onClick={() => setMode('domain')}
+                    aria-pressed={mode === 'domain'} onClick={() => setMode('domain')}
                     style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: mode === 'domain' ? '#4f46e5' : '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                 >
                     Domain (ℝ³)
                 </button>
                 <button
-                    onClick={() => setMode('codomain')}
+                    aria-pressed={mode === 'codomain'} onClick={() => setMode('codomain')}
                     style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: mode === 'codomain' ? '#c026d3' : '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                 >
                     Codomain (ℝ³)
@@ -173,7 +150,7 @@ export default function FundamentalSubspaces() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas
+            <SceneCanvas frameloop="demand"
                 camera={{ position: [20, 14, 20], fov: 45 }}
                 style={{ width: '100%', height: '100%' }}
                 dpr={[1, 1.5]}
@@ -181,7 +158,7 @@ export default function FundamentalSubspaces() {
             >
                 <SceneBase />
                 {mode === 'domain' ? <DomainView /> : <CodomainView />}
-                <OrbitControls enableDamping dampingFactor={0.05} />
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
             </SceneCanvas>
         </SceneContainer>
     );

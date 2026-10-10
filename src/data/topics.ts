@@ -29,8 +29,8 @@ export const topics: Topic[] = [
         subtopics: [
             {
                 id: 'simple-test',
-                title: 'Simple Test (Debug)',
-                description: 'Minimal 3D scene with just a rotating cube — for testing WebGL functionality.',
+                title: 'Explore 3D Coordinates',
+                description: 'Compare cube corners along the x, y, and z axes, and practice rotating and zooming the view.',
                 component: lazyWithPreload(() => import('../scenes/linear-algebra/SimpleTest')),
             },
             {
@@ -66,7 +66,7 @@ export const topics: Topic[] = [
             {
                 id: 'banach-tarski',
                 title: 'Banach-Tarski Paradox',
-                description: 'Witness the impossible: decompose one sphere into pieces that reassemble into two identical spheres.',
+                description: 'Explore a schematic surface illustration of the theorem’s conclusion, and why ordinary measurable pieces cannot construct it.',
                 component: lazyWithPreload(() => import('../scenes/linear-algebra/BanachTarski')),
             },
         ],
@@ -239,7 +239,7 @@ export const topics: Topic[] = [
             {
                 id: 'lp-regularization',
                 title: 'Lp Norm Balls',
-                description: 'Explore the full Lp norm family (L1, L2, L3, L∞) as interactive 3D constraint regions. Drag the OLS solution and watch how each penalty projects it differently.',
+                description: 'Manipulate an input vector and compare L1, L2, L3, and L∞ balls, with illustrative radial shrinkage under each norm.',
                 component: lazyWithPreload(() => import('../scenes/ml/LpRegularization')),
             },
             {

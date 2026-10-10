@@ -15,7 +15,7 @@ Math3D is an interactive educational platform designed to visualize complex math
 
 ### Prerequisites
 
-- Node.js 20.19+, 22.12+, or 24+ (supported even-numbered releases)
+- Node.js 24 (recommended; `.nvmrc`), or Node.js 22.12+
 - npm or pnpm
 
 ### Installation
@@ -68,7 +68,11 @@ The Bias–Variance and Signal-to-Noise labs use seeded polynomial-regression ex
 
 ## Using a lesson
 
-The new ML labs keep controls beside the visualization; older lessons place controls in the scene panel. The Guide tab explains what the scene means, how to use it, and what to look for. Explain gives more detail, and Learn links related lessons. Guides are also available while a scene loads or if it fails to start. Native controls, search, family links, and playback support keyboard use; scene descriptions and numerical readouts provide alternatives to the graphics.
+The new ML labs keep controls beside the visualization; older lessons place controls in the scene panel. All lessons open with the plot visible. Older lessons show a compact title and meaning above it. Use Guide & controls to open the drawer; on desktop the plot reserves space beside it. The Guide tab explains how to use the scene and what to look for. Explain gives more detail, and Learn links related lessons. Guides remain available while a scene loads or if it fails to start.
+
+Focus a 3D canvas to rotate with arrow keys and zoom with +/−. Pause motion stops automatic animation and playback while keeping manual camera changes and Step available. The browser's reduced-motion preference pauses motion by default; explicit choices are saved locally. Formulas, UI fonts, and mathematical fonts are served with the app, without external CDN requests. A failed decorative homepage scene leaves topic navigation available, and failed speculative lesson imports can retry on a subsequent visit.
+
+Trees open in input space. A threshold wall is clipped to the current node's region, a white outline shows the query's active region, and the linked diagram follows the same computed path. Choose two features on a floor or three real features in a cube; x₃ is a feature, not prediction height. The separate prediction view plots output height, with a declared fixed-x₃ slice for three-feature models. Ensemble views distinguish one selected tree's correction/region from the aggregate prediction.
 
 3D lessons default to Light graphics (one pixel per device-independent pixel, without shadows). Select Detailed in Guide for sharper rendering and scene shadows; the preference is saved on this browser. Static scenes render when their controls or camera change. Vector labels use HTML, avoiding external font downloads that the site's content security policy blocks.
 
@@ -126,6 +130,12 @@ Please refer to `AGENTS.md` for coding standards and architectural guidelines.
 4. Push to the branch (`git push origin feature/AmazingFeature`).
 5. Open a Pull Request.
 
-## License
+## Static hosting
 
-This project is licensed under the MIT License.
+Build with Node.js 24 and `npm ci && npm run build`. Deploy the contents of `dist` at the domain root. `npm run preview` is a local inspection server, not a production hosting service.
+
+Netlify reads `netlify.toml` for the build, publish directory, and SPA fallback. The build emits `dist/_headers` from `deployment/security.ts`. Vercel reads `vercel.json`; select Node.js 24 in its project settings. Both configurations preserve real asset files and exclude missing `/assets/*` files from the lesson rewrite, so a deleted chunk produces an asset error rather than HTML served as JavaScript. HTML revalidates; hashed assets can be cached for a year.
+
+The production policy permits scripts, fonts, and connections only from this site. Inline styles are required by React Three Fiber and the layout. HTTP headers also restrict framing, disable unused camera/microphone/location permissions, and set HTTPS and content-type protections. Development alone permits Vite's injected refresh script and WebSocket connection. If you deliberately embed the app in another site, change the framing policy before deployment.
+
+The GitHub Validate workflow runs locked installation, lint, tests, production build, and a production dependency audit on pull requests and pushes to `main`. Before publishing, verify `/ml/decision-trees` on a direct load and refresh, check a missing asset returns 404, and inspect the deployed response headers. Provider configuration is prepared in this repository; creating these files does not publish a site or select an account.

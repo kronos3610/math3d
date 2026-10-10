@@ -106,7 +106,7 @@ function Labels() {
                 <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: '14px', userSelect: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>Z (μz)</div>
             </Html>
             <Html position={[0, 8, 0]} transform sprite>
-                <div style={{ color: '#4ade80', fontWeight: 700, fontSize: '14px', userSelect: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>Probability</div>
+                <div style={{ color: '#4ade80', fontWeight: 700, fontSize: '14px', userSelect: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>Density (scaled height)</div>
             </Html>
         </group>
     );
@@ -124,6 +124,7 @@ export default function LogLikelihood() {
 
     const controls = (
         <GlassPane className="scene-controls" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '320px' }}>
+            <p style={{ fontSize: '12px', color: '#cbd5e1' }}>The dome height is visually rescaled with σ and clipped at 0.05; its height is not a calibrated density axis. The log-likelihood score uses the exact Gaussian density for all nine observations.</p>
             <div>
                 <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Tent size={20} /> Log-Likelihood Visualizer
@@ -157,7 +158,7 @@ export default function LogLikelihood() {
                         <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' }}>X-Position (μx)</span>
                         <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{muX.toFixed(2)}</span>
                     </div>
-                    <input
+                    <input aria-label="X-Position"
                         type="range" min="-5" max="5" step="0.1" value={muX}
                         onChange={e => setMuX(parseFloat(e.target.value))}
                         style={{ width: '100%', accentColor: '#3b82f6' }}
@@ -169,7 +170,7 @@ export default function LogLikelihood() {
                         <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' }}>Z-Position (μz)</span>
                         <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{muZ.toFixed(2)}</span>
                     </div>
-                    <input
+                    <input aria-label="Z-Position"
                         type="range" min="-5" max="5" step="0.1" value={muZ}
                         onChange={e => setMuZ(parseFloat(e.target.value))}
                         style={{ width: '100%', accentColor: '#3b82f6' }}
@@ -187,7 +188,7 @@ export default function LogLikelihood() {
                         <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' }}>Spread (σ)</span>
                         <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{sigma.toFixed(2)}</span>
                     </div>
-                    <input
+                    <input aria-label="Spread"
                         type="range" min="0.1" max="4" step="0.1" value={sigma}
                         onChange={e => setSigma(parseFloat(e.target.value))}
                         style={{ width: '100%', accentColor: '#6366f1' }}

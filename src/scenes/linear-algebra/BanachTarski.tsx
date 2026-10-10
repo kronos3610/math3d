@@ -1,6 +1,8 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState, useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
+import { useSceneFrame as useFrame } from '../../hooks/useSceneFrame';
+import { useFrame as useDataFrame, useThree } from '@react-three/fiber';
+import { useSceneMotion } from '../../hooks/useSceneMotion';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { SceneContainer } from '../../components/layout/SceneContainer';
@@ -44,7 +46,8 @@ function SpherePiece({ pieceId, setIndex, animationProgress }: SpherePieceProps)
         [setIndex]
     );
 
-    useFrame(() => {
+    useEffect(() => () => geometry.dispose(), [geometry]);
+    useDataFrame(() => {
         if (!meshRef.current) return;
 
         const progress = animationProgress.current;
@@ -73,9 +76,6 @@ function SpherePiece({ pieceId, setIndex, animationProgress }: SpherePieceProps)
         const s = 1 + Math.sin(progress * Math.PI) * 0.1;
         meshRef.current.scale.set(s, s, s);
 
-        // Idle floating animation
-        const time = Date.now() * 0.001;
-        meshRef.current.position.y += Math.sin(time + pieceId * 0.5 + setIndex) * 0.003;
     });
 
     return (
@@ -127,6 +127,11 @@ export function AnimationController({
     isSplit: boolean;
     progressRef: React.MutableRefObject<number>;
 }) {
+    const moving = useSceneMotion();
+    const invalidate = useThree(state => state.invalidate);
+    useLayoutEffect(() => {
+        if (!moving) { progressRef.current = isSplit ? 1 : 0; invalidate(); }
+    }, [moving, isSplit, progressRef, invalidate]);
     useFrame(() => {
         const target = isSplit ? 1 : 0;
         progressRef.current += (target - progressRef.current) * 0.06;
@@ -145,7 +150,7 @@ export default function BanachTarski() {
             <div>
                 <h1 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: 'white' }}>Banach-Tarski Paradox</h1>
                 <p style={{ fontSize: '12px', color: '#94a3b8', lineHeight: 1.6 }}>
-                    The impossibility made possible through infinite decomposition.
+                    A schematic illustration of a theorem about non-measurable sets.
                 </p>
             </div>
 
@@ -169,7 +174,7 @@ export default function BanachTarski() {
             <GlassPane style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '14px' }}>
                 <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#a5b4fc', marginBottom: '6px' }}>How is this possible?</h4>
                 <p style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: 1.6, margin: 0 }}>
-                    Using the <strong>Axiom of Choice</strong>, we decompose the sphere into non-measurable sets. Rotating these "jagged" pieces re-aligns them to fill two whole spheres.
+                    The theorem uses the <strong>Axiom of Choice</strong> to partition a ball into finitely many non-measurable sets that can be rearranged by rigid motions into two equal balls. The rendered patches are ordinary surfaces drawn in two copies to illustrate the conclusion. This animation does not construct those sets or physically duplicate a ball.
                 </p>
             </GlassPane>
         </GlassPane>
@@ -177,7 +182,7 @@ export default function BanachTarski() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas camera={{ position: [0, 2, 12], fov: 60 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of the Banach-Tarski paradox decomposing a sphere into two">
+            <SceneCanvas frameloop="always" camera={{ position: [0, 2, 12], fov: 60 }} style={{ width: '100%', height: '100%' }} aria-label="Schematic animation of the Banach-Tarski conclusion using duplicated ordinary surface patches; not a construction of the theorem">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 10, 7.5]} intensity={0.8} />
                 <pointLight position={[-5, -5, 5]} color="#3b82f6" intensity={0.5} />
@@ -185,7 +190,7 @@ export default function BanachTarski() {
                 <BanachTarskiScene animationProgress={animationProgressRef} />
                 <AnimationController isSplit={isSplit} progressRef={animationProgressRef} />
 
-                <OrbitControls enableDamping dampingFactor={0.05} />
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 8, 25]} />
                 <color attach="background" args={['#0b0f19']} />
             </SceneCanvas>

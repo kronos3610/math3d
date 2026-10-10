@@ -47,7 +47,7 @@ function SignalChart({ experiment, amplitude, noiseStd }: SignalChartProps) {
     const id = useId();
     const width = 800;
     const height = 350;
-    const left = 65;
+    const left = 88;
     const right = width - 22;
     const top = 18;
     const bottom = height - 46;
@@ -140,6 +140,7 @@ export default function SignalToNoise() {
         <SceneContainer backUrl="/ml" explanation={explanation} defaultPanel="closed">
             <ExperimentLayout title="Signal-to-Noise Ratio" subtitle="Separate the quality of the data from the quality of the fitted model.">
                 <div className="learning-lab">
+                <SignalChart experiment={experiment} amplitude={amplitude} noiseStd={noiseStd} />
                 <div className="lab-controls">
                     <RangeField label="Signal amplitude A" value={amplitude} min={0} max={3} step={0.1} decimals={1} onChange={setAmplitude} />
                     <RangeField label="Noise standard deviation σ" value={noiseStd} min={0} max={2} step={0.05} decimals={2} onChange={setNoiseStd} />
@@ -166,7 +167,6 @@ export default function SignalToNoise() {
                     <div className="lab-stat"><dt>Signal variance</dt><dd>{formatValue(snr.signalVariance)}</dd></div>
                     <div className="lab-stat"><dt>Noise variance / floor</dt><dd>{formatValue(snr.noiseVariance)}</dd></div>
                 </dl>
-                <SignalChart experiment={experiment} amplitude={amplitude} noiseStd={noiseStd} />
                 <dl className="lab-metrics" aria-label="Prediction errors">
                     <div className="lab-stat"><dt>Train MSE</dt><dd>{formatValue(experiment.trainingMse)}</dd></div>
                     <div className="lab-stat"><dt>Independent test MSE</dt><dd>{formatValue(experiment.testMse)}</dd></div>

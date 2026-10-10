@@ -30,15 +30,15 @@ export default function NeuralNetworks() {
     const values = packFeedforward(weights);
     const network = useMemo(() => {
         const inputPoints: SpatialPoint[] = [first, second].map((value, index) => ({
-            position: [-2, index === 0 ? -0.7 : 0.7, value], color: '#fbbf24', radius: 0.13,
+            position: [-2, value, index === 0 ? -0.7 : 0.7], color: '#fbbf24', radius: 0.13,
             label: `x${index + 1} = ${value.toFixed(2)}`,
         }));
         const hiddenPoints: SpatialPoint[] = result.hidden.map((value, index) => ({
-            position: [0, index - 1, value], color: stage >= 1 ? (value >= 0 ? '#2dd4bf' : '#fb7185') : '#475569',
+            position: [0, value, index - 1], color: stage >= 1 ? (value >= 0 ? '#2dd4bf' : '#fb7185') : '#475569',
             radius: 0.12 + 0.08 * Math.abs(value), label: stage >= 1 ? `h${index + 1} = ${value.toFixed(2)}` : `h${index + 1}`,
         }));
         const output: SpatialPoint = {
-            position: [2, 0, result.probability], color: stage >= 2 ? '#a78bfa' : '#475569', radius: 0.18,
+            position: [2, result.probability, 0], color: stage >= 2 ? '#a78bfa' : '#475569', radius: 0.18,
             label: stage >= 2 ? `P(XOR=1) = ${result.probability.toFixed(3)}` : 'Output',
         };
         const paths: SpatialPath[] = [];
@@ -108,7 +108,7 @@ export default function NeuralNetworks() {
         ]} insight={`${trainingSteps > 0 ? `After ${trainingSteps} actual updates` : 'Manual demonstration weights'}: hidden state (${result.hidden.map(value => value.toFixed(2)).join(', ')}), output ${result.probability.toFixed(3)}. ${stage === 0 ? 'Showing inputs.' : stage === 1 ? 'Showing the tanh hidden layer.' : 'Showing the sigmoid output.'}`}
         challenge="Train several times, inspect all four corners, then edit one connection and watch the measured loss change."
         explanation={explanation}>
-        {view === 'network' ? <SpatialScene {...network} equalScale={false} axes={['layer', 'unit layout', 'activation']}
+        {view === 'network' ? <SpatialScene {...network} cameraPosition={[8, 6, 9]} equalScale={false} axes={['layer', 'activation', 'unit layout']}
             description="Computed 2-input, 3-hidden-unit, 1-output feedforward network. Node height is its actual activation; connection color and width encode weight sign and magnitude." />
             : <SpatialScene surfaces={[surface]} points={[
                 ...XOR_EXAMPLES.map(example => ({ position: [...example.input, example.target] as [number, number, number], color: example.target ? '#2dd4bf' : '#fb7185', label: `target ${example.target}` })),

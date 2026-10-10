@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, type ComponentRef } from 'react';
+import { useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react';
 import { Html, Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useThree } from '@react-three/fiber';
@@ -110,33 +110,6 @@ function SpatialLabels({ points }: { points: readonly SpatialPoint[] }) {
     </Html>)}</>;
 }
 
-function AccessibleOrbitControls({ description }: { description: string }) {
-    const controls = useRef<ComponentRef<typeof OrbitControls>>(null);
-    const { gl,camera,invalidate } = useThree();
-    useEffect(() => {
-        const canvas = gl.domElement;
-        canvas.setAttribute('tabindex','0');
-        canvas.setAttribute('aria-label',`${description} Arrow keys rotate; plus and minus zoom.`);
-        const offset = new THREE.Vector3(); const spherical = new THREE.Spherical();
-        const keyDown = (event: KeyboardEvent) => {
-            if (!controls.current || !['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-'].includes(event.key)) return;
-            event.preventDefault();
-            spherical.setFromVector3(offset.copy(camera.position).sub(controls.current.target));
-            if (event.key === 'ArrowLeft') spherical.theta -= 0.12;
-            if (event.key === 'ArrowRight') spherical.theta += 0.12;
-            if (event.key === 'ArrowUp') spherical.phi -= 0.12;
-            if (event.key === 'ArrowDown') spherical.phi += 0.12;
-            if (event.key === '+' || event.key === '=') spherical.radius = Math.max(5,spherical.radius * 0.9);
-            if (event.key === '-') spherical.radius = Math.min(45,spherical.radius * 1.1);
-            spherical.makeSafe(); camera.position.copy(offset.setFromSpherical(spherical).add(controls.current.target));
-            controls.current.update(); invalidate();
-        };
-        canvas.addEventListener('keydown',keyDown);
-        return () => canvas.removeEventListener('keydown',keyDown);
-    }, [gl,camera,invalidate,description]);
-    return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.08} minDistance={5} maxDistance={45} />;
-}
-
 function SpatialFallback({ props }: { props: SpatialSceneProps }) {
     const id = useId();
     const transform = spatialTransform(props);
@@ -221,7 +194,7 @@ export function SpatialScene(props: SpatialSceneProps) {
             from[axis] = transformed.transform.minimum[axis]; to[axis] = transformed.transform.maximum[axis];
             return <Line key={axis} points={[transformed.transform.map(from), transformed.transform.map(to)]} color={colors[axis]} lineWidth={1} transparent opacity={0.6} />;
         })}
-        <AccessibleOrbitControls description={description} />
+        <OrbitControls makeDefault enableDamping dampingFactor={0.08} minDistance={5} maxDistance={45} />
     </SceneCanvas><div className="spatial-axis-key" aria-label="Coordinate axes">{axes.map((name,axis) => <span key={axis} style={{color:colors[axis]}}><strong>{['X','Y','Z'][axis]}</strong> {name} <small>{axisValue(transformed.transform.minimum[axis])} … {axisValue(transformed.transform.maximum[axis])}</small></span>)}
         {!equalScale && <small>{equalAxes ? `${equalAxes.map(axis => ['X','Y','Z'][axis]).join('/')} units equal; other axis scaled` : 'Axes scale independently'}</small>}
     </div></div>;

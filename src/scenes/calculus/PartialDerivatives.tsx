@@ -1,6 +1,6 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState, useMemo, useRef, useEffect, type ComponentRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useState, useMemo, useRef, useEffect, useLayoutEffect, type ComponentRef } from 'react';
+import { useSceneMotion } from '../../hooks/useSceneMotion';
 import { OrbitControls, Line, PerspectiveCamera, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import {
@@ -48,6 +48,7 @@ function RigorousSurface() {
         return geo;
     }, []);
 
+    useEffect(() => () => geometry.dispose(), [geometry]);
     return (
         <group rotation={[-Math.PI / 2, 0, 0]}>
             <mesh geometry={geometry}>
@@ -122,16 +123,16 @@ function ArrowHelper({ dir, origin, len, color, width }: { dir: THREE.Vector3, o
 }
 
 function TangentPlane({ x, y, z, dx, dy }: { x: number, y: number, z: number, dx: number, dy: number }) {
-    const normal = new THREE.Vector3(-dx, 1, -dy).normalize();
     const planeRef = useRef<THREE.Mesh>(null);
 
-    useFrame(() => {
+    useLayoutEffect(() => {
+        const normal = new THREE.Vector3(-dx, 1, -dy).normalize();
         if (planeRef.current) {
             planeRef.current.position.set(x, z, y);
             planeRef.current.lookAt(x + normal.x, z + normal.y, y + normal.z);
             planeRef.current.position.addScaledVector(normal, 0.02);
         }
-    });
+    }, [x, y, z, dx, dy]);
 
     return (
         <mesh ref={planeRef}>
@@ -153,17 +154,19 @@ function RigorousAxes() {
 }
 
 function CameraController({ autoRotate, reset }: { autoRotate: boolean, reset: number }) {
+    const moving = useSceneMotion();
     const controlsRef = useRef<ComponentRef<typeof OrbitControls>>(null);
     useEffect(() => {
         if (reset > 0 && controlsRef.current) controlsRef.current.reset();
     }, [reset]);
-    return <OrbitControls ref={controlsRef} makeDefault autoRotate={autoRotate} autoRotateSpeed={2.0} enableDamping dampingFactor={0.05} />;
+    return <OrbitControls ref={controlsRef} makeDefault autoRotate={moving && autoRotate} autoRotateSpeed={2.0} enableDamping dampingFactor={0.05} />;
 }
 
 // --- Main Component ---
 
 export default function PartialDerivatives() {
     const { topicId } = useParams();
+    const moving = useSceneMotion();
     const [coords, setCoords] = useState({ x: 0.5, y: 0.5 });
     const [autoRotate, setAutoRotate] = useState(true);
     const [resetCount, setResetCount] = useState(0);
@@ -184,14 +187,14 @@ export default function PartialDerivatives() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>
                     <span>Coordinate X</span><span style={{ color: 'white' }}>{coords.x.toFixed(2)}</span>
                 </div>
-                <input type="range" min="-3" max="3" step="0.1" value={coords.x} onChange={(e) => { setCoords(p => ({ ...p, x: parseFloat(e.target.value) })); setAutoRotate(false); }} style={{ width: '100%', accentColor: '#6366f1', cursor: 'pointer' }} />
+                <input aria-label="Coordinate X" type="range" min="-3" max="3" step="0.1" value={coords.x} onChange={(e) => { setCoords(p => ({ ...p, x: parseFloat(e.target.value) })); setAutoRotate(false); }} style={{ width: '100%', accentColor: '#6366f1', cursor: 'pointer' }} />
             </div>
 
             <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>
                     <span>Coordinate Y</span><span style={{ color: 'white' }}>{coords.y.toFixed(2)}</span>
                 </div>
-                <input type="range" min="-3" max="3" step="0.1" value={coords.y} onChange={(e) => { setCoords(p => ({ ...p, y: parseFloat(e.target.value) })); setAutoRotate(false); }} style={{ width: '100%', accentColor: '#6366f1', cursor: 'pointer' }} />
+                <input aria-label="Coordinate Y" type="range" min="-3" max="3" step="0.1" value={coords.y} onChange={(e) => { setCoords(p => ({ ...p, y: parseFloat(e.target.value) })); setAutoRotate(false); }} style={{ width: '100%', accentColor: '#6366f1', cursor: 'pointer' }} />
             </div>
 
             <GlassPane style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderLeft: '2px solid #6366f1' }}>
@@ -214,7 +217,7 @@ export default function PartialDerivatives() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas dpr={[1, 1.5]} shadows aria-label="3D visualization of partial derivatives showing how functions change along individual axes">
+            <SceneCanvas frameloop={moving && autoRotate ? 'always' : 'demand'} dpr={[1, 1.5]} shadows aria-label="3D visualization of partial derivatives showing how functions change along individual axes">
                 <PerspectiveCamera makeDefault position={[8, 6, 8]} fov={50} />
                 <color attach="background" args={['#0b0f19']} />
                 <ambientLight intensity={0.5} />

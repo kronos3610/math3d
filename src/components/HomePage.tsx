@@ -1,15 +1,19 @@
 import { Link } from 'react-router-dom';
 import { topics } from '../data/topics';
 import { lazy, Suspense } from 'react';
+import SceneErrorBoundary from './SceneErrorBoundary';
+import SceneMotionControl from './SceneMotionControl';
+import { useSceneMotion } from '../hooks/useSceneMotion';
 
 const HeroScene = lazy(() => import('./HeroScene'));
 
 export default function HomePage() {
+    const moving = useSceneMotion();
     return (
         <>
             <div className="hero">
                 <div className="hero-canvas">
-                    <Suspense fallback={null}><HeroScene /></Suspense>
+                    {moving && <SceneErrorBoundary fallback={null}><Suspense fallback={null}><HeroScene /></Suspense></SceneErrorBoundary>}
                 </div>
                 <div className="hero-overlay" />
                 <div className="hero-content">
@@ -26,6 +30,7 @@ export default function HomePage() {
                         Explore mathematical concepts through interactive 3D visualizations.
                         From linear algebra to machine learning — see the math come alive.
                     </p>
+                    <SceneMotionControl />
                 </div>
             </div>
 

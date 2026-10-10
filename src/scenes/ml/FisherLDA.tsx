@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import Latex from '../../components/Latex';
+import { fisherClassStats as getStats, fisherDirection, pooledProjectionGaussian } from './legacyFisherMath';
 
 // ---------------------------------------------------------------------------
 // Data generation — fixed seed, computed once at module load
@@ -24,7 +25,7 @@ const seed = (s: number) => {
 const rng = seed(42);
 function randNorm(mu: number, sigma: number) {
     const u1 = rng(), u2 = rng();
-    return mu + sigma * Math.sqrt(-2 * Math.log(u1 + 0.001)) * Math.cos(2 * Math.PI * u2);
+    return mu + sigma * Math.sqrt(-2 * Math.log(Math.max(u1, Number.MIN_VALUE))) * Math.cos(2 * Math.PI * u2);
 }
 
 interface Pt { x: number; y: number }
@@ -32,36 +33,9 @@ interface Pt { x: number; y: number }
 const CLASS1: Pt[] = Array.from({ length: 30 }, () => ({ x: randNorm(160, 35), y: randNorm(250, 40) }));
 const CLASS2: Pt[] = Array.from({ length: 30 }, () => ({ x: randNorm(340, 35), y: randNorm(160, 40) }));
 
-function getStats(pts: Pt[]) {
-    let sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
-    const n = pts.length;
-    for (let i = 0; i < n; i++) {
-        const p = pts[i];
-        sx += p.x; sy += p.y;
-        sxx += p.x * p.x; syy += p.y * p.y; sxy += p.x * p.y;
-    }
-    const mx = sx / n, my = sy / n;
-    return {
-        m: { x: mx, y: my },
-        sxx: (sxx - (sx * sx) / n) / n,
-        syy: (syy - (sy * sy) / n) / n,
-        sxy: (sxy - (sx * sy) / n) / n,
-    };
-}
 const stats1 = getStats(CLASS1), stats2 = getStats(CLASS2);
 const m1 = stats1.m, m2 = stats2.m;
-const sw1xx = stats1.sxx, sw1yy = stats1.syy, sw1xy = stats1.sxy;
-const sw2xx = stats2.sxx, sw2yy = stats2.syy, sw2xy = stats2.sxy;
-const Sxx = sw1xx + sw2xx, Syy = sw1yy + sw2yy, Sxy = sw1xy + sw2xy;
-
-const det = Sxx * Syy - Sxy * Sxy;
-const invSxx = Syy / det, invSyy = Sxx / det, invSxy = -Sxy / det;
-
-const dx = m2.x - m1.x, dy = m2.y - m1.y;
-let wx = invSxx * dx + invSxy * dy;
-let wy = invSxy * dx + invSyy * dy;
-const wlen = Math.sqrt(wx * wx + wy * wy);
-wx /= wlen; wy /= wlen;
+const [wx, wy] = fisherDirection(stats1, stats2);
 
 function project(p: Pt) { return p.x * wx + p.y * wy; }
 
@@ -80,8 +54,11 @@ function get1DStats(vals: number[]) {
     return { mu, sig };
 }
 const pstats1 = get1DStats(proj1), pstats2 = get1DStats(proj2);
-const mu1p = pstats1.mu, mu2p = pstats2.mu, sig1p = pstats1.sig, sig2p = pstats2.sig;
-const y0 = (mu1p * sig2p + mu2p * sig1p) / (sig1p + sig2p);
+const mu1p = pstats1.mu, mu2p = pstats2.mu;
+// Equal class priors and a fitted common variance give a single midpoint cutoff.
+const fittedGaussian = pooledProjectionGaussian(pstats1, pstats2, proj1.length, proj2.length);
+const sig1p = fittedGaussian.sigma, sig2p = fittedGaussian.sigma;
+const y0 = fittedGaussian.threshold;
 
 // ---------------------------------------------------------------------------
 // Step definitions
@@ -102,26 +79,26 @@ const STEPS = [
     },
     {
         id: 2, label: 'Naïve Dir.',
-        title: 'Step 3 — Why Naïve (m₂ − m₁) Fails',
-        desc: 'Projecting along the raw (m₂ − m₁) direction (dashed) causes heavy shadow overlap because the data is tilted. We must account for within-class scatter S_W.',
-        formula: 'w_{\\text{naïve}} = m_2 - m_1 \\;\\rightarrow\\; \\text{overlapping shadows}',
+        title: 'Step 3 — Compare the Mean-Difference Direction',
+        desc: 'The dashed mean-difference direction ignores within-class scatter. It can already separate this example well; Fisher’s criterion also accounts for the measured spread.',
+        formula: 'w_{\\text{mean}} = m_2 - m_1',
     },
     {
         id: 3, label: "Fisher's w",
         title: "Step 4 — Fisher's Direction",
-        desc: "S_W⁻¹ 'whitens' the direction — it stretches/rotates (m₂ − m₁) to counteract internal class spread. The result maximises between-class to within-class variance.",
+        desc: "Multiplying the mean difference by S_W⁻¹ accounts for within-class scatter. The resulting direction maximizes Fisher’s ratio when S_W is positive definite; it is not itself a whitening transform of the data.",
         formula: 'w \\propto S_W^{-1}(m_2 - m_1) \\quad [\\text{PRML Eq. 4.30}]',
     },
     {
         id: 4, label: 'Projections',
         title: 'Step 5 — Project Onto w',
-        desc: "Every point is collapsed to a scalar y = wᵀx along the gold axis. The 1D shadows below show the classes are now much better separated.",
+        desc: "Every point is collapsed to a scalar y = wᵀx along the gold axis. The 1D shadows show the computed separation and within-class spread; the amount of improvement depends on the data.",
         formula: 'y = w^T x',
     },
     {
         id: 5, label: 'Gaussians',
         title: 'Step 6 — Fit Gaussians & Threshold y₀',
-        desc: 'Model each shadow as a 1D Gaussian. The threshold y₀ is where the two curves intersect — the optimal cutoff. Click the scatter plot to classify a new point!',
+        desc: 'Fit the projected means and one pooled variance, then assume equal class priors. The midpoint cutoff is where these equal-variance Gaussian densities intersect. This model assumption supplies a decision rule after the Fisher projection. Click the scatter plot, or use arrow keys and Enter, to classify a new point!',
         formula: 'y \\geq y_0 \\Rightarrow C_2 \\quad | \\quad y < y_0 \\Rightarrow C_1',
     },
 ];
@@ -421,7 +398,6 @@ export default function FisherLDA() {
     const { topicId } = useParams();
     const [step, setStep] = useState(0);
     const [testPoint, setTestPoint] = useState<Pt | null>(null);
-    const [animating, setAnimating] = useState(false);
 
     const scatterRef = useRef<HTMLCanvasElement>(null);
     const gaussRef = useRef<HTMLCanvasElement>(null);
@@ -468,9 +444,8 @@ export default function FisherLDA() {
 
     const goTo = (s: number) => {
         if (s < 0 || s >= STEPS.length) return;
-        setAnimating(true);
         setTestPoint(null);
-        setTimeout(() => { setStep(s); setAnimating(false); }, 150);
+        setStep(s);
     };
 
     const handleScatterClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -616,12 +591,24 @@ export default function FisherLDA() {
             <div style={{
                 width: '100%', height: '100%',
                 display: 'flex', flexDirection: 'column',
-                opacity: animating ? 0 : 1,
+                opacity: 1,
                 transition: 'opacity 0.15s',
             }}>
                 {/* Main scatter plot — fills available space */}
                 <canvas
                     ref={scatterRef}
+                    role="img" tabIndex={0}
+                    aria-label="Fisher projection of two point classes. At the classification step, arrow keys move a test point and Enter places it."
+                    onKeyDown={event => {
+                        if (step < 5) return;
+                        const moves: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+                        const move = moves[event.key];
+                        if (!move && event.key !== 'Enter' && event.key !== ' ') return;
+                        event.preventDefault();
+                        const previous = testPoint ?? { x: CHART_W / 2, y: CHART_H / 2 };
+                        const amount = event.shiftKey ? 20 : 5;
+                        setTestPoint({ x: Math.max(0, Math.min(CHART_W, previous.x + (move?.[0] ?? 0) * amount)), y: Math.max(0, Math.min(CHART_H, previous.y + (move?.[1] ?? 0) * amount)) });
+                    }}
                     style={{
                         flex: 1, minHeight: 0, display: 'block',
                         cursor: step >= 5 ? 'crosshair' : 'default',
@@ -631,6 +618,7 @@ export default function FisherLDA() {
                 {/* Gaussian chart — shown from step 4 */}
                 <canvas
                     ref={gaussRef}
+                    role="img" aria-label="Projected class distributions and fitted equal-variance Gaussian densities, with their midpoint classification threshold"
                     style={{
                         flexShrink: 0,
                         height: step >= 4 ? '28%' : '0',

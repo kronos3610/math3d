@@ -287,11 +287,12 @@ export function decodeExclusiveIndicators(bundle: readonly number[]): number[][]
     });
 }
 
-export function treeData(task: TreeTask, count: number, noise: number, seed: number): TreeSample[] {
+export function treeData(task: TreeTask, count: number, noise: number, seed: number, dimensions: 2 | 3 = 2): TreeSample[] {
     const random = seededRandom(seed);
     return Array.from({ length: count }, () => {
         const x = [random() * 2 - 1, random() * 2 - 1];
-        const signal = 0.8 * Math.sin(Math.PI * x[0]) + 0.5 * x[1] ** 2 + (x[0] > 0.25 && x[1] > 0 ? 0.5 : 0);
+        if (dimensions === 3) x.push(random() * 2 - 1);
+        const signal = 0.8 * Math.sin(Math.PI * x[0]) + 0.5 * x[1] ** 2 + (x[0] > 0.25 && x[1] > 0 ? 0.5 : 0) + (dimensions === 3 ? 1.2 * x[2] + 0.3 * x[0] * x[2] : 0);
         const standardNoise = sampleNormal(random);
         const target = task === 'classification' ? (signal + noise * standardNoise > 0.2 ? 1 : 0) : signal + noise * standardNoise;
         return { x, y: target };

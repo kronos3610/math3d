@@ -34,12 +34,12 @@ export default function LinearDiscriminants() {
     // Slider state (triggers re-renders for the control panel)
     const [wAngle, setWAngle] = useState(45);
     const [wMag, setWMag] = useState(80);
-    const [wBias, setWBias] = useState(-40);
+    const [wBias, setWBias] = useState(-3200);
 
     // Refs mirror the slider state so event handlers never close over stale values
     const wAngleRef = useRef(45);
     const wMagRef = useRef(80);
-    const wBiasRef = useRef(-40);
+    const wBiasRef = useRef(-3200);
 
     // Draggable test point (canvas-local coords, relative to centre)
     const testPointRef = useRef({ x: 80, y: -60 });
@@ -74,7 +74,7 @@ export default function LinearDiscriminants() {
 
         const angleRad = (wAngleRef.current * Math.PI) / 180;
         const mag = wMagRef.current;
-        const w0 = wBiasRef.current * mag;   // pixel-distance trick from original
+        const w0 = wBiasRef.current;
         const wx = Math.cos(angleRad) * mag;
         const wy = -Math.sin(angleRad) * mag;
 
@@ -195,7 +195,7 @@ export default function LinearDiscriminants() {
         const midY = (tp.y + footY) / 2;
         ctx.fillStyle = '#4ade80';
         ctx.font = '13px "system-ui", sans-serif';
-        ctx.fillText(`r = ${Math.abs(r).toFixed(1)}`, midX + 8, midY);
+        ctx.fillText(`r = ${r.toFixed(1)}`, midX + 8, midY);
 
         // Test point dot (colour = class)
         const ptColor = yv >= 0 ? '#22c55e' : '#f87171';
@@ -341,7 +341,7 @@ export default function LinearDiscriminants() {
                         {wAngle}°
                     </span>
                 </div>
-                <input type="range" min="0" max="360" step="1" value={wAngle}
+                <input aria-label="w Angle" type="range" min="0" max="360" step="1" value={wAngle}
                     onChange={e => setWAngle(Number(e.target.value))}
                     style={{ width: '100%' }} />
             </div>
@@ -356,7 +356,7 @@ export default function LinearDiscriminants() {
                         {wMag}
                     </span>
                 </div>
-                <input type="range" min="10" max="150" step="1" value={wMag}
+                <input aria-label="Magnitude" type="range" min="10" max="150" step="1" value={wMag}
                     onChange={e => setWMag(Number(e.target.value))}
                     style={{ width: '100%' }} />
             </div>
@@ -371,7 +371,7 @@ export default function LinearDiscriminants() {
                         {wBias}
                     </span>
                 </div>
-                <input type="range" min="-200" max="200" step="1" value={wBias}
+                <input aria-label="Bias" type="range" min="-20000" max="20000" step="100" value={wBias}
                     onChange={e => setWBias(Number(e.target.value))}
                     style={{ width: '100%' }} />
                 <p style={{ fontSize: '10px', color: '#475569', marginTop: '4px' }}>
@@ -400,10 +400,10 @@ export default function LinearDiscriminants() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: '#64748b' }}>
-                            Distance <Latex formula="r" />
+                            Signed distance <Latex formula="r" />
                         </span>
                         <span style={{ fontFamily: 'monospace', fontSize: '14px', color: '#4ade80', fontWeight: 700 }}>
-                            {Math.abs(rVal).toFixed(2)}
+                            {rVal.toFixed(2)}
                         </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -438,7 +438,7 @@ export default function LinearDiscriminants() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ width: 18, height: 2, borderTop: '2px dashed #475569', flexShrink: 0 }} />
-                    <span>Origin-to-boundary distance</span>
+                    <span>Signed boundary offset</span>
                 </div>
             </div>
 
@@ -455,7 +455,7 @@ export default function LinearDiscriminants() {
                 <b style={{ color: '#818cf8' }}>Key facts:</b>
                 <ul style={{ margin: '6px 0 0', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <li><b>w</b> is orthogonal to every vector in the boundary.</li>
-                    <li>Origin-to-boundary distance = <Latex formula="-w_0/\|\mathbf{w}\|" />.</li>
+                    <li>Signed boundary offset = <Latex formula="-w_0/\|\mathbf{w}\|" />.</li>
                     <li>Signed distance = <Latex formula="r = y(\mathbf{x})/\|\mathbf{w}\|" />.</li>
                 </ul>
             </div>
@@ -470,7 +470,7 @@ export default function LinearDiscriminants() {
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
             <canvas
                 ref={canvasRef}
-                tabIndex={0}
+                role="img" tabIndex={0}
                 aria-label="Linear discriminant boundary. Use arrow keys to move the test point; hold Shift for larger steps."
                 onKeyDown={event => {
                     const directions: Record<string, [number, number]> = {

@@ -38,6 +38,7 @@ function GaussianSurface({ mode }: { mode: 'probability' | 'likelihood' }) {
         return geo;
     }, []);
 
+    useEffect(() => () => geometry.dispose(), [geometry]);
     useEffect(() => {
         if (meshRef.current) {
             (meshRef.current.material as THREE.MeshPhongMaterial).color.setStyle(color);
@@ -90,6 +91,7 @@ function ThreeLine({ visible, points, color }: {
         return new THREE.Line(geo, mat);
     }, [points, color]);
 
+    useEffect(() => () => { lineObject.geometry.dispose(); (lineObject.material as THREE.Material).dispose(); }, [lineObject]);
     if (!visible) return null;
     return <primitive object={lineObject} />;
 }
@@ -108,6 +110,7 @@ function MLEMarker({ visible }: { visible: boolean }) {
         return new THREE.Line(geo, mat);
     }, [peakY]);
 
+    useEffect(() => () => { dropLine.geometry.dispose(); (dropLine.material as THREE.Material).dispose(); }, [dropLine]);
     if (!visible) return null;
     return (
         <group>
@@ -141,6 +144,7 @@ function AxisLine({ start, end, color }: { start: THREE.Vector3; end: THREE.Vect
         const mat = new THREE.LineBasicMaterial({ color });
         return new THREE.Line(geo, mat);
     }, [start, end, color]);
+    useEffect(() => () => { lineObject.geometry.dispose(); (lineObject.material as THREE.Material).dispose(); }, [lineObject]);
     return <primitive object={lineObject} />;
 }
 
@@ -175,7 +179,7 @@ function Axes() {
             </Html>
             <Html position={[0, 3.8, 0]} center>
                 <div style={{ color: '#4ade80', fontWeight: 700, fontSize: '13px', whiteSpace: 'nowrap', pointerEvents: 'none', textShadow: '0 0 8px rgba(0,0,0,0.9)' }}>
-                    Density
+                    5 × density
                 </div>
             </Html>
         </group>
@@ -308,6 +312,7 @@ export default function ProbabilityVsLikelihood() {
                 </div>
             </div>
 
+            <p style={{ fontSize: '12px', color: '#cbd5e1' }}>Vertical height is 5 × density. A density value is not the probability of a single continuous observation. The likelihood slice varies x while holding the observation fixed.</p>
             {/* Mode buttons */}
             <div>
                 <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>

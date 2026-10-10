@@ -43,11 +43,11 @@ test('pointer clicks map both features correctly and can place points on a verti
     fireEvent.click(screen.getByRole('button', { name: 'Clear points' }));
     const plot = screen.getByRole('application', { name: 'Interactive classification plot' });
     plot.getBoundingClientRect = () => ({ x: 0, y: 0, top: 0, left: 0, width: 800, height: 440, right: 800, bottom: 440, toJSON: () => ({}) });
-    fireEvent.click(plot, { clientX: 417, clientY: 207.5 });
+    fireEvent.click(plot, { clientX: 431, clientY: 207.5 });
     expect(screen.getByText(/Cursor: x₁ = 0.00, x₂ = 0.00/)).toBeDefined();
     expect(screen.getByText('1 (1 blue, 0 red)')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: /Red class C₂/ }));
-    fireEvent.click(plot, { clientX: 60, clientY: 207.5 });
+    fireEvent.click(plot, { clientX: 88, clientY: 207.5 });
     expect(screen.getByText(/Cursor: x₁ = -1.00, x₂ = 0.00/)).toBeDefined();
     expect(screen.getByText('2 (1 blue, 1 red)')).toBeDefined();
     expect(plot.innerHTML).not.toContain('Infinity');

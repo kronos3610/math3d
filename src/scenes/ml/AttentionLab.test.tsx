@@ -87,6 +87,8 @@ test('block stage and activation change the shown representations rather than on
 
 test('expert capacity removes dropped paths and does not offer an unrelated attention table', () => {
     renderLab('experts');
+    expect(screen.getByRole('img', { name: /renormalized top-k mixture weight, not the original router probability/ })).toBeDefined();
+    expect(screen.getByText('Top-k expert routes')).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Show weights' })).toBeNull();
     change('Experts per token','3','slider');
     change('Capacity factor','0.25','slider');
@@ -113,6 +115,8 @@ test('patch tokenization and shared embedding edits change the actual plotted in
     expect(points()[4].position[0]).toBe(2);
     expect(points()[0].position[0]).not.toBe(2);
     expect(Number(metric('Embedding norm'))).toBeCloseTo(Math.hypot(...points()[1].position),3);
+    expect(screen.getByText(/Every occurrence of that token shares this editable lookup entry/)).toBeDefined();
+    expect(screen.queryByText(/Softmax weights sum/)).toBeNull();
 });
 
 test('hybrid storage starts empty and grows only after the represented layer executes', () => {

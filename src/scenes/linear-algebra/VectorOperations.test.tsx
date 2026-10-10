@@ -29,6 +29,7 @@ afterEach(cleanup);
 
 test('labeled vector controls update the component-wise sum and reset it', () => {
     render(<MemoryRouter><VectorOperations /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Open scene panel' }));
     for (const vector of ['A', 'B']) {
         for (const axis of ['X', 'Y', 'Z']) {
             expect(screen.getByRole('slider', { name: `${vector} ${axis}` })).toBeDefined();
@@ -46,6 +47,7 @@ test('labeled vector controls update the component-wise sum and reset it', () =>
 
 test('cancellation remains readable when the resultant arrow has zero length', () => {
     render(<MemoryRouter><VectorOperations /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Open scene panel' }));
     for (const [axis, value] of [['X', '-2'], ['Y', '-1'], ['Z', '0']]) {
         fireEvent.change(screen.getByRole('slider', { name: `B ${axis}` }), { target: { value } });
     }

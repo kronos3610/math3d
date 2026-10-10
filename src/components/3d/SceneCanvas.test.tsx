@@ -34,6 +34,13 @@ test('a failed capability probe also exposes recovery and honors a custom fallba
     expect(state.mounts).toBe(0);
 });
 
+test('an explicit empty fallback keeps unsupported decorative graphics out of the page', () => {
+    vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue(null);
+    const { container } = render(<SceneCanvas fallback={null} aria-hidden="true" />);
+    expect(container.innerHTML).toBe('');
+    expect(screen.queryByRole('status')).toBeNull();
+});
+
 test('supported WebGL2 releases the disposable probe context before rendering the scene', () => {
     render(<SceneCanvas />);
     expect(HTMLCanvasElement.prototype.getContext).toHaveBeenCalledWith('webgl2', { antialias: false, powerPreference: 'low-power' });

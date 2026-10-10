@@ -4,8 +4,10 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { LabPlayback, LabRange, LabSelect, VisualLab } from './VisualLab';
+import SceneMotionControl from '../SceneMotionControl';
+import { setSceneMotion } from '../../hooks/useSceneMotion';
 
-afterEach(() => { cleanup(); vi.useRealTimers(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); localStorage.clear(); setSceneMotion(true); });
 
 function Controls() {
     const [rate, setRate] = useState(0.25);
@@ -71,6 +73,20 @@ function Playback({ onReset }: { onReset?: () => void }) {
     const [step, setStep] = useState(0);
     return <LabPlayback step={step} max={2} interval={100} onStep={setStep} onReset={onReset} />;
 }
+
+test('global pause cancels autoplay while manual Step remains available', () => {
+    vi.useFakeTimers();
+    render(<><SceneMotionControl /><Playback /></>);
+    fireEvent.click(screen.getByRole('button', { name: 'Play' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Pause motion' }));
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.getByText('Step 0 / 2')).toBeDefined();
+    expect((screen.getByRole('button', { name: 'Play' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Step' }));
+    expect(screen.getByText('Step 1 / 2')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Resume motion' }));
+    expect((screen.getByRole('button', { name: 'Play' }) as HTMLButtonElement).disabled).toBe(false);
+});
 
 test('playback advances only after Play, stops at the end, and restarts explicitly', () => {
     vi.useFakeTimers();

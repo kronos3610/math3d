@@ -1,4 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+@font-face {
+  font-family: 'Inter'; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono'; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url('@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2') format('woff2');
+}
 
 :root {
   /* Base palette */
@@ -697,6 +704,10 @@ body {
   height: 100%;
   isolation: isolate;
 }
+@media (min-width: 1101px) {
+  .scene-panel-is-open .scene-main { width: calc(100% - 380px); }
+}
+.scene-panel-toggle { width: auto; padding: 0 12px; gap: 8px; font: inherit; font-size: 12px; }
 
 .scene-nav {
   position: absolute;
@@ -1069,7 +1080,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, canvas:focus-visible
   scrollbar-color: var(--border-glass-hover) transparent;
 }
 .scene-panel-is-open .experiment-layout {
-  padding-right: 410px;
+  padding-right: 28px;
 }
 .experiment-content { max-width: 1160px; margin: 0 auto; }
 .experiment-header { margin-bottom: 24px; }
@@ -1529,7 +1540,7 @@ figure > .lab-chart + figcaption { margin-top: 12px; }
   scrollbar-width: thin;
   scrollbar-color: var(--border-glass-hover) transparent;
 }
-.scene-panel-is-open .linear-models-lab { padding-right: 410px; }
+.scene-panel-is-open .linear-models-lab { padding-right: 28px; }
 .linear-models-content { max-width: 1220px; margin: 0 auto; display: grid; gap: 16px; }
 .linear-models-header h1 { font-size: clamp(24px, 3vw, 36px); letter-spacing: -0.03em; margin: 8px 0 10px; }
 .linear-models-header > p:last-child { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
@@ -1575,7 +1586,7 @@ figure > .lab-chart + figcaption { margin-top: 12px; }
 .linear-models-plot {
   display: block;
   width: 100%;
-  height: clamp(330px, 48vh, 500px);
+  height: auto;
   border: 1px solid var(--border-glass-hover);
   border-radius: var(--radius-lg);
   background: var(--bg-primary);
@@ -1632,9 +1643,6 @@ figure > .lab-chart + figcaption { margin-top: 12px; }
 .bayes-visual-fallback svg { display: block; width: 100%; height: 100%; min-height: 0; }
 .bayes-fallback-labels { display: flex; justify-content: space-around; gap: 12px; font-size: 12px; line-height: 1.5; }
 .bayes-visual-fallback figcaption { color: var(--text-secondary); font-size: 11px; text-align: center; }
-@media (min-width: 1101px) {
-  .scene-panel-is-open .bayes-visual-header, .scene-panel-is-open .bayes-visual-stage, .scene-panel-is-open .bayes-visual-console { margin-right: 380px; }
-}
 @media (max-width: 768px) {
   .bayes-visual-lesson { padding-top: 72px; }
   .bayes-visual-header { padding: 0 16px 8px; gap: 10px; }
@@ -1738,9 +1746,6 @@ figure > .lab-chart + figcaption { margin-top: 12px; }
 .ml-family-jumps summary { min-height: 44px; padding: 10px 0; cursor: pointer; color: var(--text-primary); }
 .ml-family-jumps .ml-section-nav { margin: 12px 0 0; }
 .ml-family > h3 { scroll-margin-top: 100px; }
-@media (min-width: 1101px) {
-  .scene-panel-is-open .visual-lab { width: calc(100% - 380px); }
-}
 @media (max-width: 768px) {
   .visual-lab { padding-top: 72px; grid-template-rows: auto minmax(320px, 1fr) auto; }
   .visual-lab-header { padding: 0 14px 8px; gap: 8px; }
@@ -1755,4 +1760,58 @@ figure > .lab-chart + figcaption { margin-top: 12px; }
   .visual-lab-matrix { top: 42px; right: 8px; max-width: 58%; padding: 4px; }
   .visual-lab-matrix th, .visual-lab-matrix td { padding: 2px 3px; font-size: 9px; }
   .spatial-fallback svg text { font-size: 28px; }
+}
+
+/* Linked tree: each cut acts on a bounded input region. */
+.tree-space-layout { height: 100%; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.tree-rule-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 16px; font-size: 12px; color: var(--text-secondary); }
+.tree-rule-bar strong { color: var(--text-primary); }
+.tree-space-main { position: relative; min-height: 0; }
+.tree-linked-diagram { position: absolute; bottom: 48px; right: 10px; width: 230px; padding: 8px; border: 1px solid var(--border-glass-hover); border-radius: 12px; background: rgba(11,15,25,.94); }
+.tree-linked-diagram .tree-diagram { height: 125px; }
+.tree-linked-diagram .lab-button { width: 100%; }
+.tree-diagram { display: block; width: 100%; height: 100%; min-height: 0; }
+.tree-diagram-view { height: 100%; min-height: 0; display: flex; flex-direction: column; padding: 8px 14px; }
+.tree-diagram-view > .tree-diagram { flex: 1; }
+.tree-path-buttons { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; max-height: 80px; overflow-y: auto; }
+.tree-path-buttons button { border: 1px solid var(--border-glass-hover); border-radius: 6px; padding: 6px 9px; background: var(--bg-secondary); color: var(--text-primary); font: inherit; font-size: 12px; }
+.tree-diagram-node { cursor: pointer; }
+.tree-diagram-node:focus-visible { outline: 3px solid var(--color-ml); outline-offset: 3px; }
+.tree-diagram-hint { font-size: 12px; color: var(--text-secondary); padding: 4px 8px; }
+@media (max-width: 768px) {
+  .tree-rule-bar { font-size: 11px; gap: 4px 8px; padding: 6px 10px; }
+  .tree-linked-diagram { width: 150px; padding: 5px; bottom: 114px; right: 6px; }
+  .tree-linked-diagram .tree-diagram { height: 80px; }
+  .tree-linked-diagram .lab-button { font-size: 10px; min-height: 30px; padding: 4px; }
+}
+.scene-motion-control { pointer-events: auto; border: 1px solid var(--border-glass-hover); border-radius: 10px; min-height: 40px; padding: 8px 12px; background: var(--bg-secondary); color: var(--text-primary); font: inherit; font-size: 12px; cursor: pointer; }
+.scene-motion-control:focus-visible { outline: 2px solid var(--color-ml); outline-offset: 3px; }
+.hero-content .scene-motion-control { margin-top: 16px; }
+.visual-lab:has(.tree-space-layout) { grid-template-rows: auto minmax(480px, 1fr) auto; }
+@media (max-width: 768px) { .visual-lab:has(.tree-space-layout) { grid-template-rows: auto minmax(600px, 1fr) auto; } }
+@media (max-width: 768px) { .tree-linked-diagram .tree-diagram { display: none; } }
+.scene-icon-button.scene-panel-toggle { width: auto; padding: 0 12px; gap: 8px; }
+.tree-rule-bar { grid-row: 1; }
+.tree-space-main, .tree-diagram-view { grid-row: 2; }
+.tree-path-buttons { grid-row: 3; }
+.scene-main { display: flex; flex-direction: column; min-width: 0; }
+.scene-content { flex: 1; min-height: 0; position: relative; }
+.scene-brief { flex: none; padding: 74px 20px 8px; background: var(--bg-primary); }
+.scene-brief h1 { font-size: 18px; line-height: 1.4; margin: 0 0 4px; }
+.scene-brief p { max-width: 760px; font-size: 12px; line-height: 1.5; color: var(--text-secondary); margin: 0; }
+.scene-brief small { display: block; margin-top: 4px; font-size: 11px; color: var(--text-muted); }
+@media (max-width: 768px) { .scene-brief { padding: 72px 14px 8px; } .scene-brief h1 { font-size: 16px; } }
+.scene-motion-control { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+@media (max-width: 768px) {
+  .scene-nav .scene-motion-label { display: none; }
+  .scene-nav .scene-motion-control { width: 40px; padding: 8px; }
+}
+.linear-models-current { color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+@media (max-width: 768px) {
+  .experiment-layout .lab-chart text { font-size: 25px; }
+  .linear-models-plot text { font-size: 26px; }
+}
+@media (max-width: 768px) {
+  .linear-models-plot text, .experiment-layout .lab-chart[viewBox='0 0 800 350'] text { font-size: 28px; }
+  .linear-models-plot { height: auto; }
 }

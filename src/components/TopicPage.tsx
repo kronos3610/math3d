@@ -178,6 +178,7 @@ export default function TopicPage() {
         return (
             <div className="topic-page">
                 <h1 className="topic-page-title">Topic Not Found</h1>
+                <Link to="/" className="lab-button">Explore topics</Link>
                 <p className="topic-page-description">The requested topic does not exist.</p>
             </div>
         );

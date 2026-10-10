@@ -1,5 +1,5 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -7,12 +7,14 @@ import { useParams } from 'react-router-dom';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import Latex from '../../components/Latex';
+import { radialNormShrink } from './regularizationModel';
 
 // --- Math helpers ---
 
 function buildNormBallGeometry(pValue: number, radius: number): THREE.BufferGeometry {
+    if (pValue === Infinity) return new THREE.BoxGeometry(2 * radius, 2 * radius, 2 * radius);
     const detail = 40;
-    const effectiveP = pValue === Infinity ? 16 : pValue;
+    const effectiveP = pValue;
 
     const vertices: number[] = [];
     const indices: number[] = [];
@@ -59,19 +61,6 @@ function buildNormBallGeometry(pValue: number, radius: number): THREE.BufferGeom
     return geo;
 }
 
-function projectOntoNormBall(ols: THREE.Vector3, pValue: number, radius: number): THREE.Vector3 {
-    const effectiveP = pValue === Infinity ? 50 : pValue;
-    const norm = Math.pow(
-        Math.pow(Math.abs(ols.x), effectiveP) +
-        Math.pow(Math.abs(ols.y), effectiveP) +
-        Math.pow(Math.abs(ols.z), effectiveP),
-        1 / effectiveP,
-    );
-    if (norm <= radius) return ols.clone();
-    const scale = radius / norm;
-    return new THREE.Vector3(ols.x * scale, ols.y * scale, ols.z * scale);
-}
-
 // --- 3D sub-components ---
 
 function NormBall({ pValue, radius }: { pValue: number; radius: number }) {
@@ -79,6 +68,7 @@ function NormBall({ pValue, radius }: { pValue: number; radius: number }) {
         () => buildNormBallGeometry(pValue, radius),
         [pValue, radius],
     );
+    useEffect(() => () => geometry.dispose(), [geometry]);
 
     return (
         // key forces remount so flatShading change takes effect cleanly
@@ -101,11 +91,6 @@ function OLSMarker({ position }: { position: THREE.Vector3 }) {
             <mesh>
                 <sphereGeometry args={[0.08, 12, 12]} />
                 <meshBasicMaterial color="#facc15" />
-            </mesh>
-            {/* rotated sphere reads visually as an ellipsoid */}
-            <mesh rotation={[0.4, 0.7, 0.2]}>
-                <sphereGeometry args={[1, 24, 24]} />
-                <meshStandardMaterial color="#facc15" wireframe transparent opacity={0.2} />
             </mesh>
         </group>
     );
@@ -197,8 +182,8 @@ function Scene({ pValue, radius, olsVec, regVec }: {
 // --- Descriptions ---
 
 const DESC: Record<string, string> = {
-    '1': 'L1 (Lasso) creates sharp corners that often sit exactly on the axes, forcing coefficients to zero.',
-    '2': 'L2 (Ridge) is a smooth sphere that shrinks weights uniformly toward zero.',
+    '1': 'The L1 ball is an octahedron with vertices on the coordinate axes. A solved L1-constrained objective can have zero coefficients; this radial illustration does not create sparsity by itself.',
+    '2': 'The L2 ball is a sphere. This illustration scales all coordinates equally along a ray; a general ridge-regression fit need not shrink them equally.',
     '3': 'As p increases, the norm ball transitions from an octahedron toward a cube.',
     'Infinity': 'L-Infinity (Max) creates a box that caps the absolute maximum value of any weight.',
 };
@@ -222,7 +207,7 @@ export default function LpRegularization() {
     const [olsZ, setOlsZ] = useState(2.0);
 
     const olsVec = useMemo(() => new THREE.Vector3(olsX, olsY, olsZ), [olsX, olsY, olsZ]);
-    const regVec = useMemo(() => projectOntoNormBall(olsVec, pValue, radius), [olsVec, pValue, radius]);
+    const regVec = useMemo(() => new THREE.Vector3(...radialNormShrink([olsX, olsY, olsZ], pValue, radius)), [olsX, olsY, olsZ, pValue, radius]);
 
     const pLabel = pValue === Infinity ? '∞' : String(pValue);
     const descKey = pValue === Infinity ? 'Infinity' : String(pValue);
@@ -246,7 +231,7 @@ export default function LpRegularization() {
                     Lp Norm Balls
                 </h2>
                 <p style={{ color: '#94a3b8', fontSize: '11px' }}>
-                    Explore how different penalties shape the constraint region.
+                    Explore norm geometry and radial shrinkage of an input vector.
                 </p>
             </div>
 
@@ -258,9 +243,9 @@ export default function LpRegularization() {
                 padding: '12px',
                 textAlign: 'center',
             }}>
-                <Latex formula="\min_w \; \mathcal{L}(w) \quad \text{s.t.} \quad \|w\|_p \leq t" display />
+                <Latex formula="\{w : \|w\|_p \leq t\}" display />
                 <p style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-                    Minimize loss subject to Lp constraint
+                    The allowed norm ball; no loss function is optimized here.
                 </p>
             </div>
 
@@ -308,7 +293,7 @@ export default function LpRegularization() {
                     </span>
                 </div>
                 <input
-                    type="range" min="0.5" max="3.5" step="0.1"
+                    aria-label="Constraint Radius" type="range" min="0.5" max="3.5" step="0.1"
                     value={radius}
                     onChange={(e) => setRadius(parseFloat(e.target.value))}
                     style={{ width: '100%' }}
@@ -318,7 +303,7 @@ export default function LpRegularization() {
             {/* OLS position */}
             <div style={{ background: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px', border: '1px solid #1e293b', padding: '12px' }}>
                 <div style={{ color: '#facc15', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-                    OLS Solution (ŵ)
+                    Input vector (w)
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {olsSliders.map(({ label, val, set }) => (
@@ -328,7 +313,7 @@ export default function LpRegularization() {
                                 <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{val.toFixed(1)}</span>
                             </div>
                             <input
-                                type="range" min="0" max="5" step="0.1"
+                                aria-label={label} type="range" min="-5" max="5" step="0.1"
                                 value={val}
                                 onChange={(e) => set(parseFloat(e.target.value))}
                                 style={{ width: '100%' }}
@@ -347,8 +332,8 @@ export default function LpRegularization() {
                     <thead>
                         <tr style={{ color: '#64748b', borderBottom: '1px solid #1e293b' }}>
                             <th style={{ textAlign: 'left', paddingBottom: '6px', fontWeight: 600 }}>Weight</th>
-                            <th style={{ textAlign: 'left', paddingBottom: '6px', fontWeight: 600 }}>OLS (ŵ)</th>
-                            <th style={{ textAlign: 'left', paddingBottom: '6px', fontWeight: 600, color: '#34d399' }}>Regularized</th>
+                            <th style={{ textAlign: 'left', paddingBottom: '6px', fontWeight: 600 }}>Input</th>
+                            <th style={{ textAlign: 'left', paddingBottom: '6px', fontWeight: 600, color: '#34d399' }}>Radially shrunk</th>
                         </tr>
                     </thead>
                     <tbody style={{ fontFamily: 'monospace' }}>
@@ -371,7 +356,7 @@ export default function LpRegularization() {
                 </p>
                 <p style={{ marginBottom: '8px' }}>
                     <span style={{ color: '#34d399', fontWeight: 700 }}>Green Dot:</span>{' '}
-                    Regularized solution projected onto the norm ball.
+                    Radial shrinkage keeps the vector direction and reduces its norm to the budget when needed. This is not a nearest-point projection or a computed ridge/lasso optimum.
                 </p>
                 <p style={{ background: 'rgba(15,23,42,0.5)', padding: '10px', borderRadius: '6px', border: '1px solid #1e293b', fontStyle: 'italic', color: '#94a3b8', margin: 0 }}>
                     {DESC[descKey]}

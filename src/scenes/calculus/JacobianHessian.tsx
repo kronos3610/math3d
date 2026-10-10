@@ -1,18 +1,21 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useMemo, useRef, useEffect, type ComponentRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useSceneMotion } from '../../hooks/useSceneMotion';
 import { OrbitControls, Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { RotateCw, RefreshCcw } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
+import { Arrow } from '../../components/3d/Arrow';
+import { sineCosineSurface as f, sineCosineGradient as getJacobian, sineCosineHessian as getHessian, sineCosineTaylor } from './legacyCalculusMath';
 
 // ... (math functions skipped)
 
 // ...
 
 function CameraController({ autoRotate, reset }: { autoRotate: boolean, reset: number }) {
+    const moving = useSceneMotion();
     const controlsRef = useRef<ComponentRef<typeof OrbitControls>>(null);
 
     useEffect(() => {
@@ -21,28 +24,8 @@ function CameraController({ autoRotate, reset }: { autoRotate: boolean, reset: n
         }
     }, [reset]);
 
-    useFrame(() => {
-        if (autoRotate && controlsRef.current) {
-            controlsRef.current.update();
-        }
-    });
-
-    return <OrbitControls ref={controlsRef} makeDefault autoRotate={autoRotate} autoRotateSpeed={2.0} enableDamping dampingFactor={0.05} />;
+    return <OrbitControls ref={controlsRef} makeDefault autoRotate={moving && autoRotate} autoRotateSpeed={2.0} enableDamping dampingFactor={0.05} />;
 }
-
-// --- Mathematical Functions ---
-const f = (x: number, y: number) => Math.sin(x) * Math.cos(y);
-
-const getJacobian = (x: number, y: number) => {
-    return [Math.cos(x) * Math.cos(y), -Math.sin(x) * Math.sin(y)];
-};
-
-const getHessian = (x: number, y: number) => {
-    const h11 = -Math.sin(x) * Math.cos(y);
-    const h12 = -Math.cos(x) * Math.sin(y);
-    const h22 = -Math.sin(x) * Math.cos(y);
-    return [[h11, h12], [h12, h22]];
-};
 
 // --- Config ---
 const CONF = {
@@ -70,6 +53,7 @@ function MainSurface() {
         return geo;
     }, []);
 
+    useEffect(() => () => geometry.dispose(), [geometry]);
     return (
         <group rotation={[-Math.PI / 2, 0, 0]}>
             <mesh geometry={geometry}>
@@ -89,108 +73,26 @@ function MainSurface() {
 }
 
 function HessianSurface({ x, y, visible }: { x: number, y: number, visible: boolean }) {
-    const meshRef = useRef<THREE.Mesh>(null);
-    const z = f(x, y);
-    const [dfdx, dfdy] = getJacobian(x, y);
-    const h = getHessian(x, y);
-
-    useFrame(() => {
-        if (meshRef.current && visible) {
-            const geo = meshRef.current.geometry;
-            const pos = geo.attributes.position;
-
-            // The plane geometry is created at (0,0,0). We need to transform local coordinates to world
-            // However, the mesh itself acts as a local coordinate system centered at (x,0,y) if we move it there.
-            // But here we'll compute vertex positions relative to the center point (0,0) of the plane
-
-            for (let i = 0; i < pos.count; i++) {
-                // Local coordinates typically range from -0.75 to 0.75 for a 1.5 size plane
-                // We need to fetch the original X/Y from the geometry.
-                // Since we are modifying position directly, we should be careful. 
-                // Better approach: Re-compute z based on dx, dy offset from center.
-
-                // Let's assume the plane is standard PlaneGeometry in XY plane (before rotation).
-                // Actually, logic is easier if we compute world positions.
-
-                // Let's reconstruct based on a fresh geometry or attributes each frame? No, expensive.
-                // We'll trust the initial x/y coordinates of the plane geometry as local offsets (dx, dy).
-
-                // WAIT: The user code iterates over vertices of hGeo.
-                // let dx = hPos[i]; let dy = hPos[i+1];
-                // linearPart = dfdx * dx + dfdy * dy;
-                // quadraticPart = ...
-                // hPos[i+2] = z + linearPart + quadraticPart + 0.01;
-
-                const dx_local = pos.getX(i);
-                const dy_local = pos.getY(i);
-
-                const linearPart = dfdx * dx_local + dfdy * dy_local;
-                const quadraticPart = 0.5 * (h[0][0] * dx_local * dx_local + 2 * h[0][1] * dx_local * dy_local + h[1][1] * dy_local * dy_local);
-
-                // We want the surface to be positioned at (x, z, y).
-                // But passing z in the vertex shader or here?
-                // The mesh is positioned at [x, 0, y] in the user code, and z is calculated absolutely.
-                // Let's follow user: mesh at (x, 0, y), vertices set to z_global.
-
-                // Actually, easier: Mesh at (x, 0, y). 
-                // Local Vertex Z = z_center + linear + quadratic.
-                // Wait, if mesh is at (x,0,y), then local y (which becomes world z after rotation) is vertical.
-                // User code: rotation.x = -Math.PI/2. So local (x, y, z) -> world (x, z, -y)? No.
-                // PlaneGeometry is in XY. Rotated -90deg X -> plane is in XZ.
-                // Local X -> World X. Local Y -> World -Z. Local Z -> World Y.
-                // Let's stick to standard R3F: PlaneGeometry is usually used for floors.
-                // Let's compute z offset.
-
-                const z_val = z + linearPart + quadraticPart + 0.05; // +0.05 to prevent Z-fight
-                pos.setZ(i, z_val);
-            }
-            pos.needsUpdate = true;
-            geo.computeVertexNormals();
+    const geometry = useMemo(() => {
+        const result = new THREE.PlaneGeometry(1.5, 1.5, 20, 20);
+        const positions = result.attributes.position;
+        for (let index = 0; index < positions.count; index++) {
+            const dx = positions.getX(index); const dy = positions.getY(index);
+            positions.setXYZ(index, dx, sineCosineTaylor(x, y, dx, dy) + 0.05, dy);
         }
-    });
-
-    return (
-        <group position={[x, 0, y]} rotation={[-Math.PI / 2, 0, 0]} visible={visible}>
-            {/* Use a fresh geometry each mount? Or static? Static is fine if we update it. */}
-            <mesh ref={meshRef}>
-                <planeGeometry args={[1.5, 1.5, 20, 20]} />
-                <meshPhongMaterial
-                    color={CONF.colorHessian}
-                    side={THREE.DoubleSide}
-                    transparent
-                    opacity={0.5}
-                    shininess={30}
-                />
-            </mesh>
-        </group>
-    );
+        result.computeVertexNormals();
+        return result;
+    }, [x, y]);
+    useEffect(() => () => geometry.dispose(), [geometry]);
+    return <mesh position={[x, 0, y]} geometry={geometry} visible={visible}>
+        <meshPhongMaterial color={CONF.colorHessian} side={THREE.DoubleSide} transparent opacity={0.5} shininess={30} />
+    </mesh>;
 }
 
 function JacobianVector({ x, y, visible }: { x: number, y: number, visible: boolean }) {
     if (!visible) return null;
-
-    const z = f(x, y);
-    const [dfdx, dfdy] = getJacobian(x, y);
-    const dir = new THREE.Vector3(dfdx, 0, dfdy).normalize();
-    const len = Math.sqrt(dfdx * dfdx + dfdy * dfdy);
-    const origin = new THREE.Vector3(x, z + 0.05, y); // Lift slightly
-
-    if (len < 0.01) return null;
-
-    return (
-        <group position={origin} rotation={new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir))}>
-            {/* Arrow Shaft */}
-            <mesh position={[0, (len * 0.8 + 0.2) / 2, 0]}>
-                <cylinderGeometry args={[0.05, 0.05, len * 0.8 + 0.2, 8]} />
-                <meshBasicMaterial color={CONF.colorJacobian} toneMapped={false} />
-            </mesh>
-            {/* Arrow Head */}
-            <mesh position={[0, len * 0.8 + 0.2, 0]}>
-                <coneGeometry args={[0.15, 0.4, 16]} />
-                <meshBasicMaterial color={CONF.colorJacobian} toneMapped={false} />
-            </mesh>
-        </group>
-    );
+    const [dx, dy] = getJacobian(x, y);
+    return <Arrow direction={[dx, 0, dy]} origin={[x, f(x, y) + 0.05, y]} color={CONF.colorJacobian} />;
 }
 
 function Axes() {
@@ -233,6 +135,7 @@ function PointMarker({ x, y }: { x: number, y: number }) {
 
 export default function JacobianHessian() {
     const { topicId } = useParams();
+    const moving = useSceneMotion();
     const [coords, setCoords] = useState({ x: 0.5, y: 0.5 });
     const [showJacobian, setShowJacobian] = useState(true);
     const [showHessian, setShowHessian] = useState(true);
@@ -264,7 +167,7 @@ export default function JacobianHessian() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '4px' }}>
                     <span>X: {coords.x.toFixed(2)}</span>
                 </div>
-                <input
+                <input aria-label="Coordinate X"
                     type="range" min="-3" max="3" step="0.1" value={coords.x}
                     onChange={e => setCoords(p => ({ ...p, x: parseFloat(e.target.value) }))}
                     style={{ width: '100%', accentColor: '#6366f1' }}
@@ -272,7 +175,7 @@ export default function JacobianHessian() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginTop: '8px', marginBottom: '4px' }}>
                     <span>Y: {coords.y.toFixed(2)}</span>
                 </div>
-                <input
+                <input aria-label="Coordinate Y"
                     type="range" min="-3" max="3" step="0.1" value={coords.y}
                     onChange={e => setCoords(p => ({ ...p, y: parseFloat(e.target.value) }))}
                     style={{ width: '100%', accentColor: '#6366f1' }}
@@ -305,7 +208,7 @@ export default function JacobianHessian() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas dpr={[1, 1.5]} shadows camera={{ position: [5, 5, 5], fov: 75 }} aria-label="3D visualization comparing Jacobian gradient and Hessian curvature on a surface">
+            <SceneCanvas frameloop={moving && autoRotate ? 'always' : 'demand'} dpr={[1, 1.5]} shadows camera={{ position: [5, 5, 5], fov: 75 }} aria-label="3D visualization comparing Jacobian gradient and Hessian curvature on a surface">
                 <color attach="background" args={['#0b0f19']} />
 
                 <ambientLight intensity={0.6} />

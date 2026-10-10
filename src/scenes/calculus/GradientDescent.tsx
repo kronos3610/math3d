@@ -1,5 +1,5 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -29,6 +29,7 @@ function LossSurface() {
         return geo;
     }, []);
 
+    useEffect(() => () => geometry.dispose(), [geometry]);
     return (
         <group rotation={[-Math.PI / 2, 0, 0]}>
             <mesh geometry={geometry}>
@@ -81,7 +82,7 @@ export default function GradientDescent() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas camera={{ position: [5, 5, 5], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of gradient descent on a quadratic loss surface">
+            <SceneCanvas frameloop="always" camera={{ position: [5, 5, 5], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of gradient descent on a quadratic loss surface">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 10, 5]} intensity={1.0} />
                 <pointLight position={[-3, 5, 3]} intensity={0.5} color="#00cec9" />
@@ -90,7 +91,7 @@ export default function GradientDescent() {
                 <DescentTrajectory key={resetCount} path={descentPath} loss={calculateLoss} playing={isPlaying} color="#fdcb6e" />
 
                 <gridHelper args={[10, 20, '#475569', '#1e293b']} position={[0, -0.01, 0]} />
-                <OrbitControls enableDamping dampingFactor={0.05} />
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 5, 15]} />
                 <color attach="background" args={['#0b0f19']} />
             </SceneCanvas>

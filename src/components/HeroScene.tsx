@@ -90,7 +90,7 @@ function Particles() {
 
 export default function HeroScene() {
     return (
-        <SceneCanvas aria-label="Decorative animated mathematical shapes" camera={{ position: [0, 0, 5], fov: 60 }}>
+        <SceneCanvas aria-hidden="true" fallback={null} frameloop="always" camera={{ position: [0, 0, 5], fov: 60 }}>
             <ambientLight intensity={0.3} />
             <directionalLight position={[5, 5, 5]} intensity={1} />
             <pointLight position={[-5, -5, 5]} intensity={0.5} color="#6c5ce7" />

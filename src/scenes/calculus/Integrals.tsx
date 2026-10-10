@@ -1,6 +1,6 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useSceneFrame as useFrame } from '../../hooks/useSceneFrame';
 import { OrbitControls } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
 import * as THREE from 'three';
@@ -16,7 +16,7 @@ function IntegralBars() {
         groupRef.current.children.forEach((child, i) => {
             if (child instanceof THREE.Mesh) {
                 const x = (i / barCount) * 4 - 2;
-                const height = Math.max(0.05, Math.sin(x + t * 0.5) * Math.cos(x * 0.5) + 1);
+                const height = Math.max(0, Math.sin(x + t * 0.5) * Math.cos(x * 0.5) + 1);
                 child.scale.y = height;
                 child.position.y = height / 2;
             }
@@ -28,8 +28,10 @@ function IntegralBars() {
         const width = 4 / barCount;
         for (let i = 0; i < barCount; i++) {
             const x = (i / barCount) * 4 - 2 + width / 2;
+            const sampleX = (i / barCount) * 4 - 2;
+            const height = Math.sin(sampleX) * Math.cos(sampleX * 0.5) + 1;
             result.push(
-                <mesh key={i} position={[x, 0.5, 0]}>
+                <mesh key={i} position={[x, height / 2, 0]} scale={[1, height, 1]}>
                     <boxGeometry args={[width * 0.9, 1, 0.6]} />
                     <meshStandardMaterial
                         color={`hsl(${175 + i * 3}, 70%, 50%)`}
@@ -69,7 +71,7 @@ export default function Integrals() {
                         <span style={{ color: '#00cec9' }}>Cyan bars</span>: Rectangular approximations
                     </p>
                     <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#64748b' }}>
-                        Integration finds the exact area as bar width approaches zero
+                        The 24 bars use left-endpoint heights; animation changes the function, not the partition count. Use Riemann Integral to refine a partition and compare the limiting area.
                     </p>
                 </div>
             </div>
@@ -81,12 +83,12 @@ export default function Integrals() {
             backUrl={`/${topicId || 'calculus'}`}
             controls={controls}
         >
-            <SceneCanvas camera={{ position: [3, 3, 4], fov: 50 }} aria-label="3D animated Riemann sum bars approximating area under a curve">
+            <SceneCanvas frameloop="always" camera={{ position: [3, 3, 4], fov: 50 }} aria-label="3D animated Riemann sum bars approximating area under a curve">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 5, 5]} intensity={0.8} />
                 <pointLight position={[-3, 2, 3]} intensity={0.5} color="#00cec9" />
                 <IntegralBars />
-                <OrbitControls enableDamping dampingFactor={0.05} />
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#050508', 5, 15]} />
             </SceneCanvas>
         </SceneContainer>

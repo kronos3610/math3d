@@ -1,15 +1,17 @@
 // @vitest-environment jsdom
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { SceneContainer } from './SceneContainer';
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 test('scene tabs support keyboard navigation and expose the selected panel', () => {
     render(<MemoryRouter><SceneContainer controls={<p>Settings</p>} explanation={<p>Explanation text</p>}>
         <div>Scene</div>
     </SceneContainer></MemoryRouter>);
+    expect(screen.queryByRole('tab')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Open scene panel' }));
     const controls = screen.getByRole('tab', { name: 'Controls' });
     controls.focus();
     fireEvent.keyDown(controls, { key: 'ArrowRight' });
@@ -52,13 +54,31 @@ test('invalid learning path does not open a lab drawer', () => {
     expect(screen.getByRole('tab', { name: 'Learn' })).toBeDefined();
 });
 
+test('a mobile learning path retains its navigation while opening on the visible experiment', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(max-width: 768px)', addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    render(<MemoryRouter initialEntries={['/ml/signal-to-noise?path=generalization']}><Routes>
+        <Route path="/:topicId/:subtopicId" element={<SceneContainer defaultPanel="closed" explanation={<p>Detail</p>}><p>Visible experiment</p></SceneContainer>} />
+    </Routes></MemoryRouter>);
+    expect(screen.queryByRole('tab')).toBeNull();
+    expect(screen.getByText('Visible experiment')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Open scene panel' }));
+    expect(screen.getByRole('tab', { name: 'Learn' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('navigation', { name: 'Previous and next lessons' })).toBeDefined();
+    fireEvent.keyDown(screen.getByRole('tabpanel'), { key: 'Escape' });
+    expect(screen.queryByRole('tabpanel')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open scene panel' }));
+});
+
 test('a lesson shows a brief before its controls and exposes its complete guide by keyboard', () => {
     render(<MemoryRouter initialEntries={['/linear-algebra/vector-operations']}>
         <Routes><Route path="/:topicId/:subtopicId" element={
             <SceneContainer controls={<label>Example setting<input type="range" /></label>}><div>Scene</div></SceneContainer>
         } /></Routes>
     </MemoryRouter>);
-    expect(screen.getByText(/Vector addition combines two displacements/)).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Vector Operations' })).toBeDefined();
+    expect(screen.queryByRole('slider')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Open scene panel' }));
+    expect(screen.getAllByText(/Vector addition combines two displacements/)).toHaveLength(2);
     expect(screen.getByRole('slider', { name: 'Example setting' })).toBeDefined();
     const controls = screen.getByRole('tab', { name: 'Controls' });
     controls.focus();

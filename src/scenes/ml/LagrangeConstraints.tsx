@@ -1,54 +1,18 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { useState, useMemo, useEffect } from 'react';
+import { Html, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useParams } from 'react-router-dom';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import Latex from '../../components/Latex';
+import { QUADRATIC_CENTER, QUADRATIC_CURVATURE, quadraticWeightLoss, solveBudgetQuadratic } from './regularizationModel';
 
-// The ideal unconstrained solution (OLS optimum)
-const OLS_POS = new THREE.Vector3(3.0, 2.5, 2.0);
+// The chosen diagonal quadratic has this unconstrained minimum.
+const OLS_POS = new THREE.Vector3(...QUADRATIC_CENTER);
 const ORIGIN = new THREE.Vector3(0, 0, 0);
 
-function computeSolutionPoint(mode: 'ridge' | 'lasso', budgetT: number): THREE.Vector3 {
-    const dir = OLS_POS.clone().normalize();
-
-    if (mode === 'ridge') {
-        return dir.multiplyScalar(budgetT);
-    }
-
-    // L1: project onto the octahedron surface
-    const absSum = Math.abs(dir.x) + Math.abs(dir.y) + Math.abs(dir.z);
-    const intersect = dir.multiplyScalar(budgetT / absSum);
-
-    // Snap to axis if one weight dominates (shows lasso sparsity)
-    const wx = Math.abs(intersect.x);
-    const wy = Math.abs(intersect.y);
-    const wz = Math.abs(intersect.z);
-    const maxW = Math.max(wx, wy, wz);
-
-    if (maxW / budgetT > 0.75) {
-        if (wx === maxW) return new THREE.Vector3(Math.sign(intersect.x) * budgetT, 0, 0);
-        if (wy === maxW) return new THREE.Vector3(0, Math.sign(intersect.y) * budgetT, 0);
-        return new THREE.Vector3(0, 0, Math.sign(intersect.z) * budgetT);
-    }
-    return intersect;
-}
-
 // --- Sub-components ---
-
-function AutoRotateCamera() {
-    useFrame((state) => {
-        const t = state.clock.elapsedTime * 0.15;
-        state.camera.position.x = 12 * Math.cos(t);
-        state.camera.position.z = 12 * Math.sin(t);
-        state.camera.position.y = 8;
-        state.camera.lookAt(0, 0, 0);
-    });
-    return null;
-}
 
 function ConstraintShape({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: number }) {
     const color = mode === 'ridge' ? '#10b981' : '#f59e0b';
@@ -60,6 +24,7 @@ function ConstraintShape({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: 
             : new THREE.OctahedronGeometry(budgetT, 0);
         return { geometry: geo, edges: new THREE.EdgesGeometry(geo) };
     }, [mode, budgetT]);
+    useEffect(() => () => { geometry.dispose(); edges.dispose(); }, [geometry, edges]);
 
     return (
         <group>
@@ -88,12 +53,15 @@ function DashedLine({ start, end }: { start: THREE.Vector3; end: THREE.Vector3 }
         line.computeLineDistances();
         return line;
     }, [start, end]);
+    useEffect(() => () => { lineObj.geometry.dispose(); (lineObj.material as THREE.Material).dispose(); }, [lineObj]);
     return <primitive object={lineObj} />;
 }
 
 function Scene({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: number }) {
-    const solutionPoint = useMemo(() => computeSolutionPoint(mode, budgetT), [mode, budgetT]);
-    const dist = OLS_POS.distanceTo(solutionPoint);
+    const solution = useMemo(() => solveBudgetQuadratic(mode, budgetT), [mode, budgetT]);
+    const solutionPoint = useMemo(() => new THREE.Vector3(...solution), [solution]);
+    const loss = quadraticWeightLoss(solution);
+    const contourScale = QUADRATIC_CURVATURE.map(value => Math.sqrt(2 * loss / value)) as [number, number, number];
 
     return (
         <>
@@ -101,7 +69,7 @@ function Scene({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: number }) 
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
 
-            <AutoRotateCamera />
+            <OrbitControls makeDefault />
 
             <gridHelper args={[10, 10, 0x334155, 0x1e293b]} />
             <axesHelper args={[6]} />
@@ -130,7 +98,7 @@ function Scene({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: number }) 
             </mesh>
             <Html position={[OLS_POS.x, OLS_POS.y + 0.45, OLS_POS.z]} center>
                 <div style={{ color: '#60a5fa', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', background: 'rgba(15,23,42,0.75)', borderRadius: '4px', padding: '2px 6px', pointerEvents: 'none' }}>
-                    Best Unconstrained Fit
+                    Unconstrained minimum
                 </div>
             </Html>
 
@@ -138,10 +106,10 @@ function Scene({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: number }) 
             <ConstraintShape mode={mode} budgetT={budgetT} />
 
             {/* Error contour ellipsoid centered at OLS */}
-            <mesh position={OLS_POS} scale={[dist * 1.2, dist * 1.0, dist * 0.8]}>
+            {loss > 1e-12 && <mesh position={OLS_POS} scale={contourScale}>
                 <sphereGeometry args={[1, 32, 32]} />
                 <meshPhongMaterial color="#3b82f6" wireframe transparent opacity={0.15} />
-            </mesh>
+            </mesh>}
 
             {/* Constrained solution (red dot) */}
             <mesh position={solutionPoint}>
@@ -162,9 +130,11 @@ export default function LagrangeConstraints() {
     const { topicId } = useParams<{ topicId: string }>();
     const [mode, setMode] = useState<'ridge' | 'lasso'>('ridge');
     const [budgetT, setBudgetT] = useState(1.5);
+    const solution = useMemo(() => solveBudgetQuadratic(mode, budgetT), [mode, budgetT]);
+    const loss = quadraticWeightLoss(solution);
 
     const latexEq = mode === 'ridge'
-        ? `\\beta_1^2 + \\beta_2^2 + \\beta_3^2 \\leq ${budgetT.toFixed(2)}`
+        ? `\\beta_1^2 + \\beta_2^2 + \\beta_3^2 \\leq ${(budgetT ** 2).toFixed(2)}`
         : `|\\beta_1| + |\\beta_2| + |\\beta_3| \\leq ${budgetT.toFixed(2)}`;
 
     const shapeColor = mode === 'ridge' ? '#34d399' : '#fbbf24';
@@ -178,7 +148,7 @@ export default function LagrangeConstraints() {
                     Ridge & Lasso Constraints
                 </h2>
                 <p style={{ color: '#94a3b8', fontSize: '11px' }}>
-                    The budget metaphor for regularization.
+                    Minimize a stated quadratic error under a weight budget.
                 </p>
             </div>
 
@@ -228,9 +198,9 @@ export default function LagrangeConstraints() {
                     </span>
                 </div>
                 <input
-                    type="range"
+                    type="range" aria-label="Allowed Budget"
                     min="0.1"
-                    max="4"
+                    max="8"
                     step="0.01"
                     value={budgetT}
                     onChange={(e) => setBudgetT(parseFloat(e.target.value))}
@@ -242,7 +212,7 @@ export default function LagrangeConstraints() {
             <div style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '8px', border: '1px solid #1e293b', padding: '12px', fontSize: '12px', lineHeight: 1.7, display: 'flex', flexDirection: 'column', gap: '10px', color: '#cbd5e1' }}>
                 <div>
                     <strong style={{ color: '#93c5fd' }}>Blue Mesh:</strong>{' '}
-                    A map of model Error. Every point on this bubble has the exact same error. The center is the absolute lowest error possible.
+                    A level set of the computed quadratic loss. Every point on this ellipsoid has the same loss; its center is the unconstrained minimum.
                 </div>
                 <div>
                     <strong style={{ color: shapeColor }}>Feasible Area:</strong>{' '}
@@ -253,9 +223,12 @@ export default function LagrangeConstraints() {
                 </div>
                 <div>
                     <strong style={{ color: '#f87171' }}>Red Dot:</strong>{' '}
-                    The best compromise — the exact point where the Error bubble first touches the Budget shape. We can't afford to go any closer!
+                    The computed constrained minimum. When the budget is active, the loss ellipsoid touches the allowed shape here. With enough budget, the dot reaches the unconstrained minimum.
                 </div>
             </div>
+
+            <p style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: 1.7 }}>This example uses L(β) = ½[(β₁−3)² + 2(β₂−2.5)² + 4(β₃−2)²]. Optimality conditions determine the minimum. L1 can set coordinates to exactly zero; L2 generally shrinks them unequally.</p>
+            <p aria-live="polite" style={{ fontSize: '12px', color: '#cbd5e1' }}>Computed weights: ({solution.map(value => value.toFixed(3)).join(', ')}). Loss: {loss.toFixed(3)}. Zero coordinates: {solution.filter(value => value === 0).length}.</p>
 
             {/* Legend */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#cbd5e1' }}>
@@ -281,7 +254,7 @@ export default function LagrangeConstraints() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
-            <SceneCanvas dpr={[1, 1.5]} camera={{ position: [10, 8, 12], fov: 50 }} aria-label="3D visualization of Ridge and Lasso regularization constraints on model weights">
+            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} camera={{ position: [10, 8, 12], fov: 50 }} aria-label="Computed minimum of a diagonal quadratic under L2 or L1 weight budgets, with its true loss contour">
                 <Scene mode={mode} budgetT={budgetT} />
             </SceneCanvas>
         </SceneContainer>
