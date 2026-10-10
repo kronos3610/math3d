@@ -100,3 +100,15 @@ test('nearby annotations are readable as a marked group without moving the model
     expect(circles).toHaveLength(3);
     expect(Number(circles[1].getAttribute('cx'))).not.toBe(Number(circles[0].getAttribute('cx')));
 });
+test('fallback groups annotations that overlap in projection even when separated in 3D', () => {
+    const { container } = render(<SpatialScene description="Distinct vectors at the same projected location" points={[
+        {position:[0,0,0],label:'First vector'},
+        {position:[-25 / 48,-15 / 48,1],label:'Second vector'},
+    ]} />);
+    const circles = container.querySelectorAll('circle');
+    expect(Number(circles[0].getAttribute('cx'))).toBeCloseTo(Number(circles[1].getAttribute('cx')),10);
+    expect(Number(circles[0].getAttribute('cy'))).toBeCloseTo(Number(circles[1].getAttribute('cy')),10);
+    const annotations = container.querySelectorAll('svg > text');
+    expect(annotations).toHaveLength(1);
+    expect(annotations[0].textContent).toBe('Nearby: First vector / Second vector');
+});

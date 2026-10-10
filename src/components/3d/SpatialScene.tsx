@@ -95,8 +95,8 @@ function mergeLabels(points: readonly SpatialPoint[], measure: (point: LabVector
         });
         if (index < 0) labels.push(point);
         else {
-            const previous = labels[index]; const other = measure(previous.position);
-            const nearby = position.some((value,axis) => Math.abs(value - other[axis]) > 1e-6);
+            const previous = labels[index];
+            const nearby = point.position.some((value,axis) => Math.abs(value - previous.position[axis]) > 1e-6);
             labels[index] = { ...previous, label:`${nearby && !previous.label!.startsWith('Nearby:') ? 'Nearby: ' : ''}${previous.label} / ${point.label}` };
         }
     }
@@ -160,8 +160,12 @@ function SpatialFallback({ props }: { props: SpatialSceneProps }) {
         {(props.vectors ?? []).map((vector, index) => <path key={index} d={pathData([vector.from, vector.to])} fill="none" stroke={vector.color ?? COLORS.line} strokeWidth={3} markerEnd={`url(#${id}-arrow)`} />)}
         {(props.points ?? []).map((point, index) => <g key={index}><circle cx={project(point.position)[0]} cy={project(point.position)[1]} r={Math.max(3, (point.radius ?? 0.09) * 35)} fill={point.color ?? COLORS.point} />
             </g>)}
-        {mergeLabels([...(props.points ?? []),...(props.vectors ?? []).map(vector => ({position:vector.to,label:vector.label,color:vector.color})),...(props.boxes ?? []).map(box => ({position:box.position,label:box.label,color:box.color}))],transform.map).map((point,index) => {
-            const lines = point.label!.split(' / '); return <text key={index} x={project(point.position)[0]} y={project(point.position)[1] - 9 - (lines.length - 1) * 32} textAnchor="middle" fill={point.color ?? 'var(--text-primary)'} fontSize={12}>{lines.map((line,i) => <tspan key={i} x={project(point.position)[0]} dy={i === 0 ? 0 : 32}>{i > 0 ? ' ' : ''}{line}{i < lines.length - 1 ? ' /' : ''}</tspan>)}</text>;
+        {mergeLabels([...(props.points ?? []),...(props.vectors ?? []).map(vector => ({position:vector.to,label:vector.label,color:vector.color})),...(props.boxes ?? []).map(box => ({position:box.position,label:box.label,color:box.color}))],point => {
+            const [x,y] = project(point); return [x / 240,y / 240,0];
+        }).map((point,index) => {
+            const lines = point.label!.split(' / '); const [x,y] = project(point.position);
+            const labelY = Math.max(30,Math.min(470 - (lines.length - 1) * 32,y - 9 - (lines.length - 1) * 32));
+            return <text key={index} x={x} y={labelY} textAnchor="middle" fill={point.color ?? 'var(--text-primary)'} fontSize={12}>{lines.map((line,i) => <tspan key={i} x={x} dy={i === 0 ? 0 : 32}>{i > 0 ? ' ' : ''}{line}{i < lines.length - 1 ? ' /' : ''}</tspan>)}</text>;
         })}
     </svg><figcaption>2D projection · identical model calculations</figcaption></figure>;
 }
