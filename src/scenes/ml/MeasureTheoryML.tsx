@@ -1,7 +1,8 @@
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState, useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useState, useRef, useMemo, useLayoutEffect } from 'react';
+import { useSceneFrame as useFrame } from '../../hooks/useSceneFrame';
+import { affineFlowAt, applyAffineFlow, flowDeterminant } from './legacyFlowMath';
 import { OrbitControls, Grid, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { Info } from 'lucide-react';
@@ -27,18 +28,11 @@ const MANIFOLD_POINTS = (() => {
 })();
 
 function ManifoldScene({ isActive }: SceneProps) {
-    const planeRef = useRef<THREE.Mesh>(null);
-
-    useFrame((state) => {
-        if (!isActive || !planeRef.current) return;
-        planeRef.current.rotation.z = state.clock.getElapsedTime() * 0.05;
-    });
-
     if (!isActive) return null;
 
     return (
         <group>
-            <mesh ref={planeRef} rotation={[-Math.PI / 2, 0, 0]}>
+            <mesh rotation={[-Math.PI / 2, 0, 0]}>
                 <planeGeometry args={[12, 12, 32, 32]} />
                 <meshStandardMaterial
                     color="#ef4444"
@@ -86,33 +80,25 @@ function FlowsScene({ isActive }: SceneProps) {
     const color = useMemo(() => new THREE.Color(), []);
     const matrix = useMemo(() => new THREE.Matrix4(), []);
 
-    useFrame((state) => {
+    const elapsed = useRef(0);
+    const updateFlow = (time: number) => {
         if (!isActive || !meshRef.current) return;
-
-        const time = state.clock.getElapsedTime();
-
+        const flow = affineFlowAt(time);
+        const inverseVolume = 1 / flowDeterminant(flow);
+        color.setHSL(0.6 - Math.min(1, inverseVolume / 3) * 0.4, 0.8, 0.5);
         for (let i = 0; i < FLOW_COUNT; i++) {
-            const base = FLOW_INITIAL_POSITIONS[i];
-            const warp = Math.sin(time * 0.5 + base.x) * 0.8 + 1.2;
-
-            dummy.set(
-                base.x * warp,
-                base.y * (1 / warp) + Math.sin(time + base.z) * 0.5,
-                base.z + Math.cos(time * 0.3 + base.y) * 0.5
-            );
-
+            const point = applyAffineFlow(FLOW_INITIAL_POSITIONS[i].toArray() as [number, number, number], flow);
+            dummy.set(...point);
             matrix.setPosition(dummy);
             meshRef.current.setMatrixAt(i, matrix);
-
-            const density = 1 / warp;
-            color.setHSL(0.6 - (density - 0.5) * 0.4, 0.8, 0.5);
             meshRef.current.setColorAt(i, color);
         }
         meshRef.current.instanceMatrix.needsUpdate = true;
-        if (meshRef.current.instanceColor) {
-            meshRef.current.instanceColor.needsUpdate = true;
-        }
-    });
+        meshRef.current.computeBoundingSphere();
+        if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
+    };
+    useLayoutEffect(() => { updateFlow(elapsed.current); });
+    useFrame((_, delta) => { elapsed.current += delta; updateFlow(elapsed.current); });
 
     if (!isActive) return null;
 
@@ -164,13 +150,13 @@ export default function MeasureTheoryML() {
     const sceneData: Record<SceneType, { title: string; description: string; math: string; color: string }> = {
         manifold: {
             title: "The Manifold Hypothesis",
-            description: "The manifold hypothesis says that complex observations often concentrate near a lower-dimensional structure. An ideal distribution confined exactly to a lower-dimensional manifold has zero ambient volume; real noisy data usually has some thickness.",
-            math: "P_{\\text{data}}(x) \\approx 0 \\text{ almost everywhere}",
+            description: "The manifold hypothesis says that complex observations often concentrate near a lower-dimensional structure. The blue points here are a noisy graph above a reference plane, not an exactly supported manifold distribution. An ideal distribution on a lower-dimensional manifold has zero ambient volume; this noisy cloud has thickness.",
+            math: "\\lambda_3(M)=0 \\quad \\text{for a smooth 2D surface } M",
             color: '#f87171'
         },
         flows: {
             title: "Normalizing Flows",
-            description: "To model complex densities, we warp a simple distribution (like a sphere). The change of volume is tracked by the Jacobian Determinant. This factor compensates for the expansion or contraction of space, preserving probability mass.",
+            description: "This untrained, invertible affine flow deforms a uniform radius-two ball. Its triangular Jacobian has determinant s₁s₂s₃ > 0. All points have the same density inside each transformed solid: p = 3/(32π s₁s₂s₃). Color changes with inverse volume. Learned normalizing flows can use much richer invertible maps.",
             math: "p_x(x) = p_z(z) \\left| \\det \\frac{\\partial z}{\\partial x} \\right|",
             color: '#60a5fa'
         },
@@ -214,6 +200,7 @@ export default function MeasureTheoryML() {
                         <button
                             key={key}
                             onClick={() => setScene(key)}
+                            aria-pressed={scene === key}
                             style={{
                                 padding: '8px 16px',
                                 borderRadius: '8px',
@@ -236,7 +223,7 @@ export default function MeasureTheoryML() {
             {/* Main Content: 3D + Info */}
             <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
 
-                <SceneCanvas camera={{ position: [5, 5, 5], fov: 50 }} aria-label="3D visualization of measure theory concepts in machine learning">
+                <SceneCanvas frameloop={scene === 'flows' ? 'always' : 'demand'} camera={{ position: [5, 5, 5], fov: 50 }} aria-label="3D visualization of measure theory concepts in machine learning">
                     <ambientLight intensity={0.5} />
                     <pointLight position={[10, 10, 10]} intensity={1} />
                     <OrbitControls makeDefault enableDamping dampingFactor={0.05} />

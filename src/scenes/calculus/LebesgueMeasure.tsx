@@ -1,6 +1,6 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState, useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useState, useMemo, useRef, useLayoutEffect, useEffect } from 'react';
+import { useSceneFrame as useFrame } from '../../hooks/useSceneFrame';
 import { OrbitControls, Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { Box, Layers, Minimize2 } from 'lucide-react';
@@ -8,6 +8,7 @@ import type { LucideIcon } from 'lucide-react';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import { useParams } from 'react-router-dom';
+import { ellipsoidGridCover, ELLIPSOID_AXES, ELLIPSOID_VOLUME } from './ellipsoidCover';
 
 // ─── Step 1: Building Blocks ───────────────────────────────────────────────────
 // A transparent 3D box with labeled dimensions showing Volume = Δx·Δy·Δz
@@ -96,83 +97,41 @@ function MeasureBox({ dim }: { dim: number }) {
 // An irregular blob shape covered by small boxes that approximate its volume
 
 function OuterMeasureScene({ resolution }: { resolution: number }) {
-    const groupRef = useRef<THREE.Group>(null!);
-    useFrame((state) => {
-        groupRef.current.rotation.y = state.clock.elapsedTime * 0.12;
-    });
-
-    // The "weird shape" - a torus knot
-    const blobRef = useRef<THREE.Mesh>(null!);
-
-    // Generate covering boxes
-    const boxes = useMemo(() => {
-        const count = [8, 27, 64, 125][resolution]; // More boxes = tighter cover
-        const spread = [2.2, 1.8, 1.5, 1.3][resolution];
-        const boxSize = [1.0, 0.7, 0.45, 0.32][resolution];
-        const result: { pos: [number, number, number]; size: number }[] = [];
-
-        // Deterministic jitter keeps the cover stable across renders.
-        let seed = 12345;
-        const jitter = () => {
-            seed = (1664525 * seed + 1013904223) >>> 0;
-            return seed / 4294967296 - 0.5;
-        };
-        // Place boxes around a torus-knot-like path
-        for (let i = 0; i < count; i++) {
-            const t = (i / count) * Math.PI * 4;
-            const r = 1.2 + 0.4 * Math.cos(t * 1.5);
-            const x = r * Math.cos(t) + jitter() * spread * 0.4;
-            const y = 0.5 * Math.sin(t * 1.5) + jitter() * spread * 0.4;
-            const z = r * Math.sin(t) + jitter() * spread * 0.4;
-            result.push({ pos: [x, y, z], size: boxSize });
+    const boxes = useMemo(() => ellipsoidGridCover([4, 8, 16, 32][resolution]), [resolution]);
+    const mesh = useRef<THREE.InstancedMesh>(null);
+    useLayoutEffect(() => {
+        if (!mesh.current) return;
+        const matrix = new THREE.Matrix4();
+        for (let index = 0; index < boxes.length; index++) {
+            const cell = boxes[index];
+            matrix.makeScale(cell.size, cell.size, cell.size);
+            matrix.setPosition(...cell.position);
+            mesh.current.setMatrixAt(index, matrix);
         }
+        mesh.current.instanceMatrix.needsUpdate = true;
+        mesh.current.computeBoundingSphere();
+    }, [boxes]);
+    const edges = useMemo(() => {
+        const vertices: number[] = [];
+        for (const box of boxes) for (let corner = 0; corner < 8; corner++) for (const bit of [1, 2, 4]) {
+            if (corner >= (corner ^ bit)) continue;
+            for (const endpoint of [corner, corner ^ bit]) for (let axis = 0; axis < 3; axis++) vertices.push(box.position[axis] + (endpoint & (1 << axis) ? 1 : -1) * box.size / 2);
+        }
+        const result = new THREE.BufferGeometry();
+        result.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
         return result;
-    }, [resolution]);
-
-    const totalVolume = boxes.reduce((acc, b) => acc + (b.size * b.size * b.size), 0);
-
-    return (
-        <group ref={groupRef}>
-            {/* The actual shape being measured */}
-            <mesh ref={blobRef}>
-                <torusKnotGeometry args={[1.2, 0.35, 64, 16]} />
-                <meshPhongMaterial color="#a855f7" transparent opacity={0.3} side={THREE.DoubleSide} />
-            </mesh>
-
-            {/* Covering boxes */}
-            {boxes.map((box, i) => (
-                <mesh key={i} position={box.pos}>
-                    <boxGeometry args={[box.size, box.size, box.size]} />
-                    <meshPhongMaterial color="#4ade80" transparent opacity={0.15} side={THREE.DoubleSide} depthWrite={false} />
-                </mesh>
-            ))}
-            {boxes.map((box, i) => (
-                <lineSegments key={`e${i}`} position={box.pos}>
-                    <edgesGeometry args={[new THREE.BoxGeometry(box.size, box.size, box.size)]} />
-                    <lineBasicMaterial color="#4ade80" transparent opacity={0.5} />
-                </lineSegments>
-            ))}
-
-            {/* Volume annotation */}
-            <Html position={[0, 2.5, 0]} center>
-                <div style={{
-                    background: 'rgba(74, 222, 128, 0.1)',
-                    border: '1px solid rgba(74, 222, 128, 0.3)',
-                    borderRadius: '8px',
-                    padding: '6px 14px',
-                    textAlign: 'center',
-                    pointerEvents: 'none',
-                }}>
-                    <div style={{ fontSize: '10px', color: '#86efac', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>
-                        Outer Measure (upper bound)
-                    </div>
-                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#4ade80', fontFamily: 'monospace' }}>
-                        &Sigma; box volumes = {totalVolume.toFixed(1)}
-                    </div>
-                </div>
-            </Html>
-        </group>
-    );
+    }, [boxes]);
+    useEffect(() => () => edges.dispose(), [edges]);
+    const totalVolume = boxes.reduce((sum, cell) => sum + cell.size ** 3, 0);
+    return <group>
+        <mesh scale={[...ELLIPSOID_AXES]}><sphereGeometry args={[1, 48, 32]} /><meshPhongMaterial color="#a855f7" transparent opacity={0.55} side={THREE.DoubleSide} /></mesh>
+        <instancedMesh ref={mesh} args={[undefined, undefined, boxes.length]}><boxGeometry args={[1, 1, 1]} /><meshPhongMaterial color="#4ade80" transparent opacity={0.05} depthWrite={false} /></instancedMesh>
+        <lineSegments geometry={edges}><lineBasicMaterial color="#4ade80" transparent opacity={0.15} /></lineSegments>
+        <Html position={[0, 2.5, 0]} center><div style={{ background: 'rgba(15,23,42,0.92)', border: '1px solid #4ade80', padding: '8px', borderRadius: '8px', color: '#cbd5e1', fontSize: '12px', pointerEvents: 'none', textAlign: 'center' }}>
+            <b style={{ color: '#4ade80' }}>Guaranteed covering volume: {totalVolume.toFixed(3)}</b><br />
+            {boxes.length} cells · Solid volume: {ELLIPSOID_VOLUME.toFixed(3)}
+        </div></Html>
+    </group>;
 }
 
 // ─── Step 3: Null Sets ─────────────────────────────────────────────────────────
@@ -190,6 +149,13 @@ function NullSetScene({ coverThickness }: { coverThickness: number }) {
     // Cover boxes that get thinner
     const thickness = [0.8, 0.4, 0.15, 0.04][coverThickness];
     const coverVolume = planeSize * planeSize * thickness;
+    const slabEdges = useMemo(() => {
+        const box = new THREE.BoxGeometry(planeSize, thickness, planeSize);
+        const result = new THREE.EdgesGeometry(box);
+        box.dispose();
+        return result;
+    }, [thickness]);
+    useEffect(() => () => slabEdges.dispose(), [slabEdges]);
 
     return (
         <group ref={groupRef}>
@@ -212,11 +178,10 @@ function NullSetScene({ coverThickness }: { coverThickness: number }) {
 
             {/* Covering slab (gets thinner) */}
             <mesh position={[0, 0, 0]}>
-                <boxGeometry args={[planeSize + 0.2, thickness, planeSize + 0.2]} />
+                <boxGeometry args={[planeSize, thickness, planeSize]} />
                 <meshPhongMaterial color="#22c55e" transparent opacity={0.12} side={THREE.DoubleSide} depthWrite={false} />
             </mesh>
-            <lineSegments position={[0, 0, 0]}>
-                <edgesGeometry args={[new THREE.BoxGeometry(planeSize + 0.2, thickness, planeSize + 0.2)]} />
+            <lineSegments position={[0, 0, 0]} geometry={slabEdges}>
                 <lineBasicMaterial color="#22c55e" transparent opacity={0.6} />
             </lineSegments>
 
@@ -292,14 +257,14 @@ const STEPS: StepConfig[] = [
         title: 'Outer Measure',
         Icon: Minimize2,
         subtitle: 'Covering strange shapes',
-        description: 'To measure an irregular shape, we cover it with small boxes and sum their volumes. As boxes shrink, the sum converges to the true measure. The tightest possible cover gives the outer measure.',
+        description: 'The green grid boxes cover the entire purple ellipsoid. Their summed volume is a computed upper bound and approaches the known solid volume on finer nested grids. Outer measure is the infimum over all suitable countable covers, not the value of one finite cover.',
     },
     {
         id: 'null-sets',
         title: 'Null Sets',
         Icon: Layers,
         subtitle: 'When volume = 0',
-        description: 'A 2D plane living in 3D space has zero 3D volume. No matter how you cover it with 3D boxes, you can make the total volume as small as you like by making the boxes thinner. In the limit: measure = 0.',
+        description: 'This bounded 2D square has positive area but zero 3D volume. Its covering slab has volume 16ε, which can be made arbitrarily small by reducing its thickness. An entire unbounded plane also has zero 3D volume, using a countable family of covers. In the limit: measure = 0.',
     },
 ];
 
@@ -372,7 +337,7 @@ export default function LebesgueMeasure() {
                         <span style={{ color: '#60a5fa' }}>{dimension}D → {dimension === 1 ? 'Length' : dimension === 2 ? 'Area' : 'Volume'}</span>
                     </div>
                     <input
-                        type="range" min="1" max="3" step="1" value={dimension}
+                        aria-label="Dimension" type="range" min="1" max="3" step="1" value={dimension}
                         onChange={e => setDimension(parseInt(e.target.value))}
                         style={{ width: '100%', accentColor: '#3b82f6' }}
                     />
@@ -386,12 +351,12 @@ export default function LebesgueMeasure() {
                         <span style={{ color: '#4ade80' }}>{['Coarse', 'Medium', 'Fine', 'Very Fine'][resolution]}</span>
                     </div>
                     <input
-                        type="range" min="0" max="3" step="1" value={resolution}
+                        aria-label="Box Resolution" type="range" min="0" max="3" step="1" value={resolution}
                         onChange={e => setResolution(parseInt(e.target.value))}
                         style={{ width: '100%', accentColor: '#4ade80' }}
                     />
                     <p style={{ fontSize: '10px', color: '#64748b', marginTop: '8px', lineHeight: 1.4 }}>
-                        More boxes = tighter cover = closer to the true measure
+                        Every displayed box intersects the solid. Refining this nested grid reduces excess covering volume; the readout compares it with the exact ellipsoid volume.
                     </p>
                 </div>
             )}
@@ -403,7 +368,7 @@ export default function LebesgueMeasure() {
                         <span style={{ color: '#fbbf24' }}>{[0.8, 0.4, 0.15, 0.04][coverThickness].toFixed(2)}</span>
                     </div>
                     <input
-                        type="range" min="0" max="3" step="1" value={coverThickness}
+                        aria-label="Cover Thickness" type="range" min="0" max="3" step="1" value={coverThickness}
                         onChange={e => setCoverThickness(parseInt(e.target.value))}
                         style={{ width: '100%', accentColor: '#fbbf24' }}
                     />
@@ -432,7 +397,7 @@ export default function LebesgueMeasure() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas camera={{ position: [5, 4, 5], fov: 45 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of Lebesgue measure properties including outer measure and covering">
+            <SceneCanvas frameloop="always" camera={{ position: [5, 4, 5], fov: 45 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of Lebesgue measure properties including outer measure and covering">
                 <SceneLighting />
                 <gridHelper args={[10, 20, '#1e293b', '#0f172a']} position={[0, -0.01, 0]} />
 
@@ -440,7 +405,7 @@ export default function LebesgueMeasure() {
                 {activeStep === 1 && <OuterMeasureScene resolution={resolution} />}
                 {activeStep === 2 && <NullSetScene coverThickness={coverThickness} />}
 
-                <OrbitControls enableDamping dampingFactor={0.05} />
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 8, 20]} />
                 <color attach="background" args={['#0b0f19']} />
             </SceneCanvas>

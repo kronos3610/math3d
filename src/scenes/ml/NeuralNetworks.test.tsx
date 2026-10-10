@@ -2,7 +2,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, expect, test, vi } from 'vitest';
-import type { SpatialSceneProps } from '../../components/3d/SpatialScene';
+import type { SpatialPoint, SpatialSceneProps } from '../../components/3d/SpatialScene';
+import { createFeedforwardWeights, feedforward } from '../../utils/ml-sequence';
 import NeuralNetworks from './NeuralNetworks';
 
 vi.mock('../../components/3d/SpatialScene', () => ({
@@ -39,4 +40,15 @@ test('training reduces binary cross entropy and reset restores demonstration wei
     expect(metric('Training updates')).toBe('0');
     expect(metric('Output probability')).toBe(probability);
     expect(Number(metric('Training loss'))).toBe(loss);
+});
+
+test('network height is the actual activation; depth only lays out units', () => {
+    render(<MemoryRouter><NeuralNetworks /></MemoryRouter>);
+    const result = feedforward([-1, 1], createFeedforwardWeights());
+    const points = JSON.parse(screen.getByTestId('computed-network-points').textContent!) as SpatialPoint[];
+    expect(points.slice(0, 2).map(point => point.position[1])).toEqual([-1, 1]);
+    expect(points.slice(2, 5).map(point => point.position[1])).toEqual(result.hidden);
+    expect(points.slice(2, 5).map(point => point.position[2])).toEqual([-1, 0, 1]);
+    expect(points[5].position[1]).toBe(result.probability);
+    expect(points[5].position[2]).toBe(0);
 });

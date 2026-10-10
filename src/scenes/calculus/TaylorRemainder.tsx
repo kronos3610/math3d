@@ -1,6 +1,6 @@
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -98,6 +98,7 @@ function ErrorRibbon({
         return geom;
     }, [n, a, func, resolution]);
 
+    useEffect(() => () => geometry.dispose(), [geometry]);
     return (
         <mesh geometry={geometry}>
             <meshPhongMaterial

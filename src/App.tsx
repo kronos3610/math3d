@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import HomePage from './components/HomePage';
 import TopicPage from './components/TopicPage';
 import SubtopicView from './components/SubtopicView';
+import NotFound from './components/NotFound';
 
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/:topicId" element={<TopicPage />} />
             <Route path="/:topicId/:subtopicId" element={<SubtopicView />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
       </div>

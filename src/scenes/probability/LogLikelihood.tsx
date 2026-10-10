@@ -97,16 +97,18 @@ function Campers({ muX, muZ, sigma }: { muX: number, muZ: number, sigma: number 
 }
 
 function Labels() {
+    // Screen-space Html projects its outer element during layout. Transform Html
+    // waits for portal refs in a later DOM commit, which can miss a demand frame.
     return (
         <group>
-            <Html position={[9, 1, 0]} transform sprite>
-                <div style={{ color: '#f87171', fontWeight: 700, fontSize: '14px', userSelect: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>X (μx)</div>
+            <Html position={[3.5, 0.3, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
+                <div style={{ color: '#f87171', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', userSelect: 'none', pointerEvents: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>X (data x)</div>
             </Html>
-            <Html position={[0, 1, 9]} transform sprite>
-                <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: '14px', userSelect: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>Z (μz)</div>
+            <Html position={[0, 0.3, 3.5]} center zIndexRange={[40, 0]} pointerEvents="none">
+                <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', userSelect: 'none', pointerEvents: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>Z (data z)</div>
             </Html>
-            <Html position={[0, 8, 0]} transform sprite>
-                <div style={{ color: '#4ade80', fontWeight: 700, fontSize: '14px', userSelect: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>Probability</div>
+            <Html position={[0, 5, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
+                <div style={{ color: '#4ade80', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', userSelect: 'none', pointerEvents: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>Height (rescaled)</div>
             </Html>
         </group>
     );
@@ -124,12 +126,13 @@ export default function LogLikelihood() {
 
     const controls = (
         <GlassPane className="scene-controls" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '320px' }}>
+            <p style={{ fontSize: '12px', color: '#cbd5e1' }}>The dome height is visually rescaled with σ and clipped at 0.05; its height is not a calibrated density axis. The log-likelihood score uses the exact Gaussian density for all nine observations.</p>
             <div>
                 <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Tent size={20} /> Log-Likelihood Visualizer
                 </h2>
                 <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
-                    Now using <b>Log-Likelihood</b>. Missing a point (red) creates a huge penalty.
+                    Each observation contributes its Gaussian log-density to the total score.
                 </p>
             </div>
 
@@ -157,7 +160,7 @@ export default function LogLikelihood() {
                         <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' }}>X-Position (μx)</span>
                         <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{muX.toFixed(2)}</span>
                     </div>
-                    <input
+                    <input aria-label="X-Position"
                         type="range" min="-5" max="5" step="0.1" value={muX}
                         onChange={e => setMuX(parseFloat(e.target.value))}
                         style={{ width: '100%', accentColor: '#3b82f6' }}
@@ -169,7 +172,7 @@ export default function LogLikelihood() {
                         <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' }}>Z-Position (μz)</span>
                         <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{muZ.toFixed(2)}</span>
                     </div>
-                    <input
+                    <input aria-label="Z-Position"
                         type="range" min="-5" max="5" step="0.1" value={muZ}
                         onChange={e => setMuZ(parseFloat(e.target.value))}
                         style={{ width: '100%', accentColor: '#3b82f6' }}
@@ -187,13 +190,13 @@ export default function LogLikelihood() {
                         <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' }}>Spread (σ)</span>
                         <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{sigma.toFixed(2)}</span>
                     </div>
-                    <input
+                    <input aria-label="Spread"
                         type="range" min="0.1" max="4" step="0.1" value={sigma}
                         onChange={e => setSigma(parseFloat(e.target.value))}
                         style={{ width: '100%', accentColor: '#6366f1' }}
                     />
                     <p style={{ fontSize: '10px', color: '#64748b', marginTop: '8px', lineHeight: 1.4 }}>
-                        Try making this very small (0.1). You will see the "needle" effect, but the score will drop because red points are punished.
+                        Try Spread = 0.1. The narrow dome concentrates around its center, while distant observations contribute more negative log-density terms.
                     </p>
                 </div>
             </div>
@@ -201,9 +204,9 @@ export default function LogLikelihood() {
             <div style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '12px', padding: '12px' }}>
                 <h3 style={{ fontSize: '11px', fontWeight: 'bold', color: '#818cf8', textTransform: 'uppercase', marginBottom: '4px' }}>The Rule</h3>
                 <p style={{ fontSize: '11px', color: '#a5b4fc', lineHeight: 1.4 }}>
-                    We are now adding <b>Logarithms</b>. <br />
-                    In(0) = -∞ <br />
-                    This means if you ignore even one point (turn it red), your score gets destroyed. You must balance the peak height with covering everyone!
+                    All nine observations contribute to the score. Red marks a standardized
+                    distance greater than 2.5, not zero density. A Gaussian has positive density
+                    at every finite point; distant observations contribute smaller log densities.
                 </p>
             </div>
 
@@ -212,7 +215,7 @@ export default function LogLikelihood() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} shadows camera={{ position: [12, 10, 12], fov: 45 }} aria-label="3D visualization of log-likelihood surface with maximum likelihood estimation">
+            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} shadows camera={{ position: [12, 10, 12], fov: 45 }} aria-label="Gaussian data-space dome with rescaled height and an exact log-likelihood score">
                 <color attach="background" args={['#0b0f19']} />
                 <fog attach="fog" args={['#0b0f19', 15, 30]} />
 

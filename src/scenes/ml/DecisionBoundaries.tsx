@@ -1,5 +1,5 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useMemo, useRef, useLayoutEffect } from 'react';
+import { useMemo, useRef, useLayoutEffect, useEffect } from 'react';
 
 import { OrbitControls } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
@@ -78,9 +78,11 @@ function DataPoints() {
     );
 }
 
-function DecisionPlane() {
+const BOUNDARY_ORIENTATION = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(1.5, 1, 0).normalize());
+
+export function DecisionPlane() {
     return (
-        <mesh rotation={[0, 0, Math.PI / 6]}>
+        <mesh quaternion={BOUNDARY_ORIENTATION.toArray()}>
             <planeGeometry args={[8, 8]} />
             <meshStandardMaterial
                 color="#00cec9"
@@ -95,11 +97,14 @@ function DecisionPlane() {
 function DecisionPlaneEdge() {
     const geometry = useMemo(() => {
         const geo = new THREE.PlaneGeometry(8, 8);
-        return new THREE.EdgesGeometry(geo);
+        const edges = new THREE.EdgesGeometry(geo);
+        geo.dispose();
+        return edges;
     }, []);
 
+    useEffect(() => () => geometry.dispose(), [geometry]);
     return (
-        <lineSegments rotation={[0, 0, Math.PI / 6]} geometry={geometry}>
+        <lineSegments quaternion={BOUNDARY_ORIENTATION.toArray()} geometry={geometry}>
             <lineBasicMaterial color="#00cec9" transparent opacity={0.3} />
         </lineSegments>
     );
@@ -125,7 +130,7 @@ export default function DecisionBoundaries() {
                         <span style={{ color: '#00cec9' }}>Cyan plane</span>: Decision boundary
                     </p>
                     <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#64748b' }}>
-                        Classifiers separate feature space into regions
+                        Fixed example rule: score = 1.5x + y. The plane is score = 0; these two synthetic clusters lie on opposite sides. This view does not train a classifier.
                     </p>
                 </div>
             </div>
@@ -145,7 +150,7 @@ export default function DecisionBoundaries() {
                 <DecisionPlane />
                 <DecisionPlaneEdge />
                 <gridHelper args={[8, 16, '#222', '#181828']} position={[0, -3, 0]} />
-                <OrbitControls enableDamping dampingFactor={0.05} />
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#050508', 5, 15]} />
             </SceneCanvas>
         </SceneContainer>

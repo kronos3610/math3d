@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useKatex } from '../hooks/useKatex';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
 export interface LatexProps {
     formula: string;
@@ -8,16 +9,18 @@ export interface LatexProps {
 
 export default function Latex({ formula, display = false }: LatexProps) {
     const containerRef = useRef<HTMLSpanElement>(null);
-    const isKatexLoaded = useKatex();
 
     useEffect(() => {
-        if (containerRef.current && isKatexLoaded && window.katex) {
-            window.katex.render(formula, containerRef.current, {
-                throwOnError: false,
-                displayMode: display,
-            });
+        if (containerRef.current) {
+            try {
+                katex.render(formula, containerRef.current, {
+                    throwOnError: false, displayMode: display, trust: false, maxExpand: 1000,
+                });
+            } catch {
+                containerRef.current.textContent = formula;
+            }
         }
-    }, [formula, display, isKatexLoaded]);
+    }, [formula, display]);
 
     return (
         <span

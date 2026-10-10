@@ -1,7 +1,7 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { useFrame } from '@react-three/fiber';
+import { useSceneFrame as useFrame } from '../../hooks/useSceneFrame';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { Play, Pause } from 'lucide-react';
@@ -44,6 +44,7 @@ function TruePosterior() {
         return g;
     }, []);
 
+    useEffect(() => () => geom.dispose(), [geom]);
     return (
         <>
             <mesh geometry={geom} castShadow receiveShadow>
@@ -78,6 +79,7 @@ function ApproximateHill({ progress }: { progress: number }) {
         return g;
     }, []);
 
+    useEffect(() => () => geom.dispose(), [geom]);
     useEffect(() => {
         const g = meshRef.current?.geometry as THREE.PlaneGeometry | undefined;
         if (!g) return;
@@ -250,7 +252,7 @@ function Scene3D({ progress, playing, onTick }: {
                 shadow-camera-far={100}
             />
 
-            <OrbitControls
+            <OrbitControls makeDefault
                 target={[5, 5, 0]}
                 enableDamping
                 dampingFactor={0.05}
@@ -388,7 +390,7 @@ export default function VariationalInference() {
             <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Optimization
+                        Illustration progress
                     </span>
                     <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>
                         {(progress * 100).toFixed(0)}%
@@ -454,7 +456,7 @@ export default function VariationalInference() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'probability'}`} controls={controls}>
-            <SceneCanvas
+            <SceneCanvas frameloop="always"
                 aria-label="Conceptual illustration of approximate inference and the ELBO–KL identity; values are illustrative"
                 shadows
                 dpr={[1, 1.5]}

@@ -33,7 +33,7 @@ interface PredictionChartProps {
 function PredictionChart({ experiment, noiseStd }: PredictionChartProps) {
     const chartId = useId();
     const { grid, signalValues, predictions, meanPrediction, predictionStd, exampleSamples } = experiment;
-    const left = 60;
+    const left = 88;
     const right = 680;
     const top = 24;
     const bottom = 290;
@@ -100,7 +100,7 @@ interface ComplexityChartProps {
 
 function ComplexityChart({ experiments, selectedDegree }: ComplexityChartProps) {
     const chartId = useId();
-    const left = 60;
+    const left = 88;
     const right = 680;
     const top = 24;
     const bottom = 205;
@@ -159,9 +159,9 @@ function ComplexityChart({ experiments, selectedDegree }: ComplexityChartProps) 
 function ErrorDecomposition({ experiment }: { experiment: BiasVarianceExperiment }) {
     const chartId = useId();
     const parts = [
-        { name: 'Squared bias', value: experiment.squaredBias, color: COLORS.bias },
-        { name: 'Estimator variance', value: experiment.variance, color: COLORS.variance },
-        { name: 'Noise variance', value: experiment.noiseVariance, color: COLORS.noise },
+        { name: 'Squared bias', label: 'Bias²', value: experiment.squaredBias, color: COLORS.bias },
+        { name: 'Estimator variance', label: 'Variance', value: experiment.variance, color: COLORS.variance },
+        { name: 'Noise variance', label: 'Noise', value: experiment.noiseVariance, color: COLORS.noise },
     ];
     const maximum = Math.max(0.001, ...parts.map(part => part.value));
 
@@ -176,7 +176,7 @@ function ErrorDecomposition({ experiment }: { experiment: BiasVarianceExperiment
                 </desc>
                 {parts.map((part, index) => (
                     <g key={part.name}>
-                        <text x="154" y={28 + index * 42} fill="currentColor" textAnchor="end" fontSize="14">{part.name}</text>
+                        <text x="154" y={28 + index * 42} fill="currentColor" textAnchor="end" fontSize="14">{part.label}</text>
                         <rect x="168" y={12 + index * 42} width={part.value / maximum * 420} height="23" rx="4" fill={part.color} />
                         <text x="610" y={28 + index * 42} fill="currentColor" fontSize="14">{formatError(part.value)}</text>
                     </g>
@@ -235,6 +235,7 @@ export default function BiasVariance() {
         <SceneContainer backUrl="/ml" explanation={explanation} defaultPanel="closed">
             <ExperimentLayout title="Bias–Variance Tradeoff" subtitle="Refit the same learning method on independent datasets and see where prediction error comes from.">
                 <div className="learning-lab">
+                    <PredictionChart experiment={experiment} noiseStd={noiseStd} />
                     <div className="lab-controls" role="group" aria-label="Bias–variance experiment settings">
                         {fields.map(field => (
                             <div key={field.id} className="lab-field">
@@ -254,7 +255,6 @@ export default function BiasVariance() {
                     <dl className="lab-metrics">
                         {metrics.map(metric => <div className="lab-stat" key={metric.label}><dt>{metric.label}</dt><dd>{formatError(metric.value)}</dd></div>)}
                     </dl>
-                    <PredictionChart experiment={experiment} noiseStd={noiseStd} />
                     <ErrorDecomposition experiment={experiment} />
                     <ComplexityChart experiments={experiments} selectedDegree={degree} />
                     <p className="lab-note">These are measured results from a finite ensemble. Noise describes the observations; bias and variance describe the fitted estimator across training sets. Open Explain for the sampling assumptions.</p>

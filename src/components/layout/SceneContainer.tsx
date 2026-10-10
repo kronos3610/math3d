@@ -1,8 +1,11 @@
-import React, { useMemo, useState, useId } from 'react';
+import React, { useMemo, useState, useId, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import LessonGuide from '../LessonGuide';
 import GraphicsQualityControl from '../GraphicsQualityControl';
+import SceneMotionControl from '../SceneMotionControl';
 import { getLessonGuide } from '../../data/lessonGuides';
+import { getSubtopicById } from '../../data/topics';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import LessonConnections from '../LessonConnections';
 import { getPathNavigation, hasLessonConnections } from '../../data/mlCurriculum';
 import { BookOpen, ChevronLeft, Menu, SlidersHorizontal, X } from 'lucide-react';
@@ -20,13 +23,16 @@ export function SceneContainer({
     children,
     controls,
     explanation,
-    defaultPanel = 'controls',
+    defaultPanel = 'closed',
     backUrl
 }: SceneContainerProps) {
     const panelId = useId();
+    const toggleRef = useRef<HTMLButtonElement>(null);
+    const isMobile = useIsMobile();
     const { topicId, subtopicId } = useParams<{ topicId: string; subtopicId: string }>();
     const [searchParams] = useSearchParams();
     const guide = topicId && subtopicId ? getLessonGuide(topicId, subtopicId) : undefined;
+    const lesson = topicId && subtopicId ? getSubtopicById(topicId, subtopicId) : undefined;
     const hasConnections = Boolean(topicId && subtopicId && hasLessonConnections(topicId, subtopicId));
     const isFollowingPath = Boolean(topicId && subtopicId && getPathNavigation(searchParams.get('path'), { topicId, subtopicId }));
     const tabs = useMemo(() => {
@@ -72,9 +78,9 @@ export function SceneContainer({
     }, [controls, explanation, hasConnections, guide]);
 
     const firstTab = tabs[0]?.id ?? 'controls';
-    const requestedPanel = isFollowingPath ? 'learning' : defaultPanel === 'closed' ? firstTab : defaultPanel;
+    const requestedPanel = isFollowingPath ? 'learning' : defaultPanel === 'closed' && controls ? 'controls' : defaultPanel === 'closed' ? firstTab : defaultPanel;
     const initialPanel = tabs.some((tab) => tab.id === requestedPanel) ? requestedPanel : firstTab;
-    const [isPanelOpen, setIsPanelOpen] = useState((isFollowingPath || defaultPanel !== 'closed') && tabs.length > 0);
+    const [isPanelOpen, setIsPanelOpen] = useState(((isFollowingPath && !isMobile) || defaultPanel !== 'closed') && tabs.length > 0);
     const [activePanel, setActivePanel] = useState<'controls' | 'explanation' | 'learning' | 'guide'>(initialPanel);
     const activeTab = tabs.find((tab) => tab.id === activePanel) ?? tabs[0];
     const hasScenePanel = tabs.length > 0;
@@ -92,35 +98,24 @@ export function SceneContainer({
                         <ChevronLeft size={20} />
                     </Link>
                 )}
+                <SceneMotionControl />
 
-                {/* Title Breadcrumb - Only visible on larger screens or if space permits? 
-            For now, let's keep it minimal to focus on the scene. 
-            Actually, let's show it. 
-        */}
-                {/* 
-        <div style={{
-           pointerEvents: 'auto',
-           background: 'rgba(15, 23, 42, 0.8)',
-           backdropFilter: 'blur(8px)',
-           border: '1px solid rgba(148, 163, 184, 0.1)',
-           borderRadius: '12px',
-           padding: '8px 16px',
-           color: 'white'
-        }}>
-           <h1 style={{fontSize: '14px', fontWeight: 600}}>{title}</h1>
-        </div>
-        */}
             </nav>
 
             {/* 2. Main Content (Canvas) */}
             <div className="scene-main">
-                {children}
+                {controls && lesson && guide && <header className="scene-brief">
+                    <h1>{lesson.title}</h1><p>{guide.meaning}</p>
+                    <small>Open Guide & controls to change the experiment and see how to use this view.</small>
+                </header>}
+                <div className="scene-content">{children}</div>
             </div>
 
             {/* 3. Scene Drawer (Top Right / Right Slide-in) */}
             {hasScenePanel && (
                 <div className="scene-panel-region">
                     <button
+                        ref={toggleRef}
                         type="button"
                         onClick={() => setIsPanelOpen((isOpen) => !isOpen)}
                         className={`scene-icon-button scene-panel-toggle ${isPanelOpen ? 'active' : ''}`}
@@ -129,6 +124,7 @@ export function SceneContainer({
                         aria-controls={panelId}
                     >
                         {isPanelOpen ? <X size={20} /> : <Menu size={20} />}
+                        <span>{isPanelOpen ? 'Close' : 'Guide & controls'}</span>
                     </button>
 
                     {isPanelOpen && activeTab && (
@@ -136,6 +132,10 @@ export function SceneContainer({
                             id={panelId}
                             className="scene-panel-drawer"
                             aria-label="Scene panel"
+                            onKeyDown={event => {
+                                if (event.key !== 'Escape') return;
+                                event.preventDefault(); setIsPanelOpen(false); toggleRef.current?.focus();
+                            }}
                         >
                             {tabs.length > 1 && (
                                 <div className="scene-panel-tabs" style={{ gridTemplateColumns: `repeat(${tabs.length > 3 ? 2 : tabs.length}, minmax(0, 1fr))` }} role="tablist" aria-label="Scene panel sections">

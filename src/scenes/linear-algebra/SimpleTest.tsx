@@ -1,60 +1,22 @@
-import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import { useParams } from 'react-router-dom';
-import * as THREE from 'three';
-import { SceneContainer } from '../../components/layout/SceneContainer';
-import { GlassPane } from '../../components/layout/GlassPane';
+import { useMemo, useState } from 'react';
+import { SpatialScene, type SpatialPath } from '../../components/3d/SpatialScene';
+import { LabSelect, VisualLab } from '../../components/layout/VisualLab';
+import { ExplanationSection, SceneExplanation } from '../../components/layout/SceneExplanation';
+import type { Vector3Tuple } from './legacyLinearMath';
 
-function RotatingCube() {
-    const meshRef = useRef<THREE.Mesh>(null!);
-
-    useFrame(() => {
-        meshRef.current.rotation.x += 0.01;
-        meshRef.current.rotation.y += 0.01;
-    });
-
-    return (
-        <mesh ref={meshRef}>
-            <boxGeometry args={[2, 2, 2]} />
-            <meshStandardMaterial color="#ff0080" emissive="#ff0080" emissiveIntensity={0.2} />
-        </mesh>
-    );
-}
+const CORNERS: Vector3Tuple[] = Array.from({ length: 8 }, (_, i) => [i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1]);
+const EDGES: SpatialPath[] = CORNERS.flatMap((_, i) => [1, 2, 4].flatMap(bit => i < (i ^ bit) ? [{ points: [CORNERS[i], CORNERS[i ^ bit]], color: '#f472b6' }] : []));
 
 export default function SimpleTest() {
-    const { topicId } = useParams<{ topicId: string }>();
-
-    const controls = (
-        <GlassPane>
-            <div style={{ padding: '16px', color: 'white' }}>
-                <h3 style={{ margin: 0, marginBottom: '12px', fontSize: '18px', fontWeight: 600 }}>
-                    Simple WebGL Test
-                </h3>
-                <p style={{ margin: 0, fontSize: '14px', color: '#94a3b8', lineHeight: '1.5' }}>
-                    You should see a bright pink rotating cube. If you see this text but no cube, check the console for errors.
-                </p>
-            </div>
-        </GlassPane>
-    );
-
-    return (
-        <SceneContainer
-            backUrl={`/${topicId || 'linear-algebra'}`}
-            controls={controls}
-        >
-            <SceneCanvas
-                camera={{ position: [5, 5, 5], fov: 45 }}
-                gl={{ antialias: true, alpha: false }}
-                dpr={[1, 2]}
-                aria-label="Simple WebGL test scene with a rotating cube"
-            >
-                <ambientLight intensity={0.5} />
-                <directionalLight position={[10, 10, 5]} intensity={1} />
-                <RotatingCube />
-                <OrbitControls />
-            </SceneCanvas>
-        </SceneContainer>
-    );
+    const [corner, setCorner] = useState(7);
+    const point = CORNERS[corner];
+    const scene = useMemo(() => ({ paths: EDGES, points: [{ position: CORNERS[corner], color: '#facc15', label: `Selected (${CORNERS[corner].join(', ')})` }], vectors: [{ from: [0, 0, 0] as Vector3Tuple, to: CORNERS[corner], color: '#facc15', label: 'Position vector' }] }), [corner]);
+    return <VisualLab backUrl="/linear-algebra" title="Explore 3D coordinates" subtitle="Read coordinates independently of the camera angle."
+        controls={<LabSelect label="Select cube corner" value={String(corner)} options={CORNERS.map((value, i) => ({ value: String(i), label: `(${value.join(', ')})` }))} onChange={value => setCorner(Number(value))} />}
+        metrics={[{ label: 'X coordinate', value: String(point[0]) }, { label: 'Y coordinate', value: String(point[1]) }, { label: 'Z coordinate', value: String(point[2]) }]}
+        insight="Each corner is one unit from the origin along each axis. Orbiting the camera changes the view, not the cube’s coordinates."
+        challenge="Choose two corners with opposite X coordinates. Orbit the camera and compare their positions against the labelled axes."
+        explanation={<SceneExplanation title="3D coordinates" summary="An ordered triple locates a point relative to three coordinate axes."><ExplanationSection title="Read the cube"><p>The cube has side length two and corners (±1, ±1, ±1). The yellow arrow is a position vector from the origin to the selected corner. Its length is √3. Camera orbit, zoom, and keyboard camera controls let you inspect the same fixed geometry.</p></ExplanationSection></SceneExplanation>}>
+        <SpatialScene {...scene} axes={['X coordinate', 'Y coordinate', 'Z coordinate']} description="Fixed cube with labelled X, Y and Z coordinate axes. A yellow point and vector mark the selected corner; the coordinates remain unchanged when orbiting the camera." />
+    </VisualLab>;
 }

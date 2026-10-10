@@ -1,6 +1,6 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { SceneContainer } from '../../components/layout/SceneContainer';
-import { useState, useRef, useMemo, useLayoutEffect, useId } from 'react';
+import { useState, useRef, useMemo, useLayoutEffect, useId, useEffect } from 'react';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -51,6 +51,7 @@ function Surface({ functionType }: SurfaceProps) {
         return geo;
     }, [f]);
 
+    useEffect(() => () => geometry.dispose(), [geometry]);
     return (
         <mesh geometry={geometry}>
             <meshPhongMaterial
@@ -438,7 +439,7 @@ export default function RiemannVsLebesgue() {
             >
                 <color attach="background" args={['#050508']} />
                 <Scene mode={mode} functionType={functionType} resolution={resolution} />
-                <OrbitControls enableDamping dampingFactor={0.05} />
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
             </SceneCanvas>
         </SceneContainer>
     );

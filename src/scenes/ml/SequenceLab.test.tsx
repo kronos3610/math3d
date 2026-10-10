@@ -52,7 +52,7 @@ test('RNN training updates a real readout while preserving explicit toy-task lab
     const initialError = Math.abs(Number(metric('Current linear readout')) - 1);
     fireEvent.click(screen.getByRole('button', { name: 'Train cue task 100 steps' }));
     expect(Math.abs(Number(metric('Current linear readout')) - 1)).toBeLessThan(initialError);
-    expect(screen.getByText(/Trained on two cue sequences \(100 SGD updates\)/)).toBeDefined();
+    expect(screen.getByText(/Trained on two cue sequences \(100 full-batch gradient-descent updates\)/)).toBeDefined();
 });
 
 test('LSTM input and output controls independently expose actual written versus visible state', () => {

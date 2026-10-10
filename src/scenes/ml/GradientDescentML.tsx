@@ -1,5 +1,5 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import { OrbitControls } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
@@ -26,6 +26,7 @@ function LossLandscape() {
         return geo;
     }, []);
 
+    useEffect(() => () => geometry.dispose(), [geometry]);
     return (
         <group rotation={[-Math.PI / 2, 0, 0]}>
             <mesh geometry={geometry}>
@@ -81,13 +82,13 @@ export default function GradientDescentML() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
-            <SceneCanvas camera={{ position: [5, 5, 5], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of gradient descent on a non-convex loss landscape">
+            <SceneCanvas frameloop="always" camera={{ position: [5, 5, 5], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of gradient descent on a non-convex loss landscape">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 5, 5]} intensity={0.8} />
                 <pointLight position={[-3, 2, 3]} intensity={0.5} color="#fdcb6e" />
                 <LossLandscape />
                 <DescentTrajectory key={resetCount} path={descentPath} loss={nonconvexLoss} playing={playing} color="#fd79a8" />
-                <OrbitControls enableDamping dampingFactor={0.05} />
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#0b0f19', 6, 18]} />
                 <color attach="background" args={['#0b0f19']} />
             </SceneCanvas>

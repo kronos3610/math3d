@@ -67,7 +67,7 @@ const INFO_CARDS = [
         bg: 'rgba(16,185,129,0.08)',
         border: 'rgba(16,185,129,0.2)',
         title: 'Least Squares',
-        desc: 'A linear model y_k(x) = w_k x + b_k is fit per class via the closed-form pseudo-inverse.',
+        desc: 'A linear model y_k(x) = w_k x + b_k is fit per class via the normal equations when the design has full column rank.',
         formula: '\\mathbf{W} = (\\mathbf{X}^T\\mathbf{X})^{-1}\\mathbf{X}^T\\mathbf{T}',
     },
     {
@@ -85,6 +85,7 @@ const INFO_CARDS = [
 export default function LeastSquaresMulticlass() {
     const { topicId } = useParams();
     const [points, setPoints] = useState<DataPoint[]>(INITIAL_POINTS);
+    const [keyboardX, setKeyboardX] = useState(9);
     const [selectedClass, setSelectedClass] = useState(1);
     const [showingTargetsFor, setShowingTargetsFor] = useState<number | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
@@ -138,7 +139,9 @@ export default function LeastSquaresMulticlass() {
         const pt = svgRef.current.createSVGPoint();
         pt.x = e.clientX;
         pt.y = e.clientY;
-        const svgCoord = pt.matrixTransform(svgRef.current.getScreenCTM()!.inverse());
+        const ctm = svgRef.current.getScreenCTM();
+        if (!ctm) return;
+        const svgCoord = pt.matrixTransform(ctm.inverse());
         if (svgCoord.x < PAD || svgCoord.x > W - PAD) return;
         setPoints(prev => [...prev, { x: unmapX(svgCoord.x), c: selectedClass }]);
     };
@@ -151,7 +154,7 @@ export default function LeastSquaresMulticlass() {
                     1-of-K Least Squares
                 </h2>
                 <p style={{ fontSize: '11px', color: '#94a3b8' }}>
-                    Click chart to add points, explore class boundaries.
+                    Click the chart or focus it and press arrow keys, then Enter, to add observations. Fitted scores are not probabilities.
                 </p>
             </div>
 
@@ -277,8 +280,23 @@ export default function LeastSquaresMulticlass() {
                     display: 'block',
                     background: '#0b0f19',
                 }}
+                role="img"
+                aria-label="Least-squares multiclass chart. Left and right arrows move a cursor; Enter or Space adds an observation for the selected class."
+                tabIndex={0}
+                onKeyDown={event => {
+                    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                        event.preventDefault();
+                        setKeyboardX(value => Math.max(X_MIN, Math.min(X_MAX, value + (event.key === 'ArrowRight' ? 1 : -1) * (event.shiftKey ? 1 : 0.25))));
+                    } else if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setPoints(previous => [...previous, { x: keyboardX, c: selectedClass }]);
+                    }
+                }}
                 onClick={handleSvgClick}
             >
+                <title>Multiclass regression scores and observed one-hot targets</title>
+                <desc>Arrow keys move the yellow cursor. Enter or Space adds an observation. These fitted scores are not class probabilities.</desc>
+                <line x1={mapX(keyboardX)} x2={mapX(keyboardX)} y1={mapY(Y_MIN)} y2={mapY(Y_MAX)} stroke="#facc15" strokeDasharray="3,6" /><text x={mapX(keyboardX)} y={25} fill="#facc15" fontSize={12}>Cursor x={keyboardX.toFixed(2)}</text>
                 {/* Decision region coloring */}
                 {decisionRegions.map((region, i) => (
                     <rect

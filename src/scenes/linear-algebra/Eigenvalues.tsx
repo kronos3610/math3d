@@ -1,17 +1,15 @@
-import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
-import { OrbitControls, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import { useParams } from 'react-router-dom';
-import { Arrow } from '../../components/3d/Arrow';
-import { Label } from '../../components/3d/Label';
 import { RotateCcw, Shuffle, Scaling, MoveDiagonal } from 'lucide-react';
 
+import { SpatialScene } from '../../components/3d/SpatialScene';
+import { assessEigenvector, type Matrix3Tuple } from './legacyLinearMath';
+
 // --- Types & Constants ---
-type Matrix3Tuple = [number, number, number, number, number, number, number, number, number];
 const IDENTITY: Matrix3Tuple = [2, 0, 0, 0, 1.5, 0, 0, 0, 0.5]; // Default start
 
 // --- Math Helpers ---
@@ -19,29 +17,6 @@ const applyMatrix = (v: THREE.Vector3, m: Matrix3Tuple): THREE.Vector3 => {
     const mat = new THREE.Matrix3();
     mat.set(...m); // Three.js set() takes arguments in row-major order (n11, n12, n13...)
     return v.clone().applyMatrix3(mat);
-};
-
-const isEigenvector = (v: THREE.Vector3, av: THREE.Vector3): { isEigen: boolean; lambda: number | null } => {
-    const lenV = v.lengthSq();
-    const lenAv = av.lengthSq();
-
-    // Trivial zeros
-    if (lenAv < 0.0001 && lenV > 0.0001) return { isEigen: true, lambda: 0 };
-    if (lenV < 0.0001) return { isEigen: false, lambda: null };
-
-    // Cross product check for parallel
-    const vNorm = v.clone().normalize();
-    const avNorm = av.clone().normalize();
-    const cross = new THREE.Vector3().crossVectors(vNorm, avNorm);
-
-    // Tolerance
-    const isParallel = cross.lengthSq() < 0.0005;
-
-    if (isParallel) {
-        const dot = av.dot(v);
-        return { isEigen: true, lambda: dot / lenV };
-    }
-    return { isEigen: false, lambda: null };
 };
 
 // --- Components ---
@@ -110,66 +85,15 @@ function MathEquation({ matrix, vector, result, lambda, isEigen }: {
     );
 }
 
-function EigenScene({
-    matrix,
-    vector,
-    setEigenState
-}: {
-    matrix: Matrix3Tuple;
-    vector: THREE.Vector3;
-    setEigenState: (s: { isEigen: boolean, lambda: number | null }) => void;
-}) {
+function EigenScene({ matrix, vector }: { matrix: Matrix3Tuple; vector: THREE.Vector3 }) {
     const result = useMemo(() => applyMatrix(vector, matrix), [vector, matrix]);
-
-    // Check Eigenflow
-    useEffect(() => {
-        const { isEigen, lambda } = isEigenvector(vector, result);
-        setEigenState({ isEigen, lambda });
-    }, [vector, result, setEigenState]);
-
-    const { isEigen } = isEigenvector(vector, result);
-
-    // Eigen line visualizer (infinite line)
-    const linePoints = useMemo(() => {
-        if (!isEigen) return null;
-        const dir = vector.clone().normalize().multiplyScalar(50);
-        return [dir.clone().negate(), dir];
-    }, [vector, isEigen]);
-
-    return (
-        <group>
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[5, 10, 5]} intensity={1} />
-
-            {/* Grid & Axes */}
-            <gridHelper args={[20, 20, '#1e293b', '#0f172a']} position={[0, -0.01, 0]} />
-            <axesHelper args={[2]} />
-            <Label text="X" position={[2.2, 0, 0]} color="#ef4444" fontSize={0.8} />
-            <Label text="Y" position={[0, 2.2, 0]} color="#22c55e" fontSize={0.8} />
-            <Label text="Z" position={[0, 0, 2.2]} color="#3b82f6" fontSize={0.8} />
-
-            {/* Input Vector x (Blue) */}
-            <Arrow direction={[vector.x, vector.y, vector.z]} color="#3b82f6" lineWidth={4} />
-            {vector.lengthSq() > 0.1 && (
-                <Label text="x" position={[vector.x, vector.y, vector.z]} color="#3b82f6" fontSize={0.6} />
-            )}
-
-            {/* Output Vector Ax (Red or Gold) */}
-            <Arrow
-                direction={[result.x, result.y, result.z]}
-                color={isEigen ? "#facc15" : "#ef4444"}
-                lineWidth={4}
-            />
-            {result.lengthSq() > 0.1 && (
-                <Label text="Ax" position={[result.x, result.y, result.z]} color={isEigen ? "#facc15" : "#ef4444"} fontSize={0.6} />
-            )}
-
-            {/* Eigenline */}
-            {isEigen && linePoints && (
-                <Line points={linePoints} color="#facc15" opacity={0.3} transparent lineWidth={1} />
-            )}
-        </group>
-    );
+    const assessment = assessEigenvector(vector.toArray(), result.toArray());
+    const extent = 1.3 * Math.max(2, vector.length(), result.length());
+    const direction = vector.clone().normalize().multiplyScalar(extent);
+    return <SpatialScene axes={['coordinate 1', 'coordinate 2', 'coordinate 3']}
+        description="Actual input vector x and transformed vector Ax. Blue is x; red is Ax; a golden line appears when the normalized eigenvector residual is at most 10⁻⁶."
+        vectors={[{ from: [0, 0, 0], to: vector.toArray(), color: '#3b82f6', label: 'x' }, { from: [0, 0, 0], to: result.toArray(), color: assessment.isEigen ? '#facc15' : '#ef4444', label: 'Ax' }]}
+        paths={assessment.isEigen ? [{ points: [direction.clone().negate().toArray(), direction.toArray()], color: '#facc15', dashed: true }] : []} />;
 }
 
 export default function Eigenvalues() {
@@ -178,12 +102,15 @@ export default function Eigenvalues() {
     // State
     const [matrix, setMatrix] = useState<Matrix3Tuple>(IDENTITY);
     const [vector, setVector] = useState(new THREE.Vector3(1, 1, 1));
-    const [eigenState, setEigenState] = useState<{ isEigen: boolean; lambda: number | null }>({ isEigen: false, lambda: null });
+    const [matrixDraft, setMatrixDraft] = useState(IDENTITY.map(String));
 
     // Handlers
-    const updateMatrix = (idx: number, val: number) => {
+    const updateMatrix = (idx: number, draft: string) => {
+        setMatrixDraft(current => current.map((value, index) => index === idx ? draft : value));
+        const value = Number(draft);
+        if (!draft.trim() || !Number.isFinite(value)) return;
         const newM = [...matrix] as Matrix3Tuple;
-        newM[idx] = val;
+        newM[idx] = Math.max(-10, Math.min(10, value));
         setMatrix(newM);
     };
 
@@ -195,6 +122,7 @@ export default function Eigenvalues() {
 
     const reset = () => {
         setMatrix([1, 0, 0, 0, 1, 0, 0, 0, 1]); // Identity
+        setMatrixDraft([1, 0, 0, 0, 1, 0, 0, 0, 1].map(String));
         setVector(new THREE.Vector3(1, 1, 1));
     };
 
@@ -204,9 +132,9 @@ export default function Eigenvalues() {
         const m = new THREE.Matrix3();
         m.set(...matrix);
 
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 80; i++) {
             v.applyMatrix3(m);
-            if (v.lengthSq() < 0.000001) break;
+            if (v.lengthSq() === 0) break;
             v.normalize();
         }
 
@@ -225,22 +153,26 @@ export default function Eigenvalues() {
             m = [r(), r(), r(), r(), r(), r(), r(), r(), r()];
         }
         setMatrix(m);
+        setMatrixDraft(m.map(String));
     };
 
     const result = applyMatrix(vector, matrix);
+    const eigenState = assessEigenvector(vector.toArray(), result.toArray());
 
     const controls = (
         <GlassPane className="scene-controls" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', width: '340px' }}>
             <div>
                 <h1 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {eigenState.isEigen ? '✨ Eigenvector Found!' : 'Eigenvalue Visualizer'}
+                    {eigenState.isEigen ? 'Approximate eigenvector found' : 'Eigenvalue Visualizer'}
                 </h1>
                 <p style={{ fontSize: '12px', color: '#94a3b8', lineHeight: 1.6 }}>
                     {eigenState.isEigen
-                        ? `Eigenvalue λ = ${eigenState.lambda?.toFixed(2)}`
+                        ? `Estimated eigenvalue λ = ${eigenState.lambda?.toFixed(2)}`
                         : "Align the output vector (Red) with input (Blue)."}
                 </p>
             </div>
+
+            <p style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: 1.7 }}>A nonzero vector is an eigenvector when Ax = λx; λ can be negative or zero. Normalized residual: {Number.isFinite(eigenState.residual) ? eigenState.residual.toExponential(2) : 'undefined for a zero input'}. Auto-Find attempts 80 power iterations and may not converge, especially for rotations or equal-magnitude eigenvalues.</p>
 
             {/* Matrix Input */}
             <div>
@@ -257,13 +189,15 @@ export default function Eigenvalues() {
                     borderRadius: '8px',
                     border: '1px solid #334155'
                 }}>
-                    {matrix.map((val, i) => (
+                    {matrixDraft.map((draft, i) => (
                         <input
                             key={i}
                             type="number"
                             step="0.1"
-                            value={val}
-                            onChange={(e) => updateMatrix(i, parseFloat(e.target.value))}
+                            aria-label={`Matrix entry row ${Math.floor(i / 3) + 1} column ${i % 3 + 1}`}
+                            min="-10" max="10" value={draft}
+                            onChange={(e) => updateMatrix(i, e.target.value)}
+                            onBlur={() => setMatrixDraft(matrix.map(String))}
                             style={{
                                 width: '100%',
                                 background: 'transparent',
@@ -289,7 +223,7 @@ export default function Eigenvalues() {
                                 {axis.toUpperCase()}
                             </span>
                             <input
-                                type="range"
+                                type="range" aria-label={`Input vector ${axis.toUpperCase()}`}
                                 min="-3" max="3" step="0.1"
                                 value={vector[axis as 'x' | 'y' | 'z']}
                                 onChange={(e) => updateVector(axis as 'x' | 'y' | 'z', parseFloat(e.target.value))}
@@ -362,12 +296,7 @@ export default function Eigenvalues() {
 
     return (
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas frameloop="demand" camera={{ position: [5, 5, 8], fov: 45 }} aria-label="Eigenvalue Visualizer">
-                <OrbitControls enableDamping dampingFactor={0.05} />
-                <color attach="background" args={['#0b0f19']} />
-                <fog attach="fog" args={['#0b0f19', 10, 25]} />
-                <EigenScene matrix={matrix} vector={vector} setEigenState={setEigenState} />
-            </SceneCanvas>
+            <EigenScene matrix={matrix} vector={vector} />
         </SceneContainer>
     );
 }

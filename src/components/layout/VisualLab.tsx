@@ -1,5 +1,6 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { SceneContainer } from './SceneContainer';
+import { useSceneMotion } from '../../hooks/useSceneMotion';
 
 export interface LabMetric { label: string; value: string | number; }
 interface VisualLabProps {
@@ -11,12 +12,13 @@ interface VisualLabProps {
     explanation: ReactNode;
     children: ReactNode;
     challenge?: string;
+    backUrl?: string;
 }
 
 /** A visual experiment keeps its controls close and its longer lesson optional. */
-export function VisualLab({ title, subtitle, controls, metrics = [], insight, explanation, children, challenge }: VisualLabProps) {
+export function VisualLab({ title, subtitle, controls, metrics = [], insight, explanation, children, challenge, backUrl = '/ml' }: VisualLabProps) {
     const id = useId();
-    return <SceneContainer backUrl="/ml" defaultPanel="closed" explanation={explanation}>
+    return <SceneContainer backUrl={backUrl} defaultPanel="closed" explanation={explanation}>
         <section className="visual-lab" aria-labelledby={`${id}-title`}>
             <header className="visual-lab-header">
                 <div><h1 id={`${id}-title`}>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>
@@ -65,8 +67,9 @@ export function LabSelect({ label, value, options, onChange }: LabSelectProps) {
 
 interface LabPlaybackProps { step: number; max: number; onStep: (step: number) => void; onReset?: () => void; interval?: number; }
 export function LabPlayback({ step, max, onStep, onReset, interval = 850 }: LabPlaybackProps) {
+    const moving = useSceneMotion();
     const [playing, setPlaying] = useState(false);
-    const active = playing && step < max;
+    const active = playing && moving && step < max;
     useEffect(() => {
         if (!active) return;
         const timer = window.setTimeout(() => onStep(Math.min(max, step + 1)), interval);
@@ -74,11 +77,12 @@ export function LabPlayback({ step, max, onStep, onReset, interval = 850 }: LabP
     }, [active, step, max, onStep, interval]);
     return <div className="visual-lab-playback" role="group" aria-label="Experiment playback">
         <button type="button" className="lab-button" disabled={step >= max} onClick={() => { setPlaying(false); onStep(Math.min(max, step + 1)); }}>Step</button>
-        <button type="button" className="lab-button" aria-pressed={active} onClick={() => {
+        <button type="button" className="lab-button" disabled={!moving} title={!moving ? 'Resume motion to enable playback' : undefined} aria-pressed={active} onClick={() => {
             if (active) setPlaying(false);
             else { if (step >= max) onStep(0); setPlaying(true); }
         }}>{active ? 'Pause' : 'Play'}</button>
         <button type="button" className="lab-button" onClick={() => { setPlaying(false); onStep(0); onReset?.(); }}>Reset</button>
         <span aria-live="polite">Step {step} / {max}</span>
+        {!moving && <span>Motion paused · Step remains available</span>}
     </div>;
 }

@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Line, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import type { Objective, Point2 } from '../../utils/optimization';
+import { useSceneMotion } from '../../hooks/useSceneMotion';
 
 interface DescentTrajectoryProps {
     path: Point2[];
@@ -12,6 +13,7 @@ interface DescentTrajectoryProps {
 }
 
 export function DescentTrajectory({ path, loss, playing = true, color }: DescentTrajectoryProps) {
+    const moving = useSceneMotion();
     const ballRef = useRef<THREE.Mesh>(null);
     const elapsed = useRef(0);
     const points = useMemo(() => path.map(([x, y]): [number, number, number] =>
@@ -19,7 +21,7 @@ export function DescentTrajectory({ path, loss, playing = true, color }: Descent
 
     useFrame((_, delta) => {
         if (!ballRef.current) return;
-        if (playing) elapsed.current += Math.min(delta, 0.1) * 20;
+        if (playing && moving) elapsed.current += Math.min(delta, 0.1) * 20;
         const index = Math.min(Math.floor(elapsed.current), path.length - 1);
         const next = Math.min(index + 1, path.length - 1);
         const fraction = Math.min(elapsed.current - index, 1);

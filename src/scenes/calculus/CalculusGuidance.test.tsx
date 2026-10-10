@@ -6,6 +6,8 @@ import RiemannIntegral from './RiemannIntegral';
 import TaylorRemainder from './TaylorRemainder';
 import RiemannVsLebesgue from './RiemannVsLebesgue';
 import SigmaAlgebra from './SigmaAlgebra';
+import PartialDerivatives from './PartialDerivatives';
+import JacobianHessian from './JacobianHessian';
 
 // Keep routing, SceneContainer, lesson metadata, Guide, and controls real; only
 // omit the GPU surface and its graphics children in these DOM integration tests.
@@ -53,4 +55,13 @@ test('switching from sine to logarithm resets an invalid expansion center and re
     expect(functionSelector.value).toBe('log');
     expect(center.value).toBe('0');
     expect(center.min).toBe('-0.9');
+});
+
+
+test.each([{ id: 'partial-derivatives', Scene: PartialDerivatives }, { id: 'jacobian-hessian', Scene: JacobianHessian }])('$id keeps its axis meaning visible without GPU rendering or an open guide', ({ id, Scene }) => {
+    render(<MemoryRouter initialEntries={[`/calculus/${id}`]}><Routes><Route path="/:topicId/:subtopicId" element={<Scene />} /></Routes></MemoryRouter>);
+    const key = within(screen.getByRole('list', { name: 'Plot axis meanings' }));
+    expect(key.getByText(/input x/)).toBeDefined();
+    expect(key.getByText(/input y on the floor/)).toBeDefined();
+    expect(key.getByText(/f\(x, y\)/)).toBeDefined();
 });

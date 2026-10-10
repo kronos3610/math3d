@@ -1,5 +1,5 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useMemo, useLayoutEffect, useRef } from 'react';
+import { useMemo, useLayoutEffect, useRef, useEffect } from 'react';
 
 import { OrbitControls } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
@@ -22,6 +22,7 @@ function GaussianSurface() {
     }, []);
 
 
+    useEffect(() => () => geometry.dispose(), [geometry]);
     return (
         <group rotation={[-Math.PI / 2, 0, 0]}>
             <mesh geometry={geometry}>
@@ -46,8 +47,8 @@ const SAMPLE_POINTS = (() => {
     for (let i = 0; i < 80; i++) {
         const u1 = Math.max(Math.random(), Number.MIN_VALUE);
         const u2 = Math.random();
-        const x = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2) * 1.2;
-        const z = Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2) * 1.2;
+        const x = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        const z = Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2);
         const y = 2 * Math.exp(-(x * x + z * z) / 2) + 0.05;
         pts.push([x, y, z]);
     }
@@ -83,13 +84,13 @@ export default function Distributions() {
                 </h3>
                 <div style={{ fontSize: '14px', color: '#94a3b8', lineHeight: '1.5' }}>
                     <p style={{ margin: 0, marginBottom: '8px' }}>
-                        <span style={{ color: '#fd79a8' }}>Pink surface</span>: 2D Gaussian distribution
+                        <span style={{ color: '#fd79a8' }}>Pink surface</span>: Scaled standard 2D Gaussian density
                     </p>
                     <p style={{ margin: 0, marginBottom: '8px' }}>
                         <span style={{ color: '#fdcb6e' }}>Yellow dots</span>: Random samples from the distribution
                     </p>
                     <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#64748b' }}>
-                        Notice how samples cluster around the peak
+                        Surface height is 4π times the density for visibility. The horizontal coordinates are Gaussian samples; their heights are placed on the surface, not a third random variable.
                     </p>
                 </div>
             </div>
@@ -108,7 +109,7 @@ export default function Distributions() {
                 <GaussianSurface />
                 <SamplePoints />
                 <gridHelper args={[8, 16, '#222', '#181828']} position={[0, -0.01, 0]} />
-                <OrbitControls enableDamping dampingFactor={0.05} />
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#050508', 5, 15]} />
             </SceneCanvas>
         </SceneContainer>

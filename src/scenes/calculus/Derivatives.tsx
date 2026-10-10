@@ -1,6 +1,6 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useRef, useMemo, useEffect } from 'react';
+import { useSceneFrame as useFrame } from '../../hooks/useSceneFrame';
 import { OrbitControls, Line } from '@react-three/drei';
 import { useParams } from 'react-router-dom';
 import * as THREE from 'three';
@@ -23,6 +23,7 @@ export function DerivativeSurface() {
         return geo;
     }, []);
 
+    useEffect(() => () => geometry.dispose(), [geometry]);
     useFrame((state) => {
         const t = state.clock.elapsedTime * 0.3;
         const x = Math.sin(t) * 2;
@@ -56,7 +57,7 @@ export function DerivativeSurface() {
             </mesh>
 
             {/* Moving tangent point */}
-            <group ref={tangentRef} name="derivative-tangent">
+            <group ref={tangentRef} name="derivative-tangent" position={[0, 2, 0]} rotation={[0, -Math.atan(0.8 * Math.cos(2)), 0]}>
                 <mesh>
                     <sphereGeometry args={[0.08, 16, 16]} />
                     <meshStandardMaterial color="#fdcb6e" emissive="#fdcb6e" emissiveIntensity={0.8} />
@@ -104,12 +105,12 @@ export default function Derivatives() {
             backUrl={`/${topicId || 'calculus'}`}
             controls={controls}
         >
-            <SceneCanvas camera={{ position: [4, 3, 4], fov: 50 }} aria-label="3D surface showing the x derivative as a tangent on z = 0.8 sin(x) cos(y)">
+            <SceneCanvas frameloop="always" camera={{ position: [4, 3, 4], fov: 50 }} aria-label="3D surface showing the x derivative as a tangent on z = 0.8 sin(x) cos(y)">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 5, 5]} intensity={0.8} />
                 <pointLight position={[-3, 2, 3]} intensity={0.5} color="#00cec9" />
                 <DerivativeSurface />
-                <OrbitControls enableDamping dampingFactor={0.05} />
+                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
                 <fog attach="fog" args={['#050508', 5, 15]} />
             </SceneCanvas>
         </SceneContainer>

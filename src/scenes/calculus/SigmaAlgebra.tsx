@@ -1,6 +1,6 @@
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useSceneFrame as useFrame } from '../../hooks/useSceneFrame';
 import * as THREE from 'three';
 import { ShieldCheck, Zap, BookOpen, Scale } from 'lucide-react';
 import Latex from '../../components/Latex';
@@ -188,7 +188,7 @@ export default function SigmaAlgebra() {
                         </span>
                     </h2>
                     <p style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.6 }}>
-                        The &quot;whitelist&quot; rules that prevent mathematical paradoxes
+                        Choose which events are measurable; a measure then assigns their sizes
                     </p>
                 </div>
 
@@ -202,9 +202,9 @@ export default function SigmaAlgebra() {
                     }}
                 >
                     <p style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: 1.6 }}>
-                        To prevent mathematical paradoxes, we define a{' '}
+                        We choose a{' '}
                         <strong><Latex formula="\sigma" />-algebra</strong>: the collection
-                        of &quot;legal&quot; shapes we can measure.
+                        of events closed under complements and countable unions. A separate measure assigns their sizes; these finite graphics illustrate the closure rules.
                     </p>
                 </div>
 
@@ -303,7 +303,7 @@ export default function SigmaAlgebra() {
                     height: '50vh',
                 }}
             >
-                <SceneCanvas camera={{ position: [0, 0, 6], fov: 75 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of sigma-algebra and measure theory concepts">
+                <SceneCanvas frameloop="always" camera={{ position: [0, 0, 6], fov: 75 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of sigma-algebra and measure theory concepts">
                     <color attach="background" args={['#0a0a0f']} />
                     <SigmaScene level={sigmaLevel} mode={sigmaMode} />
                 </SceneCanvas>
@@ -377,9 +377,11 @@ export default function SigmaAlgebra() {
                         The Banach-Tarski &quot;Crime Scene&quot;
                     </h3>
                     <p style={{ fontSize: '14px', color: '#c7d2fe', lineHeight: 1.6, marginBottom: '24px' }}>
-                        Without a <strong><Latex formula="\sigma" />-algebra</strong>, you
-                        could use the <strong>Axiom of Choice</strong> to pick an <em>uncountable</em> number of
-                        points from a sphere and rearrange them into <strong>two identical spheres</strong>.
+                        The <strong>Axiom of Choice</strong> permits a finite partition of a ball
+                        into non-Lebesgue-measurable pieces that can be rearranged by rigid motions
+                        into <strong>two balls of the original size</strong>. Restricting volume to
+                        Lebesgue-measurable sets prevents assigning ordinary volume to those pieces;
+                        it does not make the theorem disappear.
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                         <div
@@ -394,8 +396,7 @@ export default function SigmaAlgebra() {
                                 The Violation
                             </p>
                             <p style={{ fontSize: '12px', lineHeight: 1.5 }}>
-                                The 5 pieces are created using &quot;uncountable&quot; selections. They aren&apos;t
-                                in the <Latex formula="\sigma" />-algebra.
+                                The theorem’s pieces are non-measurable for Lebesgue volume. They are not ordinary surface patches that can be drawn or rendered.
                             </p>
                         </div>
                         <div
@@ -410,9 +411,7 @@ export default function SigmaAlgebra() {
                                 The Consequence
                             </p>
                             <p style={{ fontSize: '12px', lineHeight: 1.5 }}>
-                                Because they aren&apos;t in the <Latex formula="\sigma" />
-                                -algebra, they have <strong>no defined volume</strong>. Math can&apos;t
-                                &quot;see&quot; them.
+                                These pieces have <strong>no Lebesgue volume</strong>, so finite additivity cannot be applied to their volumes. Being outside an arbitrary chosen σ-algebra does not by itself prove a set is non-Lebesgue-measurable.
                             </p>
                         </div>
                         <div
@@ -492,7 +491,7 @@ export default function SigmaAlgebra() {
                                     The empty set <Latex formula="\emptyset" /> and the entire
                                     space <Latex formula="X" /> must be in{' '}
                                     <Latex formula="\mathcal{F}" />.{' '}
-                                    <strong>Intuition:</strong> You must be able to say the volume of &quot;nothing&quot; is 0 and &quot;everything&quot; is 100%.
+                                    <strong>Intuition:</strong> The empty set has measure zero. Probability additionally requires P(Ω)=1; a general measure of the whole space can be finite or infinite.
                                 </p>
                             </div>
                         </div>
@@ -594,7 +593,7 @@ export default function SigmaAlgebra() {
                                         fontSize: '12px',
                                     }}
                                 >
-                                    The "cheat" in Banach-Tarski uses <strong>uncountable</strong> selections. By staying within the <Latex formula="\sigma" />-algebra, we ban the uncountable weirdness.
+                                    Banach–Tarski uses the axiom of choice to obtain non-Lebesgue-measurable pieces. Countable-union closure does not exclude uncountable sets: many measurable sets, including intervals, are uncountable.
                                 </div>
                             </div>
                         </div>
@@ -619,7 +618,7 @@ export default function SigmaAlgebra() {
                                 In Machine Learning, we use the <strong>Borel <Latex formula="\sigma" />-algebra</strong>. It contains all "open intervals" (like all numbers between 0 and 1).
                             </p>
                             <ul style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.8, paddingLeft: '20px' }}>
-                                <li>Includes every shape you could draw or code</li>
+                                <li>Includes open and closed sets and their countable combinations</li>
                                 <li>Contains spheres, cubes, and data curves</li>
                                 <li>Does NOT contain the &quot;outlaw&quot; sets in Banach-Tarski</li>
                             </ul>
@@ -637,8 +636,7 @@ export default function SigmaAlgebra() {
                             </h4>
                             <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.9)', lineHeight: 1.6 }}>
                                 Measure Theory is the &quot;contract&quot; that says: &quot;As long as we stay inside
-                                this <Latex formula="\sigma" />-algebra, 1 + 1 will always
-                                equal 2, and our probabilities will always sum to 1.&quot;
+                                this <Latex formula="\sigma" />-algebra, a chosen probability measure assigns nonnegative probabilities, is countably additive, and has total probability 1.&quot;
                             </p>
                         </div>
                     </div>

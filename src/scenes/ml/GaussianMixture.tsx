@@ -7,6 +7,8 @@ import * as THREE from 'three';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import Latex from '../../components/Latex';
+import { useSceneMotion } from '../../hooks/useSceneMotion';
+import { diagonalMixtureEStep, diagonalMixtureMStep, type MixtureParameters, type MixturePoint } from './legacyMixtureMath';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -36,20 +38,7 @@ const TRUE_CLUSTERS = [
 // ---------------------------------------------------------------------------
 
 function boxMuller() {
-    return Math.sqrt(-2 * Math.log(Math.random() + 1e-12)) * Math.cos(2 * Math.PI * Math.random());
-}
-
-function gaussianPDF(x: THREE.Vector3, mean: THREE.Vector3, variance: THREE.Vector3) {
-    const vx = Math.max(variance.x, 1e-3);
-    const vy = Math.max(variance.y, 1e-3);
-    const vz = Math.max(variance.z, 1e-3);
-    const coef = 1 / (Math.pow(2 * Math.PI, 1.5) * Math.sqrt(vx * vy * vz));
-    const exp = -0.5 * (
-        (x.x - mean.x) ** 2 / vx +
-        (x.y - mean.y) ** 2 / vy +
-        (x.z - mean.z) ** 2 / vz
-    );
-    return coef * Math.exp(exp);
+    return Math.sqrt(-2 * Math.log(Math.max(Math.random(), Number.MIN_VALUE))) * Math.cos(2 * Math.PI * Math.random());
 }
 
 // ---------------------------------------------------------------------------
@@ -60,8 +49,8 @@ interface GMMState {
     dataPoints: THREE.Vector3[];
     means: THREE.Vector3[];
     variances: THREE.Vector3[];
-    targetMeans: THREE.Vector3[];
-    targetVariances: THREE.Vector3[];
+    startMeans: THREE.Vector3[];
+    startVariances: THREE.Vector3[];
     weights: number[];
     responsibilities: number[][];
     animating: boolean;
@@ -72,7 +61,7 @@ interface GMMState {
 
 function emptyGMM(): GMMState {
     return {
-        dataPoints: [], means: [], variances: [], targetMeans: [], targetVariances: [],
+        dataPoints: [], means: [], variances: [], startMeans: [], startVariances: [],
         weights: [], responsibilities: [],
         animating: false, animProgress: 0,
         geometryRev: 0, responsibilityRev: 0,
@@ -89,7 +78,7 @@ function rebuildGMM(g: GMMState) {
             c.center.z + boxMuller() * c.spread.z,
         ));
     }
-    g.means = []; g.variances = []; g.targetMeans = []; g.targetVariances = []; g.weights = [];
+    g.means = []; g.variances = []; g.startMeans = []; g.startVariances = []; g.weights = [];
     for (let k = 0; k < K; k++) {
         const m = new THREE.Vector3(
             (Math.random() - 0.5) * 30,
@@ -97,9 +86,9 @@ function rebuildGMM(g: GMMState) {
             (Math.random() - 0.5) * 30,
         );
         g.means.push(m.clone());
-        g.targetMeans.push(m.clone());
+        g.startMeans.push(m.clone());
         g.variances.push(new THREE.Vector3(25, 25, 25));
-        g.targetVariances.push(new THREE.Vector3(25, 25, 25));
+        g.startVariances.push(new THREE.Vector3(25, 25, 25));
         g.weights.push(1 / K);
     }
     g.responsibilities = Array.from({ length: N }, () => new Array(K).fill(1 / K));
@@ -108,58 +97,30 @@ function rebuildGMM(g: GMMState) {
     g.geometryRev++;
 }
 
-function doEStep(g: GMMState): number {
-    let logL = 0;
-    for (let i = 0; i < N; i++) {
-        const probs: number[] = new Array(K);
-        let totalP = 0;
-        for (let k = 0; k < K; k++) {
-            const p = g.weights[k] * gaussianPDF(g.dataPoints[i], g.means[k], g.variances[k]);
-            probs[k] = p;
-            totalP += p;
-        }
-        for (let k = 0; k < K; k++) {
-            g.responsibilities[i][k] = totalP > 0 ? probs[k] / totalP : 1 / K;
-        }
-        if (totalP > 0) logL += Math.log(totalP);
-    }
-    g.responsibilityRev++;
-    return logL;
+function modelParameters(g: GMMState): MixtureParameters {
+    return { means: g.means.map(v => v.toArray() as MixturePoint), variances: g.variances.map(v => v.toArray() as MixturePoint), weights: g.weights };
 }
 
-function doMStep(g: GMMState) {
-    for (let k = 0; k < K; k++) {
-        let Nk = 0;
-        const newMean = new THREE.Vector3();
-        for (let i = 0; i < N; i++) {
-            Nk += g.responsibilities[i][k];
-            newMean.x += g.dataPoints[i].x * g.responsibilities[i][k];
-            newMean.y += g.dataPoints[i].y * g.responsibilities[i][k];
-            newMean.z += g.dataPoints[i].z * g.responsibilities[i][k];
-        }
-        if (Nk <= 1e-3) continue;
+function observations(g: GMMState): MixturePoint[] { return g.dataPoints.map(v => v.toArray() as MixturePoint); }
 
-        newMean.divideScalar(Nk);
-        const newVar = new THREE.Vector3();
-        for (let i = 0; i < N; i++) {
-            const dx = g.dataPoints[i].x - newMean.x;
-            const dy = g.dataPoints[i].y - newMean.y;
-            const dz = g.dataPoints[i].z - newMean.z;
-            newVar.x += dx * dx * g.responsibilities[i][k];
-            newVar.y += dy * dy * g.responsibilities[i][k];
-            newVar.z += dz * dz * g.responsibilities[i][k];
-        }
-        newVar.divideScalar(Nk);
-        newVar.x = Math.max(newVar.x, VAR_FLOOR);
-        newVar.y = Math.max(newVar.y, VAR_FLOOR);
-        newVar.z = Math.max(newVar.z, VAR_FLOOR);
+function doEStep(g: GMMState): number {
+    const result = diagonalMixtureEStep(observations(g), modelParameters(g));
+    g.responsibilities = result.responsibilities;
+    g.responsibilityRev++;
+    return result.logLikelihood;
+}
 
-        g.targetMeans[k].copy(newMean);
-        g.targetVariances[k].copy(newVar);
-        g.weights[k] = Nk / N;
-    }
+function doMStep(g: GMMState): number {
+    const next = diagonalMixtureMStep(observations(g), g.responsibilities, modelParameters(g), VAR_FLOOR);
+    g.startMeans = g.means.map(v => v.clone());
+    g.startVariances = g.variances.map(v => v.clone());
+    // Commit mathematics immediately. Rendering only interpolates this completed update.
+    g.means = next.means.map(v => new THREE.Vector3(...v));
+    g.variances = next.variances.map(v => new THREE.Vector3(...v));
+    g.weights = next.weights;
     g.animating = true;
     g.animProgress = 0;
+    return diagonalMixtureEStep(observations(g), next).logLikelihood;
 }
 
 // ---------------------------------------------------------------------------
@@ -168,10 +129,10 @@ function doMStep(g: GMMState) {
 
 interface Scene3DProps {
     gmmRef: React.MutableRefObject<GMMState>;
-    onAnimDone: () => void;
 }
 
-function Scene3D({ gmmRef, onAnimDone }: Scene3DProps) {
+function Scene3D({ gmmRef }: Scene3DProps) {
+    const moving = useSceneMotion();
     const pointMeshRef = useRef<THREE.InstancedMesh>(null);
     const gaussianRefs = useRef<(THREE.Mesh | null)[]>([null, null, null]);
 
@@ -189,6 +150,7 @@ function Scene3D({ gmmRef, onAnimDone }: Scene3DProps) {
     useFrame((_, delta) => {
         const g = gmmRef.current;
         const pm = pointMeshRef.current;
+        if (!moving) { g.animating = false; g.animProgress = 1; }
 
         // 1. Geometry update (reset / first build)
         if (pm && g.geometryRev > appliedGeometryRev.current && g.dataPoints.length === N) {
@@ -235,14 +197,14 @@ function Scene3D({ gmmRef, onAnimDone }: Scene3DProps) {
                 if (g.animating) {
                     const t = g.animProgress;
                     gm.position.set(
-                        g.means[k].x + (g.targetMeans[k].x - g.means[k].x) * t,
-                        g.means[k].y + (g.targetMeans[k].y - g.means[k].y) * t,
-                        g.means[k].z + (g.targetMeans[k].z - g.means[k].z) * t,
+                        g.startMeans[k].x + (g.means[k].x - g.startMeans[k].x) * t,
+                        g.startMeans[k].y + (g.means[k].y - g.startMeans[k].y) * t,
+                        g.startMeans[k].z + (g.means[k].z - g.startMeans[k].z) * t,
                     );
                     gm.scale.set(
-                        Math.sqrt(g.variances[k].x + (g.targetVariances[k].x - g.variances[k].x) * t),
-                        Math.sqrt(g.variances[k].y + (g.targetVariances[k].y - g.variances[k].y) * t),
-                        Math.sqrt(g.variances[k].z + (g.targetVariances[k].z - g.variances[k].z) * t),
+                        Math.sqrt(g.startVariances[k].x + (g.variances[k].x - g.startVariances[k].x) * t),
+                        Math.sqrt(g.startVariances[k].y + (g.variances[k].y - g.startVariances[k].y) * t),
+                        Math.sqrt(g.startVariances[k].z + (g.variances[k].z - g.startVariances[k].z) * t),
                     );
                 } else {
                     gm.position.copy(g.means[k]);
@@ -260,12 +222,7 @@ function Scene3D({ gmmRef, onAnimDone }: Scene3DProps) {
             g.animProgress += delta * ANIM_SPEED;
             if (g.animProgress >= 1) {
                 g.animProgress = 1;
-                for (let k = 0; k < K; k++) {
-                    g.means[k].copy(g.targetMeans[k]);
-                    g.variances[k].copy(g.targetVariances[k]);
-                }
                 g.animating = false;
-                onAnimDone();
             }
         }
     });
@@ -277,7 +234,7 @@ function Scene3D({ gmmRef, onAnimDone }: Scene3DProps) {
             <ambientLight intensity={0.4} />
             <directionalLight position={[10, 20, 10]} intensity={0.8} />
 
-            <OrbitControls
+            <OrbitControls makeDefault
                 enableDamping
                 dampingFactor={0.05}
                 maxPolarAngle={Math.PI / 1.5}
@@ -307,10 +264,12 @@ function Scene3D({ gmmRef, onAnimDone }: Scene3DProps) {
 // Main component
 // ---------------------------------------------------------------------------
 
-type Stage = 'estep' | 'mstep' | 'animating';
+type Stage = 'estep' | 'mstep';
 
 export default function GaussianMixture() {
     const { topicId } = useParams();
+    const moving = useSceneMotion();
+    const autoSteps = useRef(0);
     const gmmRef = useRef<GMMState>(emptyGMM());
 
     const [iteration, setIteration] = useState(0);
@@ -333,7 +292,6 @@ export default function GaussianMixture() {
 
     const runE = useCallback(() => {
         const g = gmmRef.current;
-        if (g.animating) return;
         const ll = doEStep(g);
         setLogL(ll);
         setStage('mstep');
@@ -341,26 +299,19 @@ export default function GaussianMixture() {
 
     const runM = useCallback(() => {
         const g = gmmRef.current;
-        if (g.animating) return;
-        doMStep(g);
-        setStage('animating');
-    }, []);
-
-    const onAnimDone = useCallback(() => {
+        setLogL(doMStep(g));
         setIteration(i => i + 1);
         setStage('estep');
     }, []);
 
     // Auto-run: alternates E and M with a tick interval; respects animation pause
     useEffect(() => {
-        if (!autoRunning) return;
-        let stepNum = 0;
+        if (!autoRunning || !moving) return;
         const tick = () => {
-            if (gmmRef.current.animating) return;
-            if (stepNum % 2 === 0) runE();
+            if (autoSteps.current % 2 === 0) runE();
             else runM();
-            stepNum++;
-            if (stepNum >= 20) {
+            autoSteps.current++;
+            if (autoSteps.current >= 20) {
                 setAutoRunning(false);
             }
         };
@@ -368,13 +319,12 @@ export default function GaussianMixture() {
         // Kick off immediately rather than waiting 700ms
         tick();
         return () => window.clearInterval(id);
-    }, [autoRunning, runE, runM]);
+    }, [autoRunning, moving, runE, runM]);
 
     // ----- UI -----
     const stageMeta = {
         estep: { color: '#60a5fa', label: 'E-Step Ready', desc: 'Compute responsibilities — color each point by P(cluster | point).' },
         mstep: { color: '#a78bfa', label: 'M-Step Ready', desc: 'Update each Gaussian — refit mean and variance to weighted points.' },
-        animating: { color: '#fbbf24', label: 'Updating Distributions…', desc: 'Maximising parameters — wireframes morphing toward new fit.' },
     }[stage];
 
     const controls = (
@@ -398,7 +348,7 @@ export default function GaussianMixture() {
                 border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: '10px', padding: '12px', textAlign: 'center',
             }}>
-                <Latex formula="p(x) = \sum_{k=1}^{K} \pi_k\, \mathcal{N}(x \mid \mu_k, \Sigma_k)" display />
+                <Latex formula={String.raw`p(x) = \sum_{k=1}^{K} \pi_k\, \mathcal{N}(x \mid \mu_k, \Sigma_k)`} display />
             </div>
 
             {/* Status card */}
@@ -456,7 +406,7 @@ export default function GaussianMixture() {
 
             {/* Auto / Reset */}
             <button
-                onClick={() => setAutoRunning(a => !a)}
+                onClick={() => { if (!autoRunning) autoSteps.current = 0; setAutoRunning(a => !a); }}
                 style={btnStyle(autoRunning ? '#ef4444' : '#10b981')}
             >
                 {autoRunning ? 'Stop Auto Run' : 'Auto Run (10 iterations)'}
@@ -473,6 +423,7 @@ export default function GaussianMixture() {
                 Reset & Regenerate Data
             </button>
 
+            {autoRunning && !moving && <p role="status">Auto run is paused. Resume motion to continue; manual E/M steps work when auto run is stopped.</p>}
             {/* Legend */}
             <div style={{
                 background: 'rgba(15,23,42,0.6)',
@@ -505,7 +456,8 @@ export default function GaussianMixture() {
                 <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <li>{N} sample points from 3 hidden gaussians</li>
                     <li>Point hue = blended responsibility γ(z<sub>nk</sub>)</li>
-                    <li>Wireframe scale = 1σ ellipsoid of each fitted Gaussian</li>
+                    <li>Wireframe scale = 1σ ellipsoid, not a confidence boundary</li>
+                    <li>Diagonal covariance; each variance is constrained to be at least 0.5</li>
                 </ul>
             </div>
 
@@ -517,8 +469,8 @@ export default function GaussianMixture() {
 
     return (
         <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
-            <SceneCanvas dpr={[1, 1.5]} camera={{ position: [25, 20, 35], fov: 60 }} aria-label="Gaussian mixture with axis-aligned covariance ellipsoids and points colored by cluster responsibility">
-                <Scene3D gmmRef={gmmRef} onAnimDone={onAnimDone} />
+            <SceneCanvas frameloop="always" dpr={[1, 1.5]} camera={{ position: [25, 20, 35], fov: 60 }} aria-label="Gaussian mixture with axis-aligned covariance ellipsoids and points colored by cluster responsibility">
+                <Scene3D gmmRef={gmmRef} />
             </SceneCanvas>
         </SceneContainer>
     );

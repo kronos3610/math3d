@@ -44,10 +44,10 @@ const BRIEFINGS: Record<LinearAlgorithm, ModelBriefing> = {
     },
 };
 
-const PLOT = { width: 800, height: 440, left: 60, right: 774, top: 20, bottom: 395 };
+const PLOT = { width: 800, height: 440, left: 88, right: 774, top: 20, bottom: 395 };
 const toX = (x: number) => PLOT.left + (x + 1) * (PLOT.right - PLOT.left) / 2;
 const toY = (y: number) => PLOT.bottom - (y + 1) * (PLOT.bottom - PLOT.top) / 2;
-const clamp = (value: number) => Math.max(-1, Math.min(1, value));
+const clamp = (value: number) => Math.abs(value) < 1e-12 ? 0 : Math.max(-1, Math.min(1, value));
 
 export default function LinearModels() {
     const id = useId();
@@ -74,8 +74,14 @@ export default function LinearModels() {
     const handlePlotClick = (event: MouseEvent<SVGSVGElement>) => {
         const rect = event.currentTarget.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return;
-        const x = (event.clientX - rect.left) / rect.width * PLOT.width;
-        const y = (event.clientY - rect.top) / rect.height * PLOT.height;
+        const transform = event.currentTarget.getScreenCTM?.();
+        const screenPoint = event.currentTarget.createSVGPoint?.();
+        if (screenPoint) { screenPoint.x = event.clientX; screenPoint.y = event.clientY; }
+        // getScreenCTM may return SVGMatrix rather than DOMMatrix. SVGPoint
+        // supports both, including viewBox scaling and CSS transformations.
+        const mapped = transform && screenPoint ? screenPoint.matrixTransform(transform.inverse()) : undefined;
+        const x = mapped?.x ?? (event.clientX - rect.left) * PLOT.width / rect.width;
+        const y = mapped?.y ?? (event.clientY - rect.top) * PLOT.height / rect.height;
         if (x < PLOT.left || x > PLOT.right || y < PLOT.top || y > PLOT.bottom) return;
         const point = {
             x1: clamp((x - PLOT.left) / (PLOT.right - PLOT.left) * 2 - 1),
@@ -128,6 +134,45 @@ export default function LinearModels() {
                         <h1 id={id + '-title'}>Linear Models for Classification</h1>
                         <p>Compare logistic regression, least squares, and the perceptron on the same two-feature dataset.</p>
                     </header>
+                    <p className="linear-models-current">{briefing.title} · {briefing.rule}</p>
+                    <svg className="linear-models-plot" viewBox={'0 0 ' + PLOT.width + ' ' + PLOT.height} preserveAspectRatio="xMidYMid meet"
+                        role="application" aria-label="Interactive classification plot" aria-describedby={id + '-plot-description ' + id + '-keyboard'}
+                        tabIndex={0} onClick={handlePlotClick} onKeyDown={handlePlotKeyDown}>
+                        <desc id={id + '-plot-description'}>A two-feature classification plot using {briefing.title}. There are {blueCount} blue circles labeled C₁ and {points.length - blueCount} red triangles labeled C₂. Faint colored regions show predictions; the white line marks the decision threshold. The gold cursor can place a new training point.</desc>
+                        <g aria-hidden="true">
+                            <rect x={PLOT.left} y={PLOT.top} width={PLOT.right - PLOT.left} height={PLOT.bottom - PLOT.top} fill="var(--bg-secondary)" />
+                            {hasBothClasses && <>
+                                <polygon points={blueRegion.map(point => toX(point.x1) + ',' + toY(point.x2)).join(' ')} fill="var(--linear-class-blue)" opacity={0.12} />
+                                <polygon points={redRegion.map(point => toX(point.x1) + ',' + toY(point.x2)).join(' ')} fill="var(--linear-class-red)" opacity={0.12} />
+                            </>}
+                            {[-1, -0.5, 0, 0.5, 1].map(value => <g key={value}>
+                                <line x1={toX(value)} x2={toX(value)} y1={PLOT.top} y2={PLOT.bottom} stroke="var(--border-glass-hover)" />
+                                <line x1={PLOT.left} x2={PLOT.right} y1={toY(value)} y2={toY(value)} stroke="var(--border-glass-hover)" />
+                                <text x={toX(value)} y={PLOT.bottom + 21} textAnchor="middle">{value}</text>
+                                <text x={PLOT.left - 12} y={toY(value) + 4} textAnchor="end">{value}</text>
+                            </g>)}
+                            {hasBothClasses && boundary && <line x1={toX(boundary[0].x1)} y1={toY(boundary[0].x2)} x2={toX(boundary[1].x1)} y2={toY(boundary[1].x2)} stroke="var(--text-primary)" strokeWidth={2.5} />}
+                            {points.map((point, index) => point.target === 1
+                                ? <circle key={index} cx={toX(point.x1)} cy={toY(point.x2)} r={6} fill="var(--linear-class-blue)" stroke="var(--text-primary)" strokeWidth={1} />
+                                : <polygon key={index} points={toX(point.x1) + ',' + (toY(point.x2) - 7) + ' ' + (toX(point.x1) - 6.5) + ',' + (toY(point.x2) + 5) + ' ' + (toX(point.x1) + 6.5) + ',' + (toY(point.x2) + 5)} fill="var(--linear-class-red)" stroke="var(--text-primary)" strokeWidth={1} />)}
+                            <g className="linear-models-cursor">
+                                <circle cx={toX(cursor.x1)} cy={toY(cursor.x2)} r={10} fill="none" stroke="var(--color-ml)" strokeWidth={2} strokeDasharray="3 2" />
+                                <line x1={toX(cursor.x1) - 14} x2={toX(cursor.x1) + 14} y1={toY(cursor.x2)} y2={toY(cursor.x2)} stroke="var(--color-ml)" />
+                                <line x1={toX(cursor.x1)} x2={toX(cursor.x1)} y1={toY(cursor.x2) - 14} y2={toY(cursor.x2) + 14} stroke="var(--color-ml)" />
+                            </g>
+                            <text x={(PLOT.left + PLOT.right) / 2} y={PLOT.height - 5} textAnchor="middle">Input feature x₁</text>
+                            <text transform={'translate(16 ' + (PLOT.top + PLOT.bottom) / 2 + ') rotate(-90)'} textAnchor="middle">Input feature x₂</text>
+                            {points.length === 0 && <text x={PLOT.width / 2} y={PLOT.height / 2} textAnchor="middle">Add blue and red training points to begin</text>}
+                        </g>
+                    </svg>
+
+                    <div className="linear-models-legend" aria-label="Plot legend">
+                        <span className="linear-models-blue">● Blue C₁: target 1</span>
+                        <span className="linear-models-red">▲ Red C₂: target 0</span>
+                        <span>━ White: decision boundary</span>
+                        <span>Faint regions: predicted class</span>
+                        <span>⊕ Gold: keyboard cursor</span>
+                    </div>
 
                     <div className="linear-models-controls">
                         <div className="linear-models-field">
@@ -173,44 +218,6 @@ export default function LinearModels() {
                     {!hasBothClasses && <p className="linear-models-status" role="status">Add at least one point from each class to compare a decision boundary.</p>}
                     {hasBothClasses && !fit.converged && <p className="linear-models-status" role="status">{algorithm === 'perceptron' ? 'Perceptron did not converge after 1,000 passes. Overlapping or conflicting classes can have no linear separator.' : 'The numerical fit reached its iteration limit. Try a different arrangement of training points.'}</p>}
 
-                    <svg className="linear-models-plot" viewBox={'0 0 ' + PLOT.width + ' ' + PLOT.height} preserveAspectRatio="none"
-                        role="application" aria-label="Interactive classification plot" aria-describedby={id + '-plot-description ' + id + '-keyboard'}
-                        tabIndex={0} onClick={handlePlotClick} onKeyDown={handlePlotKeyDown}>
-                        <desc id={id + '-plot-description'}>A two-feature classification plot using {briefing.title}. There are {blueCount} blue circles labeled C₁ and {points.length - blueCount} red triangles labeled C₂. Faint colored regions show predictions; the white line marks the decision threshold. The gold cursor can place a new training point.</desc>
-                        <g aria-hidden="true">
-                            <rect x={PLOT.left} y={PLOT.top} width={PLOT.right - PLOT.left} height={PLOT.bottom - PLOT.top} fill="var(--bg-secondary)" />
-                            {hasBothClasses && <>
-                                <polygon points={blueRegion.map(point => toX(point.x1) + ',' + toY(point.x2)).join(' ')} fill="var(--linear-class-blue)" opacity={0.12} />
-                                <polygon points={redRegion.map(point => toX(point.x1) + ',' + toY(point.x2)).join(' ')} fill="var(--linear-class-red)" opacity={0.12} />
-                            </>}
-                            {[-1, -0.5, 0, 0.5, 1].map(value => <g key={value}>
-                                <line x1={toX(value)} x2={toX(value)} y1={PLOT.top} y2={PLOT.bottom} stroke="var(--border-glass-hover)" />
-                                <line x1={PLOT.left} x2={PLOT.right} y1={toY(value)} y2={toY(value)} stroke="var(--border-glass-hover)" />
-                                <text x={toX(value)} y={PLOT.bottom + 21} textAnchor="middle">{value}</text>
-                                <text x={PLOT.left - 12} y={toY(value) + 4} textAnchor="end">{value}</text>
-                            </g>)}
-                            {hasBothClasses && boundary && <line x1={toX(boundary[0].x1)} y1={toY(boundary[0].x2)} x2={toX(boundary[1].x1)} y2={toY(boundary[1].x2)} stroke="var(--text-primary)" strokeWidth={2.5} />}
-                            {points.map((point, index) => point.target === 1
-                                ? <circle key={index} cx={toX(point.x1)} cy={toY(point.x2)} r={6} fill="var(--linear-class-blue)" stroke="var(--text-primary)" strokeWidth={1} />
-                                : <polygon key={index} points={toX(point.x1) + ',' + (toY(point.x2) - 7) + ' ' + (toX(point.x1) - 6.5) + ',' + (toY(point.x2) + 5) + ' ' + (toX(point.x1) + 6.5) + ',' + (toY(point.x2) + 5)} fill="var(--linear-class-red)" stroke="var(--text-primary)" strokeWidth={1} />)}
-                            <g className="linear-models-cursor">
-                                <circle cx={toX(cursor.x1)} cy={toY(cursor.x2)} r={10} fill="none" stroke="var(--color-ml)" strokeWidth={2} strokeDasharray="3 2" />
-                                <line x1={toX(cursor.x1) - 14} x2={toX(cursor.x1) + 14} y1={toY(cursor.x2)} y2={toY(cursor.x2)} stroke="var(--color-ml)" />
-                                <line x1={toX(cursor.x1)} x2={toX(cursor.x1)} y1={toY(cursor.x2) - 14} y2={toY(cursor.x2) + 14} stroke="var(--color-ml)" />
-                            </g>
-                            <text x={(PLOT.left + PLOT.right) / 2} y={PLOT.height - 5} textAnchor="middle">Input feature x₁</text>
-                            <text transform={'translate(16 ' + (PLOT.top + PLOT.bottom) / 2 + ') rotate(-90)'} textAnchor="middle">Input feature x₂</text>
-                            {points.length === 0 && <text x={PLOT.width / 2} y={PLOT.height / 2} textAnchor="middle">Add blue and red training points to begin</text>}
-                        </g>
-                    </svg>
-
-                    <div className="linear-models-legend" aria-label="Plot legend">
-                        <span className="linear-models-blue">● Blue C₁: target 1</span>
-                        <span className="linear-models-red">▲ Red C₂: target 0</span>
-                        <span>━ White: decision boundary</span>
-                        <span>Faint regions: predicted class</span>
-                        <span>⊕ Gold: keyboard cursor</span>
-                    </div>
                     <div className="linear-models-cursor-readout" aria-live="polite">
                         <p>Cursor: x₁ = {cursor.x1.toFixed(2)}, x₂ = {cursor.x2.toFixed(2)}. {hasBothClasses ? prediction + '; predicted ' + (cursorClass === 1 ? 'blue C₁' : 'red C₂') + '.' : 'Add both classes to inspect predictions.'}</p>
                         <button type="button" className="lab-button" onClick={() => addPoint(cursor)}>Add point at cursor</button>

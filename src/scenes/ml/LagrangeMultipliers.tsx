@@ -28,6 +28,7 @@ function BowlSurface() {
         return g;
     });
 
+    useEffect(() => () => geo.dispose(), [geo]);
     return (
         <>
             <mesh geometry={geo}>
@@ -74,7 +75,7 @@ function MovingPoint({ t, showGradients }: { t: number; showGradients: boolean }
     const cX = 4 * t;
     const cY = 4 * (1 - t);
     const cZ = (cX * cX + cY * cY) * Z_SCALE;
-    const isOptimal = Math.abs(t - 0.5) < 0.02;
+    const isOptimal = Math.abs(t - 0.5) < 1e-8;
 
     const dropLineRef = useRef<THREE.Line<THREE.BufferGeometry, THREE.LineDashedMaterial>>(null);
     const arrowFRef = useRef<THREE.ArrowHelper>(null);
@@ -212,7 +213,7 @@ function Scene3D({ t, showGradients }: { t: number; showGradients: boolean }) {
             <ambientLight intensity={0.7} />
             <directionalLight position={[5, 10, 5]} intensity={0.6} />
 
-            <OrbitControls
+            <OrbitControls makeDefault
                 target={[2, 1.5, 2]}
                 enablePan={false}
                 maxPolarAngle={Math.PI / 2.08}
@@ -276,7 +277,7 @@ export default function LagrangeMultipliers() {
     const cY = 4 * (1 - t);
     const fVal = (cX * cX + cY * cY).toFixed(2);
     const lambda = (2 * cX).toFixed(2);   // λ = ∇f₁ / ∇g₁ = 2x / 1
-    const isOptimal = Math.abs(t - 0.5) < 0.02;
+    const isOptimal = Math.abs(t - 0.5) < 1e-8;
 
     const controls = (
         <GlassPane style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -314,7 +315,7 @@ export default function LagrangeMultipliers() {
                     </span>
                 </div>
                 <input
-                    type="range" min="0" max="1" step="0.01" value={t}
+                    aria-label="Position on Path" type="range" min="0" max="1" step="0.01" value={t}
                     onChange={e => setT(parseFloat(e.target.value))}
                     style={{ width: '100%' }}
                 />
