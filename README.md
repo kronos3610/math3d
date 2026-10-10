@@ -8,7 +8,8 @@ Math3D is an interactive educational platform designed to visualize complex math
 - **Topic-Based Organization**: Structured curriculum covering key mathematical fields.
 - **Responsive Design**: Accessible on desktop and mobile devices.
 - **Performance Optimized**: Uses WebGL for high-performance rendering.
-- **Lesson Guides**: Brief meanings, usage steps, observations, and caveats for every lesson.
+- **Visual ML Labs**: Manipulate actual fits, state updates, gates, attention mixtures, and optimization trajectories.
+- **Lesson Guides**: Brief meanings, usage steps, observations, and caveats for every lesson; deeper explanations are optional.
 
 ## Getting Started
 
@@ -27,7 +28,7 @@ Math3D is an interactive educational platform designed to visualize complex math
 
 2. Install dependencies:
    ```bash
-   npm install
+   npm ci
    ```
 
 3. Start the development server:
@@ -39,15 +40,35 @@ Math3D is an interactive educational platform designed to visualize complex math
 
 ## Machine learning curriculum
 
-The ML module has Algorithms and Core Concepts sections, with one canonical URL per lesson. Browse `/ml`, `/ml?section=algorithms`, or `/ml?section=concepts`.
+The ML module has **52 lessons**, divided into Algorithms and Core Concepts, with one canonical URL per lesson. Browse `/ml`, `/ml?section=algorithms`, or `/ml?section=concepts`. Search lesson names, descriptions, families, and common abbreviations such as HMM, SVR, and GQA. Search and section filters are stored in the URL; family links jump to the relevant group.
 
-`src/data/mlCurriculum.ts` defines families, learning paths, prerequisites, and related lessons. Four paths connect classification, generalization, mixture estimation, and neural-network optimization to existing math lessons. A scene's Learn panel provides previous/next navigation and links back to its concepts and prerequisites. Path context is retained only when the destination belongs to the selected path.
+The expanded curriculum adds **38 labs** and upgrades the existing feedforward network to compute and train a small XOR network:
+
+| Family | New labs | Examples |
+| --- | ---: | --- |
+| Regression | 4 | Prediction planes, assumptions, QR/SVD and iterative solvers, feature maps and ridge |
+| Trees and ensembles | 5 | CART, bagging/random forests, boosting/AdaBoost, XGBoost, LightGBM |
+| Support vectors | 3 | Linear margins, exact finite feature lift/RBF, epsilon-SVR |
+| Sequence models | 4 | HMM filtering/Viterbi/EM, RNN, LSTM, GRU |
+| Transformers | 10 | Q/K/V, blocks, architecture, positions, caches/GQA/MLA, sparse/linear attention, experts, image patches, tiled attention, segment memory |
+| State-space models | 5 | Fixed SSM, Mamba, Mamba-2, Mamba-3, attention/state-space hybrids |
+| Shared concepts | 7 | Embeddings, softmax, normalization/residuals, temporal gradients, losses, conditioning, validation |
+
+`src/data/mlCurriculum.ts` and `src/data/mlVisualLessons.ts` define families, **11 learning paths**, prerequisites, related lessons, and the new lesson guides. A scene's Learn panel provides previous/next navigation and links to its concepts and prerequisites. Path context is retained only when the destination belongs to the selected path. Existing mathematical lessons link back to models that use them.
+
+Try `/ml/linear-regression`, `/ml/regression-solvers`, `/ml/decision-trees`, `/ml/lstm`, `/ml/attention`, or `/ml/mamba3` after starting the development server. New labs open with a large visualization, visible controls, a short observation, and calculated measurements. Play reveals precomputed steps only when requested. The optional Explain panel contains equations, assumptions, applications, and model-specific limits.
+
+The visual coordinates represent stated numerical quantities. Examples include input/response coordinates for regression, actual hidden/cell vectors for recurrence, query/key or value coordinates for attention, and real/imaginary coordinates for complex state. Time, tree depth, and categorical layout axes are identified separately. Shared scenes preserve angles and relative lengths by default, use instanced points and demand rendering, fit the camera to the viewport, and offer an SVG view when WebGL is unavailable.
+
+The numerical engines in `src/utils/ml-*.ts` compute the plotted quantities rather than substituting decorative animation. They include QR/SVD and real iterative regression updates; bounded dual SVM/SVR optimization; trained CART and ensemble updates; normalized HMM inference and Baum–Welch; recurrent gates and checked backpropagation; attention projections, softmax, residual/normalization/feed-forward blocks, real cache storage, and online tiled accumulation; and selective state-space recurrences with structured duality. Controls alter those calculations, and tests check numerical invariants and independent reference cases.
+
+These are small teaching engines with synthetic observations or explicit demonstration weights. They isolate algorithm mechanisms; they are not complete XGBoost/LightGBM libraries, pretrained language or vision models, production Mamba blocks, GPU FlashAttention kernels, or hardware speed benchmarks. Cache/state bytes count the retained float32 mixer entries, not total model memory. A feature-space or state-space visualization does not establish causal meaning, learned semantics, or generalization. Each lesson explains its particular assumptions and boundaries.
 
 The Bias–Variance and Signal-to-Noise labs use seeded polynomial-regression experiments with a stable Legendre-basis QR solver and a fixed small ridge penalty. Bias–Variance measures a finite ensemble of independent fits and explains the distinction between its grid decomposition and sampled test MSE. SNR uses centered signal variance over the specified input distribution and handles zero signal and zero noise explicitly. Both include accessible charts, textual measurements, and keyboard-accessible controls.
 
 ## Using a lesson
 
-Open the scene panel for controls and a brief introduction. The Guide tab explains what the scene means, how to use it, and what to look for. The Explain tab gives more detail, and Learn links related lessons. Guides are also available while a scene loads or if it fails to start.
+The new ML labs keep controls beside the visualization; older lessons place controls in the scene panel. The Guide tab explains what the scene means, how to use it, and what to look for. Explain gives more detail, and Learn links related lessons. Guides are also available while a scene loads or if it fails to start. Native controls, search, family links, and playback support keyboard use; scene descriptions and numerical readouts provide alternatives to the graphics.
 
 3D lessons default to Light graphics (one pixel per device-independent pixel, without shadows). Select Detailed in Guide for sharper rendering and scene shadows; the preference is saved on this browser. Static scenes render when their controls or camera change. Vector labels use HTML, avoiding external font downloads that the site's content security policy blocks.
 
@@ -81,6 +102,7 @@ src/
 │   ├── calculus/
 │   ├── probability/
 │   └── ml/
+├── utils/            # Numerical engines and shared mathematical utilities
 ├── App.tsx           # Main application entry point
 └── index.css         # Global styles and themes
 ```

@@ -33,7 +33,7 @@ describe('brief lesson guides', () => {
     });
 
     it('distinguishes schematic animations and regression scores from computed quantities', () => {
-        expect(getLessonGuide('ml', 'neural-networks')!.limitations).toContain('does not train weights');
+        expect(getLessonGuide('ml', 'neural-networks')!.limitations).toContain('computes activations and trains weights');
         expect(getLessonGuide('linear-algebra', 'banach-tarski')!.limitations).toContain('not the theorem’s non-measurable sets');
         expect(getLessonGuide('probability', 'variational-inference')!.limitations).toContain('does not compute ELBO');
         expect(getLessonGuide('ml', 'linear-models')!.limitations).toContain('raw regression score');

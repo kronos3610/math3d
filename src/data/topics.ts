@@ -1,5 +1,6 @@
 import { type ComponentType } from 'react';
 import { lazyWithPreload, type PreloadableComponent } from '../utils/lazy';
+import { mlVisualLessons } from './mlVisualLessons';
 
 export interface Subtopic {
     id: string;
@@ -208,7 +209,7 @@ export const topics: Topic[] = [
             {
                 id: 'neural-networks',
                 title: 'Neural Networks',
-                description: 'Visualize network architectures, activations, and signal propagation.',
+                description: 'Manipulate actual feed-forward activations, inspect weighted connections, and train a tiny XOR network.',
                 component: lazyWithPreload(() => import('../scenes/ml/NeuralNetworks')),
             },
             {
@@ -277,6 +278,7 @@ export const topics: Topic[] = [
                 description: 'Watch Expectation–Maximization fit K=3 Gaussians to 3D data. Step through E (responsibilities) and M (refit means & variances), or auto-run ten iterations.',
                 component: lazyWithPreload(() => import('../scenes/ml/GaussianMixture')),
             },
+            ...mlVisualLessons,
         ],
     },
 ];

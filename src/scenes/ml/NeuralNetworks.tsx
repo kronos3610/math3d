@@ -1,133 +1,119 @@
-import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useRef, useMemo, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { OrbitControls, Sphere, Line } from '@react-three/drei';
-import * as THREE from 'three';
-import { getNeuronPositions } from '../../utils/neural-network';
-import { SceneContainer } from '../../components/layout/SceneContainer';
-import { GlassPane } from '../../components/layout/GlassPane';
-import { useParams } from 'react-router-dom';
-import { Play, Pause } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { SpatialScene, type SpatialPath, type SpatialPoint } from '../../components/3d/SpatialScene';
+import { LabPlayback, LabRange, LabSelect, VisualLab } from '../../components/layout/VisualLab';
+import { ExplanationSection, SceneExplanation } from '../../components/layout/SceneExplanation';
+import {
+    createFeedforwardWeights, feedforward, feedforwardGradient, packFeedforward,
+    trainFeedforward, unpackFeedforward, XOR_EXAMPLES,
+} from '../../utils/ml-sequence';
 
-function NeuronLayer({ count, x, color }: { count: number; x: number; color: string }) {
-    const neurons = getNeuronPositions(count, x);
-    return (
-        <>
-            {neurons.map((pos, i) => (
-                <Sphere key={i} args={[0.18, 16, 16]} position={pos}>
-                    <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.4} roughness={0.3} metalness={0.7} />
-                </Sphere>
-            ))}
-        </>
-    );
-}
-
-function Connections({ fromPositions, toPositions, color }: { fromPositions: [number, number, number][]; toPositions: [number, number, number][]; color: string }) {
-    const lines = useMemo(() => {
-        const result: { from: [number, number, number]; to: [number, number, number] }[] = [];
-        for (const from of fromPositions) {
-            for (const to of toPositions) {
-                result.push({ from, to });
-            }
-        }
-        return result;
-    }, [fromPositions, toPositions]);
-
-    return (
-        <>
-            {lines.map((line, i) => (
-                <Line key={i} points={[line.from, line.to]} color={color} lineWidth={0.5} transparent opacity={0.3} />
-            ))}
-        </>
-    );
-}
-
-function AnimatedPulse({ isPlaying }: { isPlaying: boolean }) {
-    const ref = useRef<THREE.Mesh>(null!);
-
-    useFrame((state) => {
-        if (!isPlaying) return;
-        const t = state.clock.elapsedTime;
-        const x = -3 + ((t * 1.5) % 9) - 1;
-        ref.current.position.x = x;
-        ref.current.position.y = Math.sin(t * 2) * 0.5;
-        const scale = 0.1 + Math.sin(t * 3) * 0.02;
-        ref.current.scale.setScalar(scale / 0.1);
-    });
-
-    return (
-        <Sphere ref={ref} args={[0.1, 16, 16]}>
-            <meshStandardMaterial color="#fdcb6e" emissive="#fdcb6e" emissiveIntensity={1.5} />
-        </Sphere>
-    );
-}
-
-function NetworkScene({ isPlaying }: { isPlaying: boolean }) {
-    const groupRef = useRef<THREE.Group>(null!);
-
-    useFrame((state) => {
-        if (isPlaying) {
-            groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.15) * 0.3;
-        }
-    });
-
-    const layers = [
-        { count: 3, x: -3, color: '#fdcb6e' },
-        { count: 5, x: -1, color: '#fd79a8' },
-        { count: 5, x: 1, color: '#6c5ce7' },
-        { count: 2, x: 3, color: '#00cec9' },
-    ];
-
-    return (
-        <group ref={groupRef}>
-            {layers.map((layer, i) => (
-                <NeuronLayer key={i} count={layer.count} x={layer.x} color={layer.color} />
-            ))}
-            {layers.slice(0, -1).map((layer, i) => (
-                <Connections
-                    key={i}
-                    fromPositions={getNeuronPositions(layer.count, layer.x)}
-                    toPositions={getNeuronPositions(layers[i + 1].count, layers[i + 1].x)}
-                    color="#444"
-                />
-            ))}
-            <AnimatedPulse isPlaying={isPlaying} />
-        </group>
-    );
-}
+const CONNECTIONS = [
+    { value: '0', label: 'Input 1 → hidden 1' }, { value: '1', label: 'Input 2 → hidden 1' },
+    { value: '2', label: 'Input 1 → hidden 2' }, { value: '3', label: 'Input 2 → hidden 2' },
+    { value: '4', label: 'Input 1 → hidden 3' }, { value: '5', label: 'Input 2 → hidden 3' },
+    { value: '9', label: 'Hidden 1 → output' }, { value: '10', label: 'Hidden 2 → output' },
+    { value: '11', label: 'Hidden 3 → output' },
+];
 
 export default function NeuralNetworks() {
-    const { topicId } = useParams();
-    const [isPlaying, setIsPlaying] = useState(true);
-
-    const controls = (
-        <GlassPane className="scene-controls" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: 'white', margin: 0 }}>Neural Network</h3>
-                <p style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'monospace' }}>Feed Forward</p>
-            </div>
-
-            <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5' }}>
-                Visualizing signal propagation through a multi-layer perceptron.
-            </div>
-
-            <button onClick={() => setIsPlaying(!isPlaying)} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: isPlaying ? '#ec4899' : '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                {isPlaying ? <Pause size={14} /> : <Play size={14} />}
-                {isPlaying ? 'Pause Animation' : 'Resume Animation'}
-            </button>
-        </GlassPane>
-    );
-
-    return (
-        <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas camera={{ position: [0, 0, 8], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of a feed-forward neural network with signal propagation">
-                <ambientLight intensity={0.4} />
-                <directionalLight position={[5, 10, 5]} intensity={0.8} />
-                <NetworkScene isPlaying={isPlaying} />
-                <OrbitControls enableDamping dampingFactor={0.05} />
-                <fog attach="fog" args={['#0b0f19', 6, 18]} />
-                <color attach="background" args={['#0b0f19']} />
-            </SceneCanvas>
-        </SceneContainer>
-    );
+    const [weights, setWeights] = useState(createFeedforwardWeights);
+    const [first, setFirst] = useState(-1);
+    const [second, setSecond] = useState(1);
+    const [stage, setStage] = useState(2);
+    const [view, setView] = useState('network');
+    const [connection, setConnection] = useState('0');
+    const [trainingSteps, setTrainingSteps] = useState(0);
+    const result = useMemo(() => feedforward([first, second], weights), [first, second, weights]);
+    const training = useMemo(() => feedforwardGradient(weights), [weights]);
+    const predictions = useMemo(() => XOR_EXAMPLES.map(example => feedforward(example.input, weights).probability), [weights]);
+    const accuracy = predictions.filter((probability, index) => Number(probability >= 0.5) === XOR_EXAMPLES[index].target).length;
+    const values = packFeedforward(weights);
+    const network = useMemo(() => {
+        const inputPoints: SpatialPoint[] = [first, second].map((value, index) => ({
+            position: [-2, index === 0 ? -0.7 : 0.7, value], color: '#fbbf24', radius: 0.13,
+            label: `x${index + 1} = ${value.toFixed(2)}`,
+        }));
+        const hiddenPoints: SpatialPoint[] = result.hidden.map((value, index) => ({
+            position: [0, index - 1, value], color: stage >= 1 ? (value >= 0 ? '#2dd4bf' : '#fb7185') : '#475569',
+            radius: 0.12 + 0.08 * Math.abs(value), label: stage >= 1 ? `h${index + 1} = ${value.toFixed(2)}` : `h${index + 1}`,
+        }));
+        const output: SpatialPoint = {
+            position: [2, 0, result.probability], color: stage >= 2 ? '#a78bfa' : '#475569', radius: 0.18,
+            label: stage >= 2 ? `P(XOR=1) = ${result.probability.toFixed(3)}` : 'Output',
+        };
+        const paths: SpatialPath[] = [];
+        const edgeColor = (value: number, active: boolean) => active ? value >= 0 ? '#2dd4bf' : '#fb7185' : '#334155';
+        for (let hidden = 0; hidden < 3; hidden++) for (let input = 0; input < 2; input++) {
+            const weight = weights.hidden[hidden][input];
+            paths.push({ points: [inputPoints[input].position, hiddenPoints[hidden].position], color: edgeColor(weight, stage >= 1), width: 0.7 + Math.min(4, Math.abs(weight)) });
+        }
+        for (let hidden = 0; hidden < 3; hidden++) {
+            const weight = weights.output[hidden];
+            paths.push({ points: [hiddenPoints[hidden].position, output.position], color: edgeColor(weight, stage >= 2), width: 0.7 + Math.min(4, Math.abs(weight)) });
+        }
+        return { points: [...inputPoints, ...hiddenPoints, output], paths };
+    }, [first, second, result, weights, stage]);
+    const surface = useMemo(() => {
+        const vertices: [number, number, number][] = [];
+        for (let row = 0; row <= 20; row++) for (let column = 0; column <= 20; column++) {
+            const x = -1 + column / 10; const y = -1 + row / 10;
+            vertices.push([x, y, feedforward([x, y], weights).probability]);
+        }
+        return { vertices, columns: 21, color: '#a78bfa', opacity: 0.65 };
+    }, [weights]);
+    const controls = <>
+        <LabRange label="Input 1" value={first} min={-1} max={1} step={0.05} decimals={2} onChange={setFirst} />
+        <LabRange label="Input 2" value={second} min={-1} max={1} step={0.05} decimals={2} onChange={setSecond} />
+        <LabSelect label="View" value={view} options={[{ value: 'network', label: 'Computed neuron activations' }, { value: 'surface', label: 'Learned output surface' }]} onChange={setView} />
+        <LabSelect label="Inspect connection" value={connection} options={CONNECTIONS} onChange={setConnection} />
+        <LabRange label="Connection weight" value={values[Number(connection)]} min={-6} max={6} step={0.05} decimals={2} onChange={value => {
+            const parameters = packFeedforward(weights); parameters[Number(connection)] = value;
+            setWeights(unpackFeedforward(parameters)); setTrainingSteps(0);
+        }} />
+        <div className="visual-lab-playback" role="group" aria-label="XOR example inputs">
+            {XOR_EXAMPLES.map((example, index) => <button type="button" className="lab-button" key={index}
+                aria-pressed={first === example.input[0] && second === example.input[1]}
+                onClick={() => { setFirst(example.input[0]); setSecond(example.input[1]); }}>
+                {example.input.join(', ')} → {example.target}
+            </button>)}
+        </div>
+        <div className="visual-lab-playback">
+            <button type="button" className="lab-button" onClick={() => { setWeights(current => trainFeedforward(current, 200)); setTrainingSteps(current => current + 200); }}>Train 200 steps</button>
+            <button type="button" className="lab-button" onClick={() => { setWeights(createFeedforwardWeights()); setTrainingSteps(0); }}>Reset weights</button>
+        </div>
+        <LabPlayback step={stage} max={2} onStep={setStage} />
+    </>;
+    const explanation = <SceneExplanation title="A neural network that actually computes" summary="Two numbers pass through three tanh units and a sigmoid output. Every displayed activation comes from the current weights.">
+        <ExplanationSection title="Follow one prediction">
+            <p>Each hidden unit computes hᵢ = tanh(wᵢ₁x₁ + wᵢ₂x₂ + bᵢ). The output computes p = sigmoid(v·h + b). Height shows an activation; teal connections have positive weights, pink connections negative weights, and thicker connections larger absolute weights.</p>
+            <p>Step and Play reveal the layers in order. They do not change the calculation or train the network. Hidden-unit positions within a layer are a layout; their activation height is numerical.</p>
+        </ExplanationSection>
+        <ExplanationSection title="What training changes">
+            <p>The four labeled corner examples teach XOR: the target is 1 when the inputs have different signs and 0 when they have the same sign. Train 200 steps performs 200 real full-batch gradient-descent updates with learning rate 0.3 and binary cross entropy. All 13 weights and biases update through backpropagation.</p>
+            <p>The starting weights are hand-selected demonstration values, with no pretrained language or image knowledge. Reset restores them. Editing one connection returns to manual parameters; training starts from those current parameters.</p>
+        </ExplanationSection>
+        <ExplanationSection title="Read the evidence">
+            <table><caption>Current predictions on the training examples</caption><thead><tr><th>Inputs</th><th>Target</th><th>Output</th></tr></thead><tbody>
+                {XOR_EXAMPLES.map((example, index) => <tr key={index}><td>{example.input.join(', ')}</td><td>{example.target}</td><td>{predictions[index].toFixed(3)}</td></tr>)}
+            </tbody></table>
+            <p>Correct examples uses a 0.5 cutoff on these four training points. The surface between them is the network's actual output, but no interior points were labeled. A sigmoid value is a model score; four toy examples do not establish calibration or real-world accuracy.</p>
+        </ExplanationSection>
+    </SceneExplanation>;
+    return <VisualLab title="Feedforward neural network" subtitle="Compute a prediction, then train a small network on XOR."
+        controls={controls} metrics={[
+            { label: 'Output probability', value: result.probability.toFixed(3) },
+            { label: 'Training loss', value: training.loss.toFixed(4) },
+            { label: 'Correct examples', value: `${accuracy} / 4` },
+            { label: 'Training updates', value: trainingSteps },
+        ]} insight={`${trainingSteps > 0 ? `After ${trainingSteps} actual updates` : 'Manual demonstration weights'}: hidden state (${result.hidden.map(value => value.toFixed(2)).join(', ')}), output ${result.probability.toFixed(3)}. ${stage === 0 ? 'Showing inputs.' : stage === 1 ? 'Showing the tanh hidden layer.' : 'Showing the sigmoid output.'}`}
+        challenge="Train several times, inspect all four corners, then edit one connection and watch the measured loss change."
+        explanation={explanation}>
+        {view === 'network' ? <SpatialScene {...network} equalScale={false} axes={['layer', 'unit layout', 'activation']}
+            description="Computed 2-input, 3-hidden-unit, 1-output feedforward network. Node height is its actual activation; connection color and width encode weight sign and magnitude." />
+            : <SpatialScene surfaces={[surface]} points={[
+                ...XOR_EXAMPLES.map(example => ({ position: [...example.input, example.target] as [number, number, number], color: example.target ? '#2dd4bf' : '#fb7185', label: `target ${example.target}` })),
+                { position: [first, second, result.probability], color: '#fbbf24', radius: 0.15, label: 'Current prediction' },
+            ]} axes={['input 1', 'input 2', 'output probability']}
+                description="Actual sigmoid output over the two input coordinates. Four corner points show XOR training targets; the yellow point shows the selected prediction." />}
+    </VisualLab>;
 }

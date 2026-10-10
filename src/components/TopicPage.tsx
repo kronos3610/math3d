@@ -1,7 +1,21 @@
+import { useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { getTopicById, type Topic, type Subtopic } from '../data/topics';
 import { learningPaths, lessonUrl, mlFoundations, mlSections, resolveLesson } from '../data/mlCurriculum';
 import SubtopicCardPreview from './SubtopicCardPreview';
+
+const ML_SEARCH_ALIASES: Readonly<Record<string, string>> = {
+    'hidden-markov-models': 'HMM Baum Welch',
+    'bagging-random-forests': 'random forest RF OOB',
+    boosting: 'AdaBoost gradient boosting',
+    'support-vector-regression': 'SVR',
+    'transformer-architectures': 'BERT GPT T5',
+    'transformer-cache': 'grouped query multi query multi head latent GQA MQA MHA MLA',
+    'memory-gradients': 'BPTT backpropagation through time',
+    'state-space-models': 'SSM',
+    'signal-to-noise': 'SNR',
+    'neural-networks': 'MLP feedforward XOR backpropagation',
+};
 
 interface LessonCardProps {
     topic: Topic;
@@ -34,20 +48,70 @@ function LessonCard({ topic, subtopic, index }: LessonCardProps) {
 }
 
 function MLCurriculum({ topic, selectedSection }: { topic: Topic; selectedSection: string | null }) {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const searchInput = useRef<HTMLInputElement>(null);
+    const query = searchParams.get('q') ?? '';
+    const terms = query.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);
     const sections = mlSections.filter(section => !['algorithms', 'concepts'].includes(selectedSection ?? '') || section.id === selectedSection);
+    const availableCount = sections.reduce((total, section) => total + section.families.reduce((count, family) => count + family.lessonIds.length, 0), 0);
+    const filteredSections = sections.map(section => ({
+        ...section,
+        families: section.families.map(family => ({
+            ...family,
+            lessons: family.lessonIds.flatMap(id => {
+                const lesson = topic.subtopics.find(candidate => candidate.id === id);
+                if (!lesson) return [];
+                const searchable = `${lesson.title} ${lesson.description} ${lesson.id.replaceAll('-', ' ')} ${family.title} ${ML_SEARCH_ALIASES[lesson.id] ?? ''}`.toLocaleLowerCase();
+                return terms.every(term => searchable.includes(term)) ? [lesson] : [];
+            }),
+        })).filter(family => family.lessons.length > 0),
+    })).filter(section => section.families.length > 0);
+    const visibleCount = filteredSections.reduce((total, section) => total + section.families.reduce((count, family) => count + family.lessons.length, 0), 0);
+    const updateQuery = (value: string) => {
+        setSearchParams(previous => {
+            const next = new URLSearchParams(previous);
+            if (value) next.set('q', value);
+            else next.delete('q');
+            return next;
+        }, { replace: true });
+    };
+    const sectionUrl = (section?: string) => {
+        const next = new URLSearchParams();
+        if (section) next.set('section', section);
+        if (query) next.set('q', query);
+        return `/ml${next.size ? `?${next.toString()}` : ''}`;
+    };
     return (
         <>
             <nav className="ml-section-nav" aria-label="Machine learning sections">
-                <Link to="/ml" aria-current={sections.length === 2 ? 'page' : undefined}>All lessons</Link>
+                <Link to={sectionUrl()} aria-current={sections.length === 2 ? 'page' : undefined}>All lessons</Link>
                 {mlSections.map(section => (
-                    <Link key={section.id} to={`/ml?section=${section.id}`} aria-current={selectedSection === section.id ? 'page' : undefined}>
+                    <Link key={section.id} to={sectionUrl(section.id)} aria-current={selectedSection === section.id ? 'page' : undefined}>
                         {section.title}
                     </Link>
                 ))}
                 <a href="#ml-learning-paths">Learning paths ↓</a>
             </nav>
 
-            {sections.map(section => (
+            <div className="ml-lesson-search" role="search" aria-label="Machine learning lessons">
+                <label htmlFor="ml-lesson-query">Find a lesson</label>
+                <div className="ml-search-controls">
+                    <input ref={searchInput} id="ml-lesson-query" type="search" value={query} onChange={event => updateQuery(event.target.value)} placeholder="Try regression, gates, attention…" />
+                    {query && <button type="button" className="lab-button" onClick={() => { updateQuery(''); searchInput.current?.focus(); }}>Clear search</button>}
+                </div>
+                <p role="status">{visibleCount} of {availableCount} lessons{terms.length > 0 ? ` match “${query.trim()}”` : ' in this view'}.</p>
+            </div>
+
+            {visibleCount > 0 ? <details className="ml-family-jumps">
+                <summary>Jump to a family</summary>
+                <nav className="ml-section-nav" aria-label="Machine learning families">
+                    {filteredSections.flatMap(section => section.families.map(family => (
+                        <a key={family.id} href={`#ml-family-${family.id}`}>{family.title} ({family.lessons.length})</a>
+                    )))}
+                </nav>
+            </details> : <p className="ml-search-empty">No lessons match this search in the selected section. Try another term or choose All lessons.</p>}
+
+            {filteredSections.map(section => (
                 <section key={section.id} className="ml-curriculum-section" aria-labelledby={`ml-${section.id}-title`}>
                     <div className="ml-section-heading">
                         <h2 id={`ml-${section.id}-title`}>{section.title}</h2>
@@ -55,13 +119,10 @@ function MLCurriculum({ topic, selectedSection }: { topic: Topic; selectedSectio
                     </div>
                     {section.families.map(family => (
                         <section key={family.id} className="ml-family" aria-labelledby={`ml-family-${family.id}`}>
-                            <h3 id={`ml-family-${family.id}`}>{family.title}</h3>
+                            <h3 id={`ml-family-${family.id}`} tabIndex={-1}>{family.title}</h3>
                             <p className="ml-family-description">{family.description}</p>
                             <div className="subtopic-grid">
-                                {family.lessonIds.map((id, index) => {
-                                    const subtopic = topic.subtopics.find(lesson => lesson.id === id);
-                                    return subtopic ? <LessonCard key={id} topic={topic} subtopic={subtopic} index={index} /> : null;
-                                })}
+                                {family.lessons.map((subtopic, index) => <LessonCard key={subtopic.id} topic={topic} subtopic={subtopic} index={index} />)}
                             </div>
                         </section>
                     ))}

@@ -1,4 +1,5 @@
 import { getSubtopicById, getTopicById, type Subtopic } from './topics';
+import { mlVisualLessons, mlVisualPaths, visualFamilies } from './mlVisualLessons';
 
 export type MLSectionId = 'algorithms' | 'concepts';
 
@@ -69,6 +70,7 @@ export const mlSections: readonly MLSection[] = [
                 description: 'Follow activations through layers and connect network learning to optimization.',
                 lessonIds: ['neural-networks'],
             },
+            ...visualFamilies('algorithms'),
         ],
     },
     {
@@ -94,6 +96,7 @@ export const mlSections: readonly MLSection[] = [
                 description: 'Connect decision regions, projections, and distributions to their mathematical structure.',
                 lessonIds: ['linear-discriminants', 'decision-boundaries', 'measure-theory-ml'],
             },
+            ...visualFamilies('concepts'),
         ],
     },
 ];
@@ -123,6 +126,7 @@ export const learningPaths: readonly LearningPath[] = [
         description: 'Follow partial derivatives into gradient descent, then connect the learning rule to a layered model.',
         lessons: [calculus('partial-derivatives'), calculus('gradient-descent-calc'), ml('gradient-descent-ml'), ml('neural-networks')],
     },
+    ...mlVisualPaths,
 ];
 
 export const mlFoundations: readonly LessonReference[] = [
@@ -150,7 +154,7 @@ export const mlLessonRelationships: Readonly<Record<string, LessonRelationships>
     },
     'neural-networks': {
         prerequisites: [linearAlgebra('matrix-transformations'), ml('gradient-descent-ml')],
-        related: [ml('decision-boundaries'), ml('bias-variance'), ml('lagrange-constraints'), ml('measure-theory-ml')],
+        related: [ml('decision-boundaries'), ml('bias-variance'), ml('lagrange-constraints'), ml('measure-theory-ml'), ml('rnn'), ml('attention'), ml('loss-functions')],
     },
     'signal-to-noise': {
         prerequisites: [probability('distributions')],
@@ -188,6 +192,7 @@ export const mlLessonRelationships: Readonly<Record<string, LessonRelationships>
         prerequisites: [calculus('sigma-algebra'), calculus('lebesgue-measure'), probability('distributions')],
         related: [linearAlgebra('matrix-transformations'), ml('neural-networks'), probability('variational-inference')],
     },
+    ...Object.fromEntries(mlVisualLessons.map(lesson => [lesson.id, { prerequisites: lesson.prerequisites, related: lesson.related }])),
 };
 
 export function sameLesson(first: LessonReference, second: LessonReference): boolean {
