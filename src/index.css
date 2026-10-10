@@ -20,6 +20,8 @@
   --color-calculus: #00cec9;
   --color-probability: #fd79a8;
   --color-ml: #fdcb6e;
+  --bayes-spam: #fbbf24;
+  --bayes-ordinary: #60a5fa;
 
   /* Spacing */
   --sidebar-width: 260px;
@@ -1594,91 +1596,85 @@ figure > .lab-chart + figcaption { margin-top: 12px; }
 .linear-models-explanation h3:first-child { margin-top: 0; }
 .linear-models-explanation p { font-size: 13px; line-height: 1.75; color: var(--text-secondary); margin-bottom: 12px; }
 
-/* Bayes: follow a population into the observed group before introducing notation. */
-.bayes-lesson {
-  --bayes-spam: #fbbf24;
-  --bayes-ordinary: #60a5fa;
-  height: 100%;
-  overflow-y: auto;
-  padding: 80px 28px 36px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-glass-hover) transparent;
-}
-.scene-panel-is-open .bayes-lesson { padding-right: 410px; }
-.bayes-content { max-width: 1180px; margin: 0 auto; }
-.bayes-header { max-width: 820px; margin-bottom: 24px; }
-.bayes-eyebrow { color: var(--color-probability); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
-.bayes-header h1 { font-size: clamp(26px, 3vw, 38px); letter-spacing: -0.03em; margin: 8px 0 12px; }
-.bayes-header p { color: var(--text-secondary); font-size: 14px; line-height: 1.7; }
-.bayes-header .bayes-question { font-size: 19px; color: var(--text-primary); margin-bottom: 8px; }
-.bayes-change-summary { margin-top: 14px; padding: 10px 14px; border-left: 3px solid var(--bayes-spam); background: rgba(251, 191, 36, 0.05); border-radius: 4px; }
-.bayes-change-summary strong { color: var(--bayes-spam); }
-.bayes-header-jump { display: inline-block; margin-top: 12px; color: var(--color-probability); font-size: 13px; text-underline-offset: 3px; }
-.bayes-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
-.scene-panel-is-open .bayes-layout { grid-template-columns: minmax(0, 1fr); }
-.scene-panel-is-open .bayes-controls { position: static; }
-.bayes-story { min-width: 0; }
-.bayes-walkthrough { display: grid; gap: 16px; list-style: none; padding: 0; }
-.bayes-step, .bayes-controls, .bayes-symbols, .bayes-insight { border: 1px solid var(--border-glass-hover); border-radius: var(--radius-lg); padding: 20px; background: var(--bg-secondary); }
-.bayes-step h2 { display: flex; align-items: center; gap: 10px; font-size: 17px; margin-bottom: 12px; line-height: 1.4; }
-.bayes-step h2 > span { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; background: var(--bg-tertiary); border: 1px solid var(--border-glass-hover); border-radius: 50%; font-size: 13px; }
-.bayes-step p, .bayes-controls p, .bayes-insight p, .bayes-symbols p { color: var(--text-secondary); font-size: 13px; line-height: 1.75; }
-.bayes-step > p + p, .bayes-insight p + p { margin-top: 10px; }
-.bayes-step strong, .bayes-symbols strong { color: var(--text-primary); }
-.bayes-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
-.bayes-count-card { display: grid; gap: 5px; padding: 16px 12px; border: 1px solid var(--border-glass-hover); border-radius: var(--radius-md); min-width: 0; }
-.bayes-count-card strong { font-size: 28px; font-weight: 700; line-height: 1.15; }
-.bayes-count-card span { font-size: 13px; line-height: 1.5; }
-.bayes-count-card small { font-size: 11px; line-height: 1.5; color: var(--text-secondary); }
-.bayes-spam-card { background: rgba(251, 191, 36, 0.06); border-top: 3px solid var(--bayes-spam); }
-.bayes-spam-card strong, .bayes-spam-text { color: var(--bayes-spam); }
-.bayes-ordinary-card { background: rgba(96, 165, 250, 0.06); border-top: 3px solid var(--bayes-ordinary); }
-.bayes-ordinary-card strong, .bayes-ordinary-text { color: var(--bayes-ordinary); }
-.bayes-branch { min-width: 0; text-align: center; }
-.bayes-branch .bayes-count-card { text-align: left; }
-.bayes-branch > p { font-size: 12px; }
-.bayes-arrow { display: block; color: var(--text-secondary); font-size: 24px; margin: 4px 0; }
-.bayes-flow figcaption { color: var(--text-secondary); font-size: 12px; line-height: 1.6; margin-bottom: 10px; }
-.bayes-step .bayes-aside, .bayes-controls .bayes-aside, .bayes-symbols .bayes-aside { font-size: 12px; }
-.bayes-answer-step { border-color: rgba(251, 191, 36, 0.45); }
-.bayes-answer { margin: 16px 0; font-size: clamp(20px, 3vw, 30px); font-variant-numeric: tabular-nums; line-height: 1.5; }
-.bayes-answer output { color: var(--bayes-spam); font-size: 1.25em; font-weight: 700; }
-.bayes-flagged-group { margin: 16px 0; }
-.bayes-flagged-group svg { display: block; width: 100%; height: 32px; border-radius: var(--radius-sm); }
-.bayes-flagged-group figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 12px; margin-top: 8px; }
-.bayes-empty { padding: 16px 0 0; }
-.bayes-empty output { color: var(--bayes-spam); font-weight: 700; display: block; margin-bottom: 8px; }
-.bayes-insight { margin-top: 16px; background: rgba(96, 165, 250, 0.05); }
-.bayes-insight h2, .bayes-controls h2, .bayes-symbols h2 { font-size: 18px; line-height: 1.5; margin-bottom: 10px; }
-.bayes-controls { position: sticky; top: 0; }
-.bayes-rate-control { margin-top: 22px; }
-.bayes-rate-label { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-.bayes-rate-label label { font-size: 13px; line-height: 1.5; }
-.bayes-rate-label output { color: var(--bayes-spam); font-size: 13px; font-variant-numeric: tabular-nums; }
-.bayes-rate-control input { width: 100%; accent-color: var(--color-probability); min-height: 24px; }
-.bayes-rate-control p { font-size: 12px; margin-top: 5px; }
-.bayes-presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 16px; }
-.bayes-controls .bayes-experiment-hint { padding-top: 16px; border-top: 1px solid var(--border-glass-hover); margin-bottom: 16px; }
-.bayes-symbols { margin-top: 24px; }
-.bayes-formula { font-family: var(--font-mono, monospace); font-size: 14px; overflow-wrap: anywhere; padding: 14px 0; line-height: 1.8; }
-.bayes-symbols .bayes-formula { color: var(--text-primary); font-size: 16px; }
-.bayes-glossary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
-.bayes-glossary > div { padding: 14px; background: var(--bg-tertiary); border-radius: var(--radius-md); }
-.bayes-glossary dt { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
-.bayes-glossary dd { color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
-@media (max-width: 1100px) {
-  .scene-panel-is-open .bayes-lesson { padding-right: 28px; }
-  .bayes-layout { grid-template-columns: minmax(0, 1fr); }
-  .bayes-controls { position: static; }
+/* Bayes: the population is the main view; the worked lesson is in Explain. */
+.bayes-visual-lesson { height: 100%; padding-top: 78px; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(190px, 1fr) auto; overflow-y: auto; overflow-x: hidden; }
+.bayes-visual-lesson > * { min-width: 0; }
+.bayes-visual-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 24px 8px; }
+.bayes-visual-header h1 { font-size: clamp(20px, 2.5vw, 28px); letter-spacing: -0.03em; }
+.bayes-visual-header p { color: var(--text-secondary); font-size: 12px; line-height: 1.6; margin-top: 4px; }
+.bayes-visual-chance { display: grid; gap: 3px; text-align: right; flex-shrink: 0; }
+.bayes-visual-chance span { color: var(--text-secondary); font-size: 11px; }
+.bayes-visual-chance output { color: var(--bayes-spam); font-size: clamp(22px, 3vw, 32px); font-weight: 700; line-height: 1.2; }
+.bayes-visual-chance output[data-undefined='true'] { font-size: 13px; max-width: 165px; line-height: 1.5; }
+.bayes-visual-stage { min-height: 0; position: relative; }
+.bayes-visual-legend { position: absolute; left: 24px; top: 8px; z-index: 10; display: flex; flex-wrap: wrap; gap: 8px 18px; pointer-events: none; font-size: 12px; }
+.bayes-visual-legend span { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+.bayes-visual-legend i { width: 9px; height: 9px; display: inline-block; border-radius: 2px; }
+.bayes-visual-legend .bayes-spam-swatch { background: var(--bayes-spam); }
+.bayes-visual-legend .bayes-ordinary-swatch { background: var(--bayes-ordinary); }
+.bayes-visual-caption { position: absolute; bottom: 10px; left: 20px; right: 20px; z-index: 10; text-align: center; font-size: 11px; line-height: 1.5; color: var(--text-secondary); pointer-events: none; }
+.bayes-visual-console { padding: 12px 24px 16px; border-top: 1px solid var(--border-glass-hover); background: var(--bg-secondary); }
+.bayes-visual-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 12px; }
+.bayes-visual-views, .bayes-visual-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.bayes-visual-views button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 34px; padding: 7px 12px; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-glass-hover); border-radius: var(--radius-sm); font: inherit; font-size: 12px; cursor: pointer; }
+.bayes-visual-views button[aria-pressed='true'] { color: var(--bayes-spam); border-color: var(--bayes-spam); background: rgba(251, 191, 36, 0.06); }
+.bayes-visual-views button span { color: inherit; opacity: 0.75; font-size: 11px; }
+.bayes-visual-presets .lab-button { padding: 7px 10px; min-height: 32px; font-size: 11px; }
+.bayes-visual-rates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.bayes-visual-rate-label { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-height: 21px; }
+.bayes-visual-rate-label label { font-size: 12px; line-height: 1.5; }
+.bayes-visual-rate-label output { font-size: 12px; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.bayes-visual-rate input { width: 100%; min-width: 0; accent-color: var(--color-probability); min-height: 24px; }
+.bayes-visual-totals { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; margin-top: 8px; font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+.bayes-visual-totals strong { color: var(--text-primary); }
+.bayes-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.bayes-visual-fallback { height: 100%; max-width: 850px; margin: 0 auto; padding: 48px 20px 30px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.bayes-visual-fallback svg { display: block; width: 100%; height: 100%; min-height: 0; }
+.bayes-fallback-labels { display: flex; justify-content: space-around; gap: 12px; font-size: 12px; line-height: 1.5; }
+.bayes-visual-fallback figcaption { color: var(--text-secondary); font-size: 11px; text-align: center; }
+@media (min-width: 1101px) {
+  .scene-panel-is-open .bayes-visual-header, .scene-panel-is-open .bayes-visual-stage, .scene-panel-is-open .bayes-visual-console { margin-right: 380px; }
 }
 @media (max-width: 768px) {
-  .bayes-lesson, .scene-panel-is-open .bayes-lesson { padding: 80px 16px 28px; }
-  .bayes-step, .bayes-controls, .bayes-symbols, .bayes-insight { padding: 16px; }
-  .bayes-pair { gap: 8px; }
-  .bayes-count-card { padding: 12px 10px; }
-  .bayes-count-card strong { font-size: 25px; }
-  .bayes-glossary { grid-template-columns: minmax(0, 1fr); }
+  .bayes-visual-lesson { padding-top: 72px; }
+  .bayes-visual-header { padding: 0 16px 8px; gap: 10px; }
+  .bayes-visual-header h1 { font-size: 20px; }
+  .bayes-visual-header p { max-width: 220px; font-size: 11px; }
+  .bayes-visual-chance span { max-width: 100px; font-size: 10px; }
+  .bayes-visual-console { padding: 10px 12px 14px; }
+  .bayes-visual-toolbar { gap: 8px; margin-bottom: 10px; }
+  .bayes-visual-views { width: 100%; flex-wrap: nowrap; }
+  .bayes-visual-views button { flex: 1; min-width: 0; padding: 6px 7px; gap: 4px; font-size: 11px; }
+  .bayes-visual-presets { justify-content: center; width: 100%; }
+  .bayes-visual-rates { gap: 10px; }
+  .bayes-visual-rate-label { flex-wrap: wrap; gap: 2px; min-height: 53px; align-content: start; }
+  .bayes-visual-rate-label label { font-size: 11px; }
+  .bayes-visual-rate-label output { width: 100%; font-size: 11px; }
+  .bayes-visual-legend { left: 16px; font-size: 11px; }
+  .bayes-visual-caption { bottom: 6px; left: 12px; right: 12px; font-size: 10px; }
 }
+/* The optional worked explanation retains its diagrams and glossary. */
+.bayes-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+.bayes-count-card { display: grid; gap: 5px; padding: 12px 10px; border: 1px solid var(--border-glass-hover); border-radius: var(--radius-md); min-width: 0; }
+.bayes-count-card strong { font-size: 24px; font-weight: 700; line-height: 1.15; }
+.bayes-count-card span { font-size: 12px; line-height: 1.5; }
+.bayes-count-card small { font-size: 11px; line-height: 1.5; color: var(--text-secondary); }
+.bayes-spam-card { background: rgba(251, 191, 36, 0.06); border-top: 3px solid var(--bayes-spam); }
+.bayes-spam-card strong { color: var(--bayes-spam); }
+.bayes-ordinary-card { background: rgba(96, 165, 250, 0.06); border-top: 3px solid var(--bayes-ordinary); }
+.bayes-ordinary-card strong { color: var(--bayes-ordinary); }
+.bayes-branch { min-width: 0; text-align: center; }
+.bayes-branch .bayes-count-card { text-align: left; }
+.bayes-branch > p { font-size: 11px; }
+.bayes-arrow { display: block; color: var(--text-secondary); font-size: 24px; margin: 4px 0; }
+.bayes-flow figcaption { color: var(--text-secondary); font-size: 11px; line-height: 1.6; }
+.bayes-answer { margin: 12px 0; font-size: 24px; font-variant-numeric: tabular-nums; line-height: 1.5; }
+.bayes-answer output { color: var(--bayes-spam); font-size: 1.15em; font-weight: 700; }
+.bayes-formula { font-family: var(--font-mono, monospace); font-size: 14px; overflow-wrap: anywhere; padding: 12px 0; line-height: 1.8; }
+.bayes-glossary { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 12px 0; }
+.bayes-glossary > div { padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius-md); }
+.bayes-glossary dt { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+.bayes-glossary dd { color: var(--text-secondary); font-size: 12px; line-height: 1.7; }
 @media (max-width: 1100px) {
   .scene-panel-is-open .linear-models-lab { padding-right: 28px; }
 }
