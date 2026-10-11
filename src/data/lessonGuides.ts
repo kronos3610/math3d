@@ -198,10 +198,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'This solves one explicitly chosen three-weight quadratic using optimality conditions. The control t is the L2 radius (squared budget t²) or L1 norm, rather than a penalty coefficient. Detail clips the true contour to a stated local window; camera fitting changes zoom, never weight coordinates. The red point glyph is enlarged for visibility in the overview. This is not a fit to observed data.',
         },
         'lp-regularization': {
-            meaning: 'Lp norms define different weight budgets, from the pointed L1 ball to the round L2 ball and box-like L∞ region.',
-            steps: ['Choose a Penalty Type and change Constraint Radius.', 'Adjust the Input vector coordinates, including negative values, and compare the radial shrinkage.'],
-            observe: 'Changing the norm changes the feasible shape and the displayed radial shrinkage.',
-            limitations: 'The green marker is radial shrinkage, not a nearest-point projection or a general least-squares constrained optimum. L∞ uses the exact maximum norm and a box-shaped boundary.',
+            meaning: "Lp norms define different weight budgets, from the pointed L1 ball to the round L2 ball and box-like L∞ region.",
+            steps: ["Choose Norm p and change Radius / budget to compare the allowed weight shapes.", "Expand Input weight coordinates, including negative values, and compare the input norm with the radial output and its norm."],
+            observe: "Changing the norm changes the feasible shape and the common radial scaling factor. An already-feasible input stays unchanged. Radial scaling alone does not create L1 sparsity.",
+            limitations: "The highlighted output is radial shrinkage, not nearest-point projection or a general least-squares constrained optimum. L∞ uses the exact maximum norm and a box-shaped boundary. Use Ridge & Lasso Constraints for an actually solved quadratic objective.",
         },
         'linear-models': {
             meaning: 'Linear classifiers learn a straight decision boundary. Logistic regression, least squares on class targets, and the perceptron use different objectives.',
