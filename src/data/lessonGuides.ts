@@ -100,10 +100,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'Finite pictures illustrate closure rules. They cannot display all sets in an infinite σ-algebra.',
         },
         'riemann-vs-lebesgue': {
-            meaning: 'Riemann sums group contributions by input location. Lebesgue integration groups them by function value and the size of the corresponding sets.',
-            steps: ['Choose Smooth Hills or Extreme Spikes, beginning with low Refinement.', 'Switch between Riemann and Lebesgue, then increase Refinement gradually.'],
-            observe: 'Vertical columns partition the domain; horizontal layers accumulate regions above each height.',
-            limitations: 'Both examples are smooth and integrable. Coarse sampling can miss narrow peaks; that does not mean Riemann integration fails mathematically.',
+            meaning: "Riemann sums group contributions by input location. Lebesgue integration groups them by function value and the size of the corresponding sets.",
+            steps: ["Choose Smooth Hills or Extreme Spikes and compare both estimates with the fine-grid reference.", "Switch the slicing direction, raise Refinement and watch the errors and drawn cells."],
+            observe: "Domain columns and height layers estimate the same integral. The layer sum is a lower height sum for the fixed sampled floor grid, while finer domain sampling better resolves narrow spikes.",
+            limitations: "Both examples are smooth and integrable. The Lebesgue estimate uses a fixed 40×40 lower-left floor grid; its lower height sum is not a guaranteed lower bound on the continuous integral. The 200×200 midpoint reference is also numerical; coarse sampling can miss peaks. Drawing gaps do not remove mathematical area.",
         },
         'lebesgue-measure': {
             meaning: 'Lebesgue measure extends length, area, and volume. Coverings connect irregular shapes to simple boxes and reveal sets of zero volume.',
