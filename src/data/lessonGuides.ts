@@ -210,10 +210,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'Logistic output is a modeled class probability; least-squares output is a raw regression score that may lie outside [0, 1]. The perceptron score is not a probability.',
         },
         'linear-discriminants': {
-            meaning: 'A linear discriminant uses a weight vector normal to the boundary and a bias that offsets it. Its sign determines the predicted class.',
-            steps: ['Change w Angle, Magnitude, and Bias to reposition the boundary.', 'Drag the test point or focus the chart and use arrow keys; inspect its score and signed distance.'],
-            observe: 'The weight vector is perpendicular to the boundary. Bias is the actual intercept w₀, and signed distance is (w·x + w₀)/‖w‖; both score and distance change sign at the boundary.',
-            limitations: 'This is geometric exploration of a chosen rule; no training algorithm fits the weights.',
+            meaning: "A linear discriminant uses a weight vector normal to the boundary and a bias that offsets it. Its sign determines the predicted class.",
+            steps: ["Change w Angle, Magnitude, and Bias to reposition the boundary while comparing its live offset.", "Drag the selected point or use arrow keys on the canvas; inspect its score and distance, then try Reset point."],
+            observe: "The weight vector is perpendicular to the boundary. Bias is the intercept w₀, and signed distance is (w·x + w₀)/‖w‖; both score and distance change sign at the boundary.",
+            limitations: "This is geometric exploration of a chosen rule; no training algorithm fits the weights. Movements stay inside the canvas; coordinates and distances use centered native-canvas pixels. Scores are not calibrated probabilities.",
         },
         'least-squares-multiclass': {
             meaning: 'One-of-K targets fit one linear score per class. The class with the largest score becomes the prediction.',

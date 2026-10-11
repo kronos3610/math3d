@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { SceneContainer } from '../../components/layout/SceneContainer';
-import { GlassPane } from '../../components/layout/GlassPane';
+import { VisualLab, LabRange } from '../../components/layout/VisualLab';
+import { VIZ } from '../../data/palette';
 import Latex from '../../components/Latex';
 
 // --- Canvas helpers ---
@@ -25,6 +25,15 @@ function drawArrowhead(
     ctx.restore();
 }
 
+const POINT_PADDING = 28;
+const DEFAULT_POINT = { x: 80, y: -60 };
+
+function clampPoint(point: { x: number; y: number }, width: number, height: number) {
+    const horizontal = Math.max(0, width / 2 - POINT_PADDING);
+    const vertical = Math.max(0, height / 2 - POINT_PADDING);
+    return { x: Math.max(-horizontal, Math.min(horizontal, point.x)), y: Math.max(-vertical, Math.min(vertical, point.y)) };
+}
+
 // --- Main Component ---
 
 export default function LinearDiscriminants() {
@@ -42,7 +51,7 @@ export default function LinearDiscriminants() {
     const wBiasRef = useRef(-3200);
 
     // Draggable test point (canvas-local coords, relative to centre)
-    const testPointRef = useRef({ x: 80, y: -60 });
+    const testPointRef = useRef({ ...DEFAULT_POINT });
     const isDragging = useRef(false);
 
     // Live stats for the control panel
@@ -61,6 +70,10 @@ export default function LinearDiscriminants() {
         const rect = canvas.getBoundingClientRect();
         const W = rect.width;
         const H = rect.height;
+        if (W <= 0 || H <= 0) return;
+        // Every input path and resize comes through draw, so the point and its
+        // label remain visible while coordinates retain their centered pixel units.
+        testPointRef.current = clampPoint(testPointRef.current, W, H);
 
         if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
             canvas.width = Math.round(W * dpr);
@@ -79,11 +92,11 @@ export default function LinearDiscriminants() {
         const wy = -Math.sin(angleRad) * mag;
 
         // Background
-        ctx.fillStyle = '#0b0f19';
+        ctx.fillStyle = VIZ.background;
         ctx.fillRect(0, 0, W, H);
 
         // Grid
-        ctx.strokeStyle = 'rgba(30, 41, 59, 0.9)';
+        ctx.strokeStyle = VIZ.grid;
         ctx.lineWidth = 1;
         ctx.beginPath();
         for (let i = -Math.max(W, H); i < Math.max(W, H); i += 40) {
@@ -93,7 +106,7 @@ export default function LinearDiscriminants() {
         ctx.stroke();
 
         // Axes
-        ctx.strokeStyle = '#334155';
+        ctx.strokeStyle = VIZ.axis;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(cx, 0); ctx.lineTo(cx, H);
@@ -104,9 +117,9 @@ export default function LinearDiscriminants() {
         ctx.translate(cx, cy);
 
         // Decision boundary (red)
-        ctx.strokeStyle = '#ef4444';
+        ctx.strokeStyle = VIZ.output;
         ctx.lineWidth = 2.5;
-        ctx.shadowColor = 'rgba(239,68,68,0.45)';
+        ctx.shadowColor = VIZ.output;
         ctx.shadowBlur = 10;
         ctx.beginPath();
         if (Math.abs(wy) > 0.01) {
@@ -127,7 +140,7 @@ export default function LinearDiscriminants() {
         const py = originDist * (wy / mag);
 
         ctx.setLineDash([5, 5]);
-        ctx.strokeStyle = '#475569';
+        ctx.strokeStyle = VIZ.muted;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(0, 0);
@@ -136,24 +149,24 @@ export default function LinearDiscriminants() {
         ctx.setLineDash([]);
 
         // Small dot at origin-to-boundary foot
-        ctx.fillStyle = '#64748b';
+        ctx.fillStyle = VIZ.muted;
         ctx.beginPath();
         ctx.arc(px, py, 4, 0, Math.PI * 2);
         ctx.fill();
 
         // Weight vector (blue arrow)
-        ctx.strokeStyle = '#3b82f6';
+        ctx.strokeStyle = VIZ.data;
         ctx.lineWidth = 3;
-        ctx.shadowColor = 'rgba(59,130,246,0.55)';
+        ctx.shadowColor = VIZ.data;
         ctx.shadowBlur = 10;
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(wx, wy);
         ctx.stroke();
         ctx.shadowBlur = 0;
-        drawArrowhead(ctx, wx, wy, Math.atan2(wy, wx), '#3b82f6');
+        drawArrowhead(ctx, wx, wy, Math.atan2(wy, wx), VIZ.data);
 
-        ctx.fillStyle = '#93c5fd';
+        ctx.fillStyle = VIZ.data;
         ctx.font = 'italic bold 18px Georgia, "Times New Roman", serif';
         ctx.fillText('w', wx + 12, wy - 8);
 
@@ -167,7 +180,7 @@ export default function LinearDiscriminants() {
         const footY = tp.y - r * (wy / mag);
 
         // Dashed perpendicular distance line (green)
-        ctx.strokeStyle = '#22c55e';
+        ctx.strokeStyle = VIZ.variation;
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();
@@ -182,7 +195,7 @@ export default function LinearDiscriminants() {
         const bx_u = -ny_u;            // unit along boundary
         const by_u =  nx_u;
         const MS = 8;
-        ctx.strokeStyle = '#4ade80';
+        ctx.strokeStyle = VIZ.variation;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(footX + bx_u * MS,              footY + by_u * MS);
@@ -193,13 +206,13 @@ export default function LinearDiscriminants() {
         // r label at midpoint of the distance line
         const midX = (tp.x + footX) / 2;
         const midY = (tp.y + footY) / 2;
-        ctx.fillStyle = '#4ade80';
+        ctx.fillStyle = VIZ.variation;
         ctx.font = '13px "system-ui", sans-serif';
         ctx.fillText(`r = ${r.toFixed(1)}`, midX + 8, midY);
 
         // Test point dot (colour = class)
-        const ptColor = yv >= 0 ? '#22c55e' : '#f87171';
-        const ptGlow  = yv >= 0 ? 'rgba(34,197,94,0.5)' : 'rgba(248,113,113,0.5)';
+        const ptColor = VIZ.focus;
+        const ptGlow = VIZ.focus;
         ctx.fillStyle = ptGlow;
         ctx.shadowColor = ptGlow;
         ctx.shadowBlur = 14;
@@ -216,7 +229,7 @@ export default function LinearDiscriminants() {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        ctx.fillStyle = yv >= 0 ? '#86efac' : '#fca5a5';
+        ctx.fillStyle = VIZ.focus;
         ctx.font = 'italic bold 18px Georgia, "Times New Roman", serif';
         ctx.fillText('x', tp.x + 14, tp.y - 10);
 
@@ -284,6 +297,7 @@ export default function LinearDiscriminants() {
         canvas.addEventListener('touchstart', onTouchStart, { passive: false });
         canvas.addEventListener('touchmove',  onTouchMove,  { passive: false });
         canvas.addEventListener('touchend',   onTouchEnd);
+        canvas.addEventListener('touchcancel', onTouchEnd);
 
         return () => {
             canvas.removeEventListener('mousedown',  onDown);
@@ -292,6 +306,7 @@ export default function LinearDiscriminants() {
             canvas.removeEventListener('touchstart', onTouchStart);
             canvas.removeEventListener('touchmove',  onTouchMove);
             canvas.removeEventListener('touchend',   onTouchEnd);
+            canvas.removeEventListener('touchcancel', onTouchEnd);
         };
     }, [draw]);
 
@@ -305,169 +320,20 @@ export default function LinearDiscriminants() {
         return () => ro.disconnect();
     }, [draw]);
 
-    // ---- Controls panel ---------------------------------------------
-    const controls = (
-        <GlassPane style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-                <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginBottom: '4px' }}>
-                    Linear Discriminant Geometry
-                </h2>
-                <p style={{ fontSize: '11px', color: '#94a3b8' }}>
-                    Drag the point to explore the decision surface.
-                </p>
-            </div>
-
-            {/* Formula box */}
-            <div style={{
-                background: 'rgba(30,41,59,0.6)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '10px',
-                padding: '12px',
-                textAlign: 'center',
-            }}>
-                <Latex formula="y(\mathbf{x}) = \mathbf{w}^T\mathbf{x} + w_0" display />
-                <p style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-                    Decision boundary where y(<b>x</b>) = 0
-                </p>
-            </div>
-
-            {/* w Angle */}
-            <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        w Angle
-                    </span>
-                    <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>
-                        {wAngle}°
-                    </span>
-                </div>
-                <input aria-label="w Angle" type="range" min="0" max="360" step="1" value={wAngle}
-                    onChange={e => setWAngle(Number(e.target.value))}
-                    style={{ width: '100%' }} />
-            </div>
-
-            {/* Magnitude */}
-            <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Magnitude ‖w‖
-                    </span>
-                    <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>
-                        {wMag}
-                    </span>
-                </div>
-                <input aria-label="Magnitude" type="range" min="10" max="150" step="1" value={wMag}
-                    onChange={e => setWMag(Number(e.target.value))}
-                    style={{ width: '100%' }} />
-            </div>
-
-            {/* Bias */}
-            <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Bias w₀
-                    </span>
-                    <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>
-                        {wBias}
-                    </span>
-                </div>
-                <input aria-label="Bias" type="range" min="-20000" max="20000" step="100" value={wBias}
-                    onChange={e => setWBias(Number(e.target.value))}
-                    style={{ width: '100%' }} />
-                <p style={{ fontSize: '10px', color: '#475569', marginTop: '4px' }}>
-                    Boundary offset from origin: <Latex formula="-w_0/\|\mathbf{w}\|" /> pixels
-                </p>
-            </div>
-
-            {/* Live stats */}
-            <div style={{
-                background: 'rgba(15,23,42,0.6)',
-                border: '1px solid #1e293b',
-                borderRadius: '10px',
-                padding: '12px',
-            }}>
-                <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
-                    Live Values
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#64748b' }}>
-                            <Latex formula="y(\mathbf{x})" />
-                        </span>
-                        <span style={{ fontFamily: 'monospace', fontSize: '14px', color: isC1 ? '#60a5fa' : '#f87171', fontWeight: 700 }}>
-                            {yVal.toFixed(0)}
-                        </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#64748b' }}>
-                            Signed distance <Latex formula="r" />
-                        </span>
-                        <span style={{ fontFamily: 'monospace', fontSize: '14px', color: '#4ade80', fontWeight: 700 }}>
-                            {rVal.toFixed(2)}
-                        </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#64748b' }}>Decision</span>
-                        <span style={{
-                            fontWeight: 700,
-                            fontSize: '13px',
-                            color: isC1 ? '#60a5fa' : '#f87171',
-                            background: isC1 ? 'rgba(59,130,246,0.15)' : 'rgba(239,68,68,0.15)',
-                            padding: '2px 8px',
-                            borderRadius: '6px',
-                        }}>
-                            {isC1 ? 'Class C₁' : 'Class C₂'}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Legend */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#cbd5e1' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 18, height: 3, background: '#3b82f6', borderRadius: '2px', flexShrink: 0 }} />
-                    <span>Weight vector <b>w</b> (normal to boundary)</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 18, height: 3, background: '#ef4444', borderRadius: '2px', flexShrink: 0 }} />
-                    <span>Boundary y(<b>x</b>) = 0</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 12, height: 12, background: '#22c55e', borderRadius: '50%', flexShrink: 0 }} />
-                    <span>Test point <b>x</b> — drag me</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: 18, height: 2, borderTop: '2px dashed #475569', flexShrink: 0 }} />
-                    <span>Signed boundary offset</span>
-                </div>
-            </div>
-
-            {/* Key facts */}
-            <div style={{
-                background: 'rgba(99,102,241,0.1)',
-                border: '1px solid rgba(99,102,241,0.2)',
-                borderRadius: '10px',
-                padding: '12px',
-                fontSize: '11px',
-                color: '#a5b4fc',
-                lineHeight: 1.6,
-            }}>
-                <b style={{ color: '#818cf8' }}>Key facts:</b>
-                <ul style={{ margin: '6px 0 0', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <li><b>w</b> is orthogonal to every vector in the boundary.</li>
-                    <li>Signed boundary offset = <Latex formula="-w_0/\|\mathbf{w}\|" />.</li>
-                    <li>Signed distance = <Latex formula="r = y(\mathbf{x})/\|\mathbf{w}\|" />.</li>
-                </ul>
-            </div>
-
-            <p style={{ fontSize: '11px', color: '#475569', textAlign: 'center', fontStyle: 'italic' }}>
-                Drag the green dot or focus the canvas and use arrow keys · Adjust sliders
-            </p>
-        </GlassPane>
-    );
-
-    return (
-        <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
+    return <VisualLab title="Linear discriminant geometry" subtitle="Move the point across the boundary; its signed score changes class."
+        backUrl={`/${topicId || 'ml'}`} metrics={[{ label: 'Score y(x)', value: yVal.toFixed(0) }, { label: 'Signed distance r', value: rVal.toFixed(2) },
+            { label: 'Decision', value: isC1 ? 'Class C₁' : 'Class C₂' }, { label: 'Boundary offset', value: (-wBias / wMag).toFixed(2) }]}
+        legend={[{ label: 'w', meaning: 'weight vector normal to the boundary', color: VIZ.data, shape: 'line' }, { label: 'Boundary', meaning: 'y(x) = 0', color: VIZ.output, shape: 'line' },
+            { label: 'Point x', meaning: 'selected draggable input', color: VIZ.focus }, { label: 'Dashed r', meaning: 'signed perpendicular distance', color: VIZ.variation, shape: 'line' }]}
+        controls={<><LabRange label="w Angle" value={wAngle} min={0} max={360} onChange={setWAngle} />
+            <LabRange label="Magnitude" value={wMag} min={10} max={150} onChange={setWMag} />
+            <LabRange label="Bias" value={wBias} min={-20000} max={20000} step={100} onChange={setWBias} />
+            <button type="button" className="lab-button" onClick={() => { testPointRef.current = { ...DEFAULT_POINT }; draw(); }}>Reset point</button></>}
+        insight={`The point has y(x) = ${yVal.toFixed(0)} and belongs to ${isC1 ? 'C₁ (nonnegative)' : 'C₂ (negative)'}. Dividing the score by ‖w‖ gives distance r = ${rVal.toFixed(2)} in canvas pixels.`}
+        challenge="Change the magnitude and bias together by the same factor. Why do the decision boundary and signed distance stay in place?"
+        explanation={<div className="lab-explanation"><Latex formula="y(\mathbf{x}) = \mathbf{w}^T\mathbf{x} + w_0" display />
+            <p>The line y(x) = 0 is perpendicular to w. Its signed offset is −w₀/‖w‖. The native canvas uses pixel coordinates with the origin at its center; the vertical mathematical direction is upward.</p>
+            <p>Drag the point, or focus the canvas and use arrow keys. Hold Shift for larger steps. The point stays inside the plot; Reset point restores its starting pixel coordinates within the current view. These are geometric scores, not calibrated probabilities.</p></div>}>
             <canvas
                 ref={canvasRef}
                 role="img" tabIndex={0}
@@ -484,8 +350,7 @@ export default function LinearDiscriminants() {
                     testPointRef.current = { x: point.x + direction[0] * amount, y: point.y + direction[1] * amount };
                     draw();
                 }}
-                style={{ width: '100%', height: '100%', display: 'block', cursor: 'crosshair' }}
+                className="lab-native-canvas"
             />
-        </SceneContainer>
-    );
+        </VisualLab>;
 }
