@@ -70,10 +70,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'The overlays are local approximations around the selected point, not descriptions of the entire surface.',
         },
         integrals: {
-            meaning: 'Integration accumulates small contributions. Rectangular bars illustrate how a sum can approximate the area under a curve.',
-            steps: ['Watch the heights of the bars change automatically.', 'Rotate the scene to see each bar’s width and height.'],
-            observe: 'Each contribution is height × width; adding the contributions gives an area approximation.',
-            limitations: 'These 24 bars use left-endpoint heights, with visual gaps between boxes. Animation changes the function, not the partition count. Use Riemann Integral to refine a partition.',
+            meaning: "Integration accumulates signed area. The accumulated function A(x) has slope equal to the height of the original function f(x).",
+            steps: ["Move the endpoint x and compare shaded positive and negative contributions under sin(x).", "Watch A(x) and its tangent below; optionally enable midpoint bars to compare a sum with the exact area."],
+            observe: "A(x)=1−cos(x) and A′(x)=sin(x). After π, negative contributions reduce the accumulated area; at 2π the signed total returns to zero.",
+            limitations: "This example uses sin(x) on [0,2π]. The numerical area is a midpoint approximation and the displayed slope uses a finite difference. It is signed area, not unsigned geometric area or volume.",
         },
         'gradient-descent-calc': {
             meaning: "Gradient descent repeatedly moves opposite the gradient. On a quadratic bowl, the learning rate determines whether updates approach, overshoot or escape.",
