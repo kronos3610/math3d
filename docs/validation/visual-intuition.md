@@ -62,4 +62,4 @@ Additional paired galleries:
 
 The optional anisotropic bowl and exact cubic eigenpair solver are deferred stretch items. The direction map is sampled, and the guide states that limitation. Existing legacy numerical helpers retain their behavior; their lab controls, plots and readouts use the same computations.
 
-The [review series](visual-intuition-review.md) lists the scoped branches, bases and commits. Source and evidence are committed locally. GitHub publication is pending approval after automatic review rejected the push; no new branches or PRs have been published. `STATUS.md` remains untouched and untracked.
+The [review series](visual-intuition-review.md) lists the scoped branches, bases and commits. Source and evidence are committed and published as [24 scoped PRs](visual-intuition-review.md), with paired screenshots attached. Their GitHub validation status is visible in each PR. `STATUS.md` remains untouched and untracked.

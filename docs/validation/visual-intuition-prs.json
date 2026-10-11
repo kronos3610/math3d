@@ -1,0 +1,193 @@
+[
+  {
+    "branch": "feat/intuition-baseline",
+    "base": "feat/public-beta-readiness",
+    "sha": "6b891280928d681a89d61a15cb9100bcaff831b7",
+    "title": "Confirm the visual-intuition baseline",
+    "url": "https://github.com/kronos3610/math3d/pull/35",
+    "number": 35
+  },
+  {
+    "branch": "feat/intuition-grammar",
+    "base": "feat/intuition-baseline",
+    "sha": "1fc6d88f026a309dac8b79983d67f6bcf88339f7",
+    "title": "Unify plot keys, semantic colours and shared scene geometry",
+    "url": "https://github.com/kronos3610/math3d/pull/36",
+    "number": 36
+  },
+  {
+    "branch": "feat/intuition-descent",
+    "base": "feat/intuition-grammar",
+    "sha": "e9adb584f384519c4c1e19f07c7ad6e12fc9a090",
+    "title": "Expose gradient-descent learning rates and starting points",
+    "url": "https://github.com/kronos3610/math3d/pull/37",
+    "number": 37
+  },
+  {
+    "branch": "feat/intuition-integration-slices",
+    "base": "feat/intuition-descent",
+    "sha": "51c7053b903c1f34f317b59b5a31d7486ccc1419",
+    "title": "Show Riemann and Lebesgue estimates beside their slices",
+    "url": "https://github.com/kronos3610/math3d/pull/38",
+    "number": 38
+  },
+  {
+    "branch": "feat/intuition-monte-carlo",
+    "base": "feat/intuition-integration-slices",
+    "sha": "97cd803f12d4a24ff860ccfea10f73fdb9b526a9",
+    "title": "Make Monte Carlo reproducible and show error convergence",
+    "url": "https://github.com/kronos3610/math3d/pull/39",
+    "number": 39
+  },
+  {
+    "branch": "feat/intuition-derivatives",
+    "base": "feat/intuition-monte-carlo",
+    "sha": "46631e0b61434cf7253f73f996906b2c2dbc6964",
+    "title": "Link surface slices, secants and tangent slopes",
+    "url": "https://github.com/kronos3610/math3d/pull/40",
+    "number": 40
+  },
+  {
+    "branch": "feat/intuition-accumulation",
+    "base": "feat/intuition-derivatives",
+    "sha": "cf31c42b36eef05755111237ecc515521e855b20",
+    "title": "Connect signed-area accumulation with its slope",
+    "url": "https://github.com/kronos3610/math3d/pull/41",
+    "number": 41
+  },
+  {
+    "branch": "feat/intuition-eigenvalues",
+    "base": "feat/intuition-accumulation",
+    "sha": "cb9e7ee216dde3a066c395c5f6adfe21d022256d",
+    "title": "Let learners find eigen-directions with an alignment map",
+    "url": "https://github.com/kronos3610/math3d/pull/42",
+    "number": 42
+  },
+  {
+    "branch": "feat/intuition-distributions",
+    "base": "feat/intuition-eigenvalues",
+    "sha": "ba61532d4c5a9030b08bdbdaf528124ac23bc08c",
+    "title": "Manipulate Gaussian spread, correlation and seeded samples",
+    "url": "https://github.com/kronos3610/math3d/pull/43",
+    "number": 43
+  },
+  {
+    "branch": "feat/intuition-boundaries",
+    "base": "feat/intuition-distributions",
+    "sha": "b6209565bdfcecfdd717d0c919189b44636836e0",
+    "title": "Move 3D decision boundaries and count their mistakes",
+    "url": "https://github.com/kronos3610/math3d/pull/44",
+    "number": 44
+  },
+  {
+    "branch": "feat/intuition-subspace-input",
+    "base": "feat/intuition-boundaries",
+    "sha": "358aed16979fb615bda658b9ddcfb019455d0352",
+    "title": "Drive input vectors through orthogonal subspace components",
+    "url": "https://github.com/kronos3610/math3d/pull/45",
+    "number": 45
+  },
+  {
+    "branch": "feat/intuition-predict",
+    "base": "feat/intuition-subspace-input",
+    "sha": "20164b20dd623d168b9f81c852366b00dfb55d41",
+    "title": "Reveal computed Bayes and bias-variance results after a prediction",
+    "url": "https://github.com/kronos3610/math3d/pull/46",
+    "number": 46
+  },
+  {
+    "branch": "feat/intuition-sigma-algebra",
+    "base": "feat/intuition-predict",
+    "sha": "30840885c045d65912d219fe721947bba723d87e",
+    "title": "Expose sigma-algebra atoms and closure operations",
+    "url": "https://github.com/kronos3610/math3d/pull/47",
+    "number": 47
+  },
+  {
+    "branch": "feat/intuition-lebesgue-measure",
+    "base": "feat/intuition-sigma-algebra",
+    "sha": "74cbed738baaee20a3d728095fd739c29c7b6eac",
+    "title": "Expose measure-covering controls and live estimates",
+    "url": "https://github.com/kronos3610/math3d/pull/48",
+    "number": 48
+  },
+  {
+    "branch": "feat/intuition-linear-discriminants",
+    "base": "feat/intuition-lebesgue-measure",
+    "sha": "b56845d73d63cf7d57a07928caecb2497fbd05ce",
+    "title": "Keep discriminant controls and query points visible",
+    "url": "https://github.com/kronos3610/math3d/pull/49",
+    "number": 49
+  },
+  {
+    "branch": "feat/intuition-lp-regularization",
+    "base": "feat/intuition-linear-discriminants",
+    "sha": "ac6d511fdbb5d087fcdbf68fa36121f364c46d8d",
+    "title": "Show the live regularization budget and feasible region",
+    "url": "https://github.com/kronos3610/math3d/pull/50",
+    "number": 50
+  },
+  {
+    "branch": "feat/intuition-lagrange-multipliers",
+    "base": "feat/intuition-lp-regularization",
+    "sha": "277ccd6e466d3499e934921683e95e45aea28ae2",
+    "title": "Link constrained positions to objective and multiplier",
+    "url": "https://github.com/kronos3610/math3d/pull/51",
+    "number": 51
+  },
+  {
+    "branch": "feat/intuition-log-likelihood",
+    "base": "feat/intuition-lagrange-multipliers",
+    "sha": "cb97e1cdd2ef211a67d463933e13244b8ce18cca",
+    "title": "Show Gaussian likelihood and log scores beside their controls",
+    "url": "https://github.com/kronos3610/math3d/pull/52",
+    "number": 52
+  },
+  {
+    "branch": "feat/intuition-probability-likelihood",
+    "base": "feat/intuition-log-likelihood",
+    "sha": "91fdc6a2c8b435e018b480cd7c3f37509537ed85",
+    "title": "Separate the varied axes for probability and likelihood",
+    "url": "https://github.com/kronos3610/math3d/pull/53",
+    "number": 53
+  },
+  {
+    "branch": "feat/intuition-jacobian-hessian",
+    "base": "feat/intuition-probability-likelihood",
+    "sha": "fb4436e88bf7461399deca97d9db94d05958e86e",
+    "title": "Link the surface point to its gradient and Hessian",
+    "url": "https://github.com/kronos3610/math3d/pull/54",
+    "number": 54
+  },
+  {
+    "branch": "feat/intuition-taylor-remainder",
+    "base": "feat/intuition-jacobian-hessian",
+    "sha": "cc8448dfc770ea6a03c4a7dba16af91826128ca6",
+    "title": "Expose Taylor approximation controls and live remainder",
+    "url": "https://github.com/kronos3610/math3d/pull/55",
+    "number": 55
+  },
+  {
+    "branch": "feat/intuition-paths",
+    "base": "feat/intuition-taylor-remainder",
+    "sha": "3269aed0119534de18b1af4e9be8b83cc2431a46",
+    "title": "Surface learning paths on every topic page",
+    "url": "https://github.com/kronos3610/math3d/pull/56",
+    "number": 56
+  },
+  {
+    "branch": "feat/intuition-previews",
+    "base": "feat/intuition-paths",
+    "sha": "68541e93b4c2aed789b2f2fc5d8ba97968268d67",
+    "title": "Give lesson cards ten distinct static visual previews",
+    "url": "https://github.com/kronos3610/math3d/pull/57",
+    "number": 57
+  },
+  {
+    "branch": "feat/visual-intuition-plan",
+    "base": "feat/intuition-previews",
+    "title": "Record the visual-intuition release checks and before/after evidence",
+    "url": "https://github.com/kronos3610/math3d/pull/58",
+    "number": 58
+  }
+]

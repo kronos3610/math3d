@@ -1,6 +1,6 @@
 # Plan: make Math3D a visual, intuitive explanation tool
 
-Status: product implementation and local release checks complete; PR publication pending approval · Branch base: `feat/public-beta-readiness` · Written against commit `a5b3c9d`
+Status: implemented and validated; review series [PR #35–#58](docs/validation/visual-intuition-review.md) published · Branch base: `feat/public-beta-readiness` · Written against commit `a5b3c9d`
 
 ## 0. How to read this document
 
@@ -426,7 +426,7 @@ Add `preview?: 'surface' | 'vectors' | 'bars' | 'bell' | 'scatter' | 'tree' | 'n
 - [x] Reduced motion + "Pause motion": nothing auto-plays; manual control still works.
 - [x] Light vs Detailed graphics both fine.
 - [x] Guide updated (`meaning`, `steps`, `observe`, `limitations`) and `lessonGuides.test.ts` passes (2–3 steps each; each step > 15 chars).
-- [ ] Screenshot before/after attached to the PR. Paired galleries are committed locally; remote PR publication is pending approval.
+- [x] Screenshot before/after attached to each PR; the paired galleries and complete review order are linked below.
 
 ---
 
