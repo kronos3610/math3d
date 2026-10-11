@@ -1,185 +1,9 @@
-import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState, useMemo, useEffect } from 'react';
-
-import { OrbitControls } from '@react-three/drei';
-import * as THREE from 'three';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { SceneContainer } from '../../components/layout/SceneContainer';
-import { GlassPane } from '../../components/layout/GlassPane';
-import Latex from '../../components/Latex';
+import { SpatialScene, type LabVector } from '../../components/3d/SpatialScene';
+import { VisualLab, LabRange, LabSelect } from '../../components/layout/VisualLab';
+import { VIZ } from '../../data/palette';
 import { radialNormShrink } from './regularizationModel';
-
-// --- Math helpers ---
-
-function buildNormBallGeometry(pValue: number, radius: number): THREE.BufferGeometry {
-    if (pValue === Infinity) return new THREE.BoxGeometry(2 * radius, 2 * radius, 2 * radius);
-    const detail = 40;
-    const effectiveP = pValue;
-
-    const vertices: number[] = [];
-    const indices: number[] = [];
-
-    for (let i = 0; i <= detail; i++) {
-        const v = (i / detail) * Math.PI;
-        for (let j = 0; j <= detail; j++) {
-            const u = (j / detail) * 2 * Math.PI;
-
-            const sinV = Math.sin(v);
-            const cosV = Math.cos(v);
-            const sinU = Math.sin(u);
-            const cosU = Math.cos(u);
-
-            const denom = Math.pow(
-                Math.pow(Math.abs(sinV * cosU), effectiveP) +
-                Math.pow(Math.abs(sinV * sinU), effectiveP) +
-                Math.pow(Math.abs(cosV), effectiveP),
-                1 / effectiveP,
-            ) || 1;
-
-            vertices.push(
-                (sinV * cosU / denom) * radius,
-                (sinV * sinU / denom) * radius,
-                (cosV / denom) * radius,
-            );
-        }
-    }
-
-    for (let i = 0; i < detail; i++) {
-        for (let j = 0; j < detail; j++) {
-            const a = i * (detail + 1) + j;
-            const b = a + 1;
-            const c = (i + 1) * (detail + 1) + j;
-            const d = c + 1;
-            indices.push(a, b, d, a, d, c);
-        }
-    }
-
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    geo.setIndex(indices);
-    geo.computeVertexNormals();
-    return geo;
-}
-
-// --- 3D sub-components ---
-
-function NormBall({ pValue, radius }: { pValue: number; radius: number }) {
-    const geometry = useMemo(
-        () => buildNormBallGeometry(pValue, radius),
-        [pValue, radius],
-    );
-    useEffect(() => () => geometry.dispose(), [geometry]);
-
-    return (
-        // key forces remount so flatShading change takes effect cleanly
-        <mesh key={pValue} geometry={geometry}>
-            <meshPhongMaterial
-                color="#3b82f6"
-                transparent
-                opacity={0.6}
-                side={THREE.DoubleSide}
-                shininess={80}
-                flatShading={pValue === 1}
-            />
-        </mesh>
-    );
-}
-
-function OLSMarker({ position }: { position: THREE.Vector3 }) {
-    return (
-        <group position={position}>
-            <mesh>
-                <sphereGeometry args={[0.08, 12, 12]} />
-                <meshBasicMaterial color="#facc15" />
-            </mesh>
-        </group>
-    );
-}
-
-function RegMarker({ position }: { position: THREE.Vector3 }) {
-    return (
-        <mesh position={position}>
-            <sphereGeometry args={[0.09, 16, 16]} />
-            <meshBasicMaterial color="#10b981" />
-        </mesh>
-    );
-}
-
-function ShrinkLine({ from, to }: { from: THREE.Vector3; to: THREE.Vector3 }) {
-    const obj = useMemo(() => {
-        const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
-        const mat = new THREE.LineDashedMaterial({ color: '#10b981', dashSize: 0.2, gapSize: 0.1 });
-        const line = new THREE.Line(geo, mat);
-        line.computeLineDistances();
-        return line;
-    }, [from, to]);
-    return <primitive object={obj} />;
-}
-
-function SceneAxes() {
-    const shared = { emissiveIntensity: 0.5 };
-    return (
-        <group>
-            {/* X — red */}
-            <mesh position={[2.5, 0, 0]}>
-                <boxGeometry args={[5, 0.02, 0.02]} />
-                <meshStandardMaterial color="#ff4444" emissive="#ff4444" {...shared} />
-            </mesh>
-            <mesh position={[5.5, 0, 0]}>
-                <sphereGeometry args={[0.1, 8, 8]} />
-                <meshBasicMaterial color="#ff4444" />
-            </mesh>
-
-            {/* Y — green */}
-            <mesh position={[0, 2.5, 0]}>
-                <boxGeometry args={[0.02, 5, 0.02]} />
-                <meshStandardMaterial color="#44ff44" emissive="#44ff44" {...shared} />
-            </mesh>
-            <mesh position={[0, 5.5, 0]}>
-                <sphereGeometry args={[0.1, 8, 8]} />
-                <meshBasicMaterial color="#44ff44" />
-            </mesh>
-
-            {/* Z — blue */}
-            <mesh position={[0, 0, 2.5]}>
-                <boxGeometry args={[0.02, 0.02, 5]} />
-                <meshStandardMaterial color="#4444ff" emissive="#4444ff" {...shared} />
-            </mesh>
-            <mesh position={[0, 0, 5.5]}>
-                <sphereGeometry args={[0.1, 8, 8]} />
-                <meshBasicMaterial color="#4444ff" />
-            </mesh>
-        </group>
-    );
-}
-
-function Scene({ pValue, radius, olsVec, regVec }: {
-    pValue: number;
-    radius: number;
-    olsVec: THREE.Vector3;
-    regVec: THREE.Vector3;
-}) {
-    return (
-        <>
-            <color attach="background" args={['#020617']} />
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} intensity={1} />
-            <spotLight position={[-10, 10, 10]} intensity={1} color="#3b82f6" />
-
-            <gridHelper args={[20, 20, 0x1e293b, 0x0f172a]} position={[0, -0.01, 0]} />
-            <SceneAxes />
-
-            <NormBall pValue={pValue} radius={radius} />
-            <OLSMarker position={olsVec} />
-            <RegMarker position={regVec} />
-            <ShrinkLine from={olsVec} to={regVec} />
-
-            <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
-        </>
-    );
-}
-
-// --- Descriptions ---
 
 const DESC: Record<string, string> = {
     '1': 'The L1 ball is an octahedron with vertices on the coordinate axes. A solved L1-constrained objective can have zero coefficients; this radial illustration does not create sparsity by itself.',
@@ -187,193 +11,43 @@ const DESC: Record<string, string> = {
     '3': 'As p increases, the norm ball transitions from an octahedron toward a cube.',
     'Infinity': 'L-Infinity (Max) creates a box that caps the absolute maximum value of any weight.',
 };
-
-const PENALTY_BTNS = [
-    { label: 'L1 (Lasso)', val: 1 },
-    { label: 'L2 (Ridge)', val: 2 },
-    { label: 'L3', val: 3 },
-    { label: 'L-Infinity', val: Infinity },
-] as const;
-
-// --- Main export ---
+const norm = (weights: LabVector, p: number) => p === Infinity ? Math.max(...weights.map(Math.abs)) : weights.reduce((sum, weight) => sum + Math.abs(weight) ** p, 0) ** (1 / p);
+const tuple = (weights: readonly number[]) => `(${weights.map(value => value.toFixed(2)).join(', ')})`;
 
 export default function LpRegularization() {
-    const { topicId } = useParams<{ topicId: string }>();
-
-    const [pValue, setPValue] = useState<number>(2);
+    const { topicId } = useParams();
+    const [pValue, setPValue] = useState(2);
     const [radius, setRadius] = useState(1.2);
-    const [olsX, setOlsX] = useState(2.8);
-    const [olsY, setOlsY] = useState(2.2);
-    const [olsZ, setOlsZ] = useState(2.0);
-
-    const olsVec = useMemo(() => new THREE.Vector3(olsX, olsY, olsZ), [olsX, olsY, olsZ]);
-    const regVec = useMemo(() => new THREE.Vector3(...radialNormShrink([olsX, olsY, olsZ], pValue, radius)), [olsX, olsY, olsZ, pValue, radius]);
-
-    const pLabel = pValue === Infinity ? '∞' : String(pValue);
-    const descKey = pValue === Infinity ? 'Infinity' : String(pValue);
-
-    const olsSliders = [
-        { label: 'w1 (X)', val: olsX, set: setOlsX },
-        { label: 'w2 (Y)', val: olsY, set: setOlsY },
-        { label: 'w3 (Z)', val: olsZ, set: setOlsZ },
-    ];
-
-    const tableRows = [
-        { label: 'w1', ols: olsX, reg: regVec.x },
-        { label: 'w2', ols: olsY, reg: regVec.y },
-        { label: 'w3', ols: olsZ, reg: regVec.z },
-    ];
-
-    const controls = (
-        <GlassPane style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-                <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginBottom: '4px' }}>
-                    Lp Norm Balls
-                </h2>
-                <p style={{ color: '#94a3b8', fontSize: '11px' }}>
-                    Explore norm geometry and radial shrinkage of an input vector.
-                </p>
-            </div>
-
-            {/* Formula box */}
-            <div style={{
-                background: 'rgba(30,41,59,0.6)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '10px',
-                padding: '12px',
-                textAlign: 'center',
-            }}>
-                <Latex formula="\{w : \|w\|_p \leq t\}" display />
-                <p style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-                    The allowed norm ball; no loss function is optimized here.
-                </p>
-            </div>
-
-            {/* Penalty type buttons */}
-            <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Penalty Type (Lp)
-                    </span>
-                    <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>
-                        p = {pLabel}
-                    </span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                    {PENALTY_BTNS.map(({ label, val }) => (
-                        <button
-                            key={label}
-                            onClick={() => setPValue(val)}
-                            style={{
-                                padding: '8px 12px',
-                                borderRadius: '8px',
-                                border: '1px solid #334155',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                background: pValue === val ? '#2563eb' : '#1e293b',
-                                color: pValue === val ? 'white' : '#94a3b8',
-                                transition: 'all 0.2s',
-                            }}
-                        >
-                            {label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Constraint radius */}
-            <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Constraint Radius (t)
-                    </span>
-                    <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>
-                        {radius.toFixed(1)}
-                    </span>
-                </div>
-                <input
-                    aria-label="Constraint Radius" type="range" min="0.5" max="3.5" step="0.1"
-                    value={radius}
-                    onChange={(e) => setRadius(parseFloat(e.target.value))}
-                    style={{ width: '100%' }}
-                />
-            </div>
-
-            {/* OLS position */}
-            <div style={{ background: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px', border: '1px solid #1e293b', padding: '12px' }}>
-                <div style={{ color: '#facc15', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
-                    Input vector (w)
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {olsSliders.map(({ label, val, set }) => (
-                        <div key={label}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
-                                <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{val.toFixed(1)}</span>
-                            </div>
-                            <input
-                                aria-label={label} type="range" min="-5" max="5" step="0.1"
-                                value={val}
-                                onChange={(e) => set(parseFloat(e.target.value))}
-                                style={{ width: '100%' }}
-                            />
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Weight comparison table */}
-            <div style={{ background: 'rgba(59,130,246,0.05)', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.15)', padding: '12px' }}>
-                <div style={{ color: '#60a5fa', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-                    Weight Comparison
-                </div>
-                <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ color: '#64748b', borderBottom: '1px solid #1e293b' }}>
-                            <th style={{ textAlign: 'left', paddingBottom: '6px', fontWeight: 600 }}>Weight</th>
-                            <th style={{ textAlign: 'left', paddingBottom: '6px', fontWeight: 600 }}>Input</th>
-                            <th style={{ textAlign: 'left', paddingBottom: '6px', fontWeight: 600, color: '#34d399' }}>Radially shrunk</th>
-                        </tr>
-                    </thead>
-                    <tbody style={{ fontFamily: 'monospace' }}>
-                        {tableRows.map(({ label, ols, reg }) => (
-                            <tr key={label}>
-                                <td style={{ paddingTop: '6px', color: '#94a3b8' }}>{label}</td>
-                                <td style={{ paddingTop: '6px', color: 'white' }}>{ols.toFixed(2)}</td>
-                                <td style={{ paddingTop: '6px', color: '#34d399' }}>{reg.toFixed(2)}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Description */}
-            <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.6 }}>
-                <p style={{ marginBottom: '4px' }}>
-                    <span style={{ color: '#60a5fa', fontWeight: 700 }}>Blue Shell:</span>{' '}
-                    The constraint region <Latex formula="\|w\|_p \leq t" />.
-                </p>
-                <p style={{ marginBottom: '8px' }}>
-                    <span style={{ color: '#34d399', fontWeight: 700 }}>Green Dot:</span>{' '}
-                    Radial shrinkage keeps the vector direction and reduces its norm to the budget when needed. This is not a nearest-point projection or a computed ridge/lasso optimum.
-                </p>
-                <p style={{ background: 'rgba(15,23,42,0.5)', padding: '10px', borderRadius: '6px', border: '1px solid #1e293b', fontStyle: 'italic', color: '#94a3b8', margin: 0 }}>
-                    {DESC[descKey]}
-                </p>
-            </div>
-
-            <p style={{ fontSize: '11px', color: '#475569', textAlign: 'center', fontStyle: 'italic', margin: 0 }}>
-                Drag to rotate · Scroll to zoom
-            </p>
-        </GlassPane>
-    );
-
-    return (
-        <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
-            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} camera={{ position: [7.5, 7.5, 7.5], fov: 45 }} aria-label="3D visualization of Lp norm balls showing L1, L2, L3, and L-infinity constraint regions">
-                <Scene pValue={pValue} radius={radius} olsVec={olsVec} regVec={regVec} />
-            </SceneCanvas>
-        </SceneContainer>
-    );
+    const [weights, setWeights] = useState<LabVector>([2.8, 2.2, 2]);
+    const radial = radialNormShrink(weights, pValue, radius) as LabVector;
+    const vertices = useMemo(() => {
+        if (pValue === Infinity) return [];
+        return Array.from({ length: 41 * 41 }, (_, index): LabVector => {
+            const v = Math.floor(index / 41) / 40 * Math.PI; const u = index % 41 / 40 * 2 * Math.PI;
+            const direction: LabVector = [Math.sin(v) * Math.cos(u), Math.sin(v) * Math.sin(u), Math.cos(v)];
+            const denominator = norm(direction, pValue) || 1;
+            return direction.map(value => value / denominator * radius) as LabVector;
+        });
+    }, [pValue, radius]);
+    const label = pValue === Infinity ? '∞' : String(pValue);
+    const feasible = norm(weights, pValue) <= radius;
+    return <VisualLab title="Lp norm geometry" subtitle="Change the norm and budget. The allowed weight region changes shape; the selected ray meets its boundary."
+        backUrl={`/${topicId || 'ml'}`} metrics={[{ label: `Input ‖β‖${label}`, value: norm(weights, pValue).toFixed(3) }, { label: 'Budget t', value: radius.toFixed(2) },
+            { label: 'Radial output', value: tuple(radial) }, { label: 'Output norm', value: norm(radial, pValue).toFixed(3) }]}
+        legend={[{ label: 'Norm ball', meaning: 'allowed weights ‖β‖p ≤ t', color: VIZ.output, shape: 'square' }, { label: 'Input β', meaning: 'given weight vector', color: VIZ.data },
+            { label: 'Radial output', meaning: 'current ray intersection', color: VIZ.focus }, { label: 'Ray', meaning: 'common scaling of all coordinates', color: VIZ.variation, shape: 'line' }]}
+        controls={<><LabSelect label="Norm p" value={String(pValue)} options={[{ value: '1', label: 'L1 (octahedron)' }, { value: '2', label: 'L2 (sphere)' }, { value: '3', label: 'L3' }, { value: 'Infinity', label: 'L∞ (cube)' }]}
+            onChange={value => setPValue(Number(value))} />
+            <LabRange label="Radius / budget" value={radius} min={0.1} max={5} step={0.1} decimals={1} onChange={setRadius} />
+            <details className="lab-panel"><summary>Input weight coordinates</summary>{weights.map((value, axis) => <LabRange key={axis} label={`Weight β${axis + 1}`} value={value} min={-4} max={4} step={0.1} decimals={1}
+                onChange={next => setWeights(current => current.map((entry, index) => index === axis ? next : entry) as LabVector)} />)}</details></>}
+        insight={feasible ? `The input already satisfies the L${label} budget, so the radial output equals the input.` : `Every coefficient is multiplied by ${(radius / norm(weights, pValue)).toFixed(3)} until the output norm equals the budget.`}
+        challenge="Switch L2 to L1 without changing the budget. Why does the same positive input ray stop closer to the origin?"
+        explanation={<div className="lab-explanation"><p>{DESC[String(pValue)]}</p><p>The computed output is β × min(1, t/‖β‖p). It is a radial intersection, not nearest-point projection and not a fitted regularized regression. Use Ridge &amp; Lasso Constraints to see solved objectives and actual sparse solutions.</p></div>}>
+        <SpatialScene axes={['weight β₁', 'weight β₂', 'weight β₃']} description={`The L${label} weight ball, input weights, and their radial intersection with the budget. All coordinate axes have equal units.`}
+            surfaces={vertices.length ? [{ vertices, columns: 41, color: VIZ.output, opacity: 0.25 }] : []}
+            boxes={pValue === Infinity ? [{ position: [0, 0, 0], size: [2 * radius, 2 * radius, 2 * radius], color: VIZ.output, opacity: 0.15 }] : []}
+            points={[{ position: weights, color: VIZ.data, radius: 0.12, label: 'Input β' }, { position: radial, color: VIZ.focus, radius: 0.14, label: 'Radial output' }]}
+            paths={[{ points: [[0, 0, 0], weights], color: VIZ.variation, dashed: true }]} />
+    </VisualLab>;
 }
