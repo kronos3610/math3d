@@ -26,11 +26,11 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             observe: 'The operations apply scaling, then shear, then rotation. The determinant gives signed volume change; zero collapses a dimension.',
             limitations: 'The computed family is A = Rz Hx D. It includes reflections and flattening but does not represent every 3×3 matrix or translations.',
         },
-        'eigenvalues': {
-            meaning: 'An eigenvector is a nonzero direction that a matrix only scales or reverses. Its scaling factor is the eigenvalue.',
-            steps: ['Choose Scale, Shear, Rotation, or Random, or edit the matrix entries.', 'Adjust the input-vector sliders or try Auto-Find Eigenvector.'],
-            observe: 'An eigenvector makes the input and output parallel. Negative eigenvalues reverse the direction; zero eigenvalues send nonzero eigenvectors to zero. The zero input is not an eigenvector.',
-            limitations: 'Auto-Find uses a finite numerical iteration that may not converge for every matrix. The relative residual must be at most 10⁻⁶ to show an approximate eigenvector; it does not enumerate all eigenvectors.',
+        eigenvalues: {
+            meaning: "A nonzero eigenvector stays on its line when a matrix transforms it. Its eigenvalue gives the signed scale; the alignment map helps locate these directions.",
+            steps: ["Move Input vector X, Y, and Z toward bright directions and compare x, Ax, their scale ratio, and normalized residual.", "Compare Scale, Shear, and Identity. Choose Rotation, make or skip the prediction, then reveal its map. Reset restores the unsolved starting example."],
+            observe: "Scale has three eigen-lines. Shear has the whole y = 0 eigenplane. A 90° Z rotation preserves only the Z line; its two poles represent one line. A negative eigenvalue reverses direction and zero sends a nonzero vector to zero.",
+            limitations: "The map samples 306 directions; brightness is absolute angular alignment, so nearby bright points are hints rather than exact eigenvectors. The probe tests the normalized residual at tolerance 10⁻⁶. Reveal dominant eigenvector runs 80 power iterations and can fail for rotations or equal-magnitude eigenvalues. The map is not a plot of singular-vector ellipsoid axes.",
         },
         'fundamental-subspaces': {
             meaning: 'A matrix connects an input domain and an output codomain. Row/null spaces and column/left-null spaces form two orthogonal pairs.',

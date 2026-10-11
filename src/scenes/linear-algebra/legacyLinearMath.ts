@@ -35,3 +35,24 @@ export const SUBSPACE_EXAMPLE = {
     c1: [1, 0, 1] as Vector3Tuple,
     c2: [2, 1, 3] as Vector3Tuple,
 };
+
+/** Deterministic equal-area direction samples, independent of the renderer. */
+export function fibonacciSphere(count = 300): Vector3Tuple[] {
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    return Array.from({ length: count }, (_, index) => {
+        const y = 1 - 2 * (index + 0.5) / count;
+        const radius = Math.sqrt(Math.max(0, 1 - y * y));
+        const angle = goldenAngle * index;
+        return [Math.cos(angle) * radius, y, Math.sin(angle) * radius];
+    });
+}
+
+/** Absolute cosine keeps negative eigenvalues bright; a zero image is λ = 0. */
+export function eigenAlignment(matrix: Matrix3Tuple, direction: Vector3Tuple): number {
+    const image = multiplyMatrixVector(matrix, direction);
+    const assessment = assessEigenvector(direction, image);
+    if (assessment.isEigen) return 1;
+    const denominator = Math.hypot(...direction) * Math.hypot(...image);
+    if (denominator === 0 || !Number.isFinite(denominator)) return 0;
+    return Math.min(1, Math.abs(direction.reduce((sum, value, axis) => sum + value * image[axis], 0)) / denominator);
+}

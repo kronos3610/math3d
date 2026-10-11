@@ -16,8 +16,10 @@ function show(id: string, Scene: typeof Eigenvalues) {
 test('eigenvector assessment stays available without a renderer and rejects a zero input', () => {
     show('eigenvalues', Eigenvalues);
     fireEvent.click(screen.getByRole('button', { name: 'Reset', exact: true }));
-    expect(screen.getByText('Estimated eigenvalue λ = 1.00')).toBeDefined();
-    ['X', 'Y', 'Z'].forEach(axis => fireEvent.change(screen.getByLabelText(`Input vector ${axis}`), { target: { value: '0' } }));
+    expect(screen.queryByText(/Estimated eigenvalue/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Identity', exact: true }));
+    expect(screen.getByText(/Estimated eigenvalue λ = 1.00/)).toBeDefined();
+    ['X', 'Y', 'Z'].forEach(axis => fireEvent.change(screen.getByRole('slider', { name: `Input vector ${axis}` }), { target: { value: '0' } }));
     expect(screen.queryByText(/Estimated eigenvalue/)).toBeNull();
     expect(screen.getByText(/undefined for a zero input/)).toBeDefined();
 });
@@ -29,9 +31,9 @@ test('clearing a matrix entry retains finite geometry and the actual value until
     expect(entry.value).toBe(''); expect(document.body.textContent).not.toContain('NaN');
     fireEvent.blur(entry); expect(entry.value).toBe('2');
     fireEvent.change(entry, { target: { value: '-2' } });
-    fireEvent.change(screen.getByLabelText('Input vector Y'), { target: { value: '0' } });
-    fireEvent.change(screen.getByLabelText('Input vector Z'), { target: { value: '0' } });
-    expect(screen.getByText('Estimated eigenvalue λ = -2.00')).toBeDefined();
+    fireEvent.change(screen.getByRole('slider', { name: 'Input vector Y' }), { target: { value: '0' } });
+    fireEvent.change(screen.getByRole('slider', { name: 'Input vector Z' }), { target: { value: '0' } });
+    expect(screen.getByText(/Estimated eigenvalue λ = -2.00/)).toBeDefined();
 });
 
 test('matrix preset changes actual determinant and selected cube-corner output', () => {
@@ -50,4 +52,15 @@ test('coordinate exploration selects actual fixed cube corners without requiring
     fireEvent.change(screen.getByLabelText('Select cube corner'), { target: { value: '0' } });
     expect(screen.getAllByText('-1')).toHaveLength(3);
     expect(screen.getByText(/Orbiting the camera changes the view/)).toBeDefined();
+});
+
+
+test('rotation asks for a prediction before revealing its eigen-direction map', () => {
+    show('eigenvalues', Eigenvalues);
+    fireEvent.click(screen.getByRole('button', { name: 'Rotation', exact: true }));
+    expect(screen.getByRole('img').getAttribute('aria-label')).toContain('hidden until');
+    fireEvent.click(screen.getByRole('radio', { name: 'One line: the Z axis' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lock in' }));
+    expect(document.querySelector('.predict-feedback')?.textContent).toContain('Your prediction matches');
+    expect(screen.getByRole('img').getAttribute('aria-label')).toContain('sampled alignment map');
 });

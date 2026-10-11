@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { assessEigenvector, matrixDeterminant, multiplyMatrixVector, SUBSPACE_EXAMPLE, SUBSPACE_MATRIX, transformationMatrix } from './legacyLinearMath';
+import { assessEigenvector, eigenAlignment, fibonacciSphere, matrixDeterminant, multiplyMatrixVector, SUBSPACE_EXAMPLE, SUBSPACE_MATRIX, transformationMatrix } from './legacyLinearMath';
 
 test('the displayed subspace decomposition has its claimed orthogonality, null image, and column coordinates', () => {
     const { x, x_row: row, x_null: nullVector, b, c1, c2, colNormal } = SUBSPACE_EXAMPLE;
@@ -27,4 +27,26 @@ test('relative eigenvector criterion rejects tiny nonparallel images and accepts
     expect(assessEigenvector([2, -1, 0], [0, 0, 0])).toEqual({ isEigen: true, lambda: 0, residual: 0 });
     expect(assessEigenvector([0, 0, 0], [0, 0, 0]).isEigen).toBe(false);
     expect(assessEigenvector([0, 0, 0], [0, 0, 0]).lambda).toBeNull();
+});
+
+
+test('alignment map measures eigen-lines, including negative and zero images, without confusing singular axes', () => {
+    const diagonal = [2, 0, 0, 0, 1.5, 0, 0, 0, -0.5] as const;
+    expect(eigenAlignment([...diagonal], [1, 0, 0])).toBe(1);
+    expect(eigenAlignment([...diagonal], [0, 0, -1])).toBe(1);
+    expect(eigenAlignment([...diagonal], [1, 1, 1])).toBeLessThan(1);
+    expect(eigenAlignment([0, 0, 0, 0, 1, 0, 0, 0, 1], [1, 0, 0])).toBe(1);
+    const shear = [1, 1, 0, 0, 1, 0, 0, 0, 1] as const;
+    expect(eigenAlignment([...shear], [1, 0, 2])).toBe(1);
+    expect(eigenAlignment([...shear], [0, 1, 0])).toBeLessThan(1);
+    const rotation = [0, -1, 0, 1, 0, 0, 0, 0, 1] as const;
+    expect(eigenAlignment([...rotation], [0, 0, 1])).toBe(1);
+    expect(eigenAlignment([...rotation], [1, 0, 0])).toBe(0);
+});
+
+test('Fibonacci map is reproducible and all sampled directions have unit length', () => {
+    const samples = fibonacciSphere(300);
+    expect(samples).toHaveLength(300);
+    expect(samples).toEqual(fibonacciSphere(300));
+    samples.forEach(sample => expect(Math.hypot(...sample)).toBeCloseTo(1, 12));
 });
