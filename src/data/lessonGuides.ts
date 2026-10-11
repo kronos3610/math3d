@@ -136,10 +136,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: "Seeded pseudorandom samples are a reproducible simulation, not a proof of π. The dashed curve uses the known sphere probability π/6 to show theoretical standard error, not a guaranteed bound. All samples contribute to statistics; the SVG projection draws at most 1,200 evenly selected points, and errors below 0.0001 are shown at the chart floor.",
         },
         'log-likelihood': {
-            meaning: 'Log-likelihood scores how well a proposed probability model explains the observed data. Independent observations contribute additive log-density terms.',
-            steps: ['Move the X-Position and Z-Position sliders to place the Gaussian center.', 'Change Spread and compare the log-likelihood score.'],
-            observe: 'A narrow peak can fit one point while heavily penalizing the others. Center and spread must balance the whole dataset.',
-            limitations: 'This is manual exploration of one Gaussian model, not an automatic optimizer. Dome heights use a σ-dependent visual scaling and a floor, not a calibrated density axis; the score uses exact Gaussian log densities.',
+            meaning: "Log-likelihood scores a model against fixed observations by adding their log-densities. Moving the Gaussian mean or spread changes the contribution of every point.",
+            steps: ["Move X-Position and Z-Position while comparing the mean, observations, and exact log-likelihood score.", "Change Spread; compare the dome shape with the number of observations beyond 2.5σ and the total score."],
+            observe: "A very narrow dome has a tall peak but can badly penalize distant observations. Every one of the nine observations contributes to the score; red does not mean zero density.",
+            limitations: "The dome is a manually controlled data-space Gaussian illustration, not a likelihood-parameter surface or optimizer. Height is rescaled as 15/σ times the Gaussian shape and clipped below at 0.05; it is not calibrated density. Data-floor units are equal and height scales separately. The score uses exact normalized Gaussian log-density for all nine observations.",
         },
         'probability-vs-likelihood': {
             meaning: 'The same model f(b | x) can predict data for a fixed parameter or score parameters for fixed observed data.',
