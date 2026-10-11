@@ -1,0 +1,292 @@
+[
+  {
+    "path": "visual-intuition-pairs-extra-pilots-webgl-desktop.jpg",
+    "viewport": "desktop",
+    "pairs": [
+      {
+        "label": "distributions",
+        "before": "math-plan-p0-webgl-desktop-probability-distributions.png",
+        "after": "math-plan-build2-webgl-desktop-probability-distributions.png"
+      },
+      {
+        "label": "decision-boundaries",
+        "before": "math-plan-p0-webgl-desktop-ml-decision-boundaries.png",
+        "after": "math-plan-build2-webgl-desktop-ml-decision-boundaries.png"
+      },
+      {
+        "label": "fundamental-subspaces-lite",
+        "before": "math-plan-p0-webgl-desktop-linear-algebra-fundamental-subspaces-lite.png",
+        "after": "math-plan-lite-fit-production-final-webgl-desktop.png"
+      }
+    ]
+  },
+  {
+    "path": "visual-intuition-pairs-extra-pilots-webgl-mobile.jpg",
+    "viewport": "mobile",
+    "pairs": [
+      {
+        "label": "distributions",
+        "before": "math-plan-p0-webgl-mobile-probability-distributions.png",
+        "after": "math-plan-build2-webgl-mobile-probability-distributions.png"
+      },
+      {
+        "label": "decision-boundaries",
+        "before": "math-plan-p0-webgl-mobile-ml-decision-boundaries.png",
+        "after": "math-plan-build2-webgl-mobile-ml-decision-boundaries.png"
+      },
+      {
+        "label": "fundamental-subspaces-lite",
+        "before": "math-plan-p0-webgl-mobile-linear-algebra-fundamental-subspaces-lite.png",
+        "after": "math-plan-lite-fit-production-final-webgl-mobile.png"
+      }
+    ]
+  },
+  {
+    "path": "visual-intuition-pairs-extra-pilots-no-webgl-desktop.jpg",
+    "viewport": "desktop",
+    "pairs": [
+      {
+        "label": "distributions",
+        "before": "math-plan-p0-no-webgl-desktop-probability-distributions.png",
+        "after": "math-plan-build2-no-webgl-desktop-probability-distributions.png"
+      },
+      {
+        "label": "decision-boundaries",
+        "before": "math-plan-p0-no-webgl-desktop-ml-decision-boundaries.png",
+        "after": "math-plan-build2-no-webgl-desktop-ml-decision-boundaries.png"
+      },
+      {
+        "label": "fundamental-subspaces-lite",
+        "before": "math-plan-p0-no-webgl-desktop-linear-algebra-fundamental-subspaces-lite.png",
+        "after": "math-plan-lite-fit-production-final-no-webgl-desktop.png"
+      }
+    ]
+  },
+  {
+    "path": "visual-intuition-pairs-extra-pilots-no-webgl-mobile.jpg",
+    "viewport": "mobile",
+    "pairs": [
+      {
+        "label": "distributions",
+        "before": "math-plan-p0-no-webgl-mobile-probability-distributions.png",
+        "after": "math-plan-build2-no-webgl-mobile-probability-distributions.png"
+      },
+      {
+        "label": "decision-boundaries",
+        "before": "math-plan-p0-no-webgl-mobile-ml-decision-boundaries.png",
+        "after": "math-plan-build2-no-webgl-mobile-ml-decision-boundaries.png"
+      },
+      {
+        "label": "fundamental-subspaces-lite",
+        "before": "math-plan-p0-no-webgl-mobile-linear-algebra-fundamental-subspaces-lite.png",
+        "after": "math-plan-lite-fit-production-final-no-webgl-mobile.png"
+      }
+    ]
+  },
+  {
+    "path": "visual-intuition-pairs-legacy-desktop.jpg",
+    "viewport": "desktop",
+    "pairs": [
+      {
+        "label": "sigma-algebra",
+        "before": "math-plan-legacy-a5-before-desktop-calculus-sigma-algebra.png",
+        "after": "math-plan-legacy-after-desktop-calculus-sigma-algebra.png"
+      },
+      {
+        "label": "lebesgue-measure",
+        "before": "math-plan-legacy-a5-before-desktop-calculus-lebesgue-measure.png",
+        "after": "math-plan-legacy-after-desktop-calculus-lebesgue-measure.png"
+      },
+      {
+        "label": "linear-discriminants",
+        "before": "math-plan-legacy-a5-before-desktop-ml-linear-discriminants.png",
+        "after": "math-plan-legacy-after-desktop-ml-linear-discriminants.png"
+      },
+      {
+        "label": "lp-regularization",
+        "before": "math-plan-legacy-a5-before-desktop-ml-lp-regularization.png",
+        "after": "math-plan-legacy-after-desktop-ml-lp-regularization.png"
+      },
+      {
+        "label": "lagrange-multipliers",
+        "before": "math-plan-legacy-a5-before-desktop-ml-lagrange-multipliers.png",
+        "after": "math-plan-legacy-after-desktop-ml-lagrange-multipliers.png"
+      },
+      {
+        "label": "log-likelihood",
+        "before": "math-plan-legacy-a5-before-desktop-probability-log-likelihood.png",
+        "after": "math-plan-legacy-after-desktop-probability-log-likelihood.png"
+      },
+      {
+        "label": "probability-vs-likelihood",
+        "before": "math-plan-legacy-a5-before-desktop-probability-probability-vs-likelihood.png",
+        "after": "math-plan-legacy-after-desktop-probability-probability-vs-likelihood.png"
+      },
+      {
+        "label": "jacobian-hessian",
+        "before": "math-plan-legacy-a5-before-desktop-calculus-jacobian-hessian.png",
+        "after": "math-plan-legacy-after-desktop-calculus-jacobian-hessian.png"
+      },
+      {
+        "label": "taylor-remainder",
+        "before": "math-plan-legacy-a5-before-desktop-calculus-taylor-remainder.png",
+        "after": "math-plan-legacy-after-desktop-calculus-taylor-remainder.png"
+      }
+    ]
+  },
+  {
+    "path": "visual-intuition-pairs-legacy-mobile.jpg",
+    "viewport": "mobile",
+    "pairs": [
+      {
+        "label": "sigma-algebra",
+        "before": "math-plan-legacy-a5-before-mobile-calculus-sigma-algebra.png",
+        "after": "math-plan-legacy-after-mobile-calculus-sigma-algebra.png"
+      },
+      {
+        "label": "lebesgue-measure",
+        "before": "math-plan-legacy-a5-before-mobile-calculus-lebesgue-measure.png",
+        "after": "math-plan-legacy-after-mobile-calculus-lebesgue-measure.png"
+      },
+      {
+        "label": "linear-discriminants",
+        "before": "math-plan-legacy-a5-before-mobile-ml-linear-discriminants.png",
+        "after": "math-plan-legacy-after-mobile-ml-linear-discriminants.png"
+      },
+      {
+        "label": "lp-regularization",
+        "before": "math-plan-legacy-a5-before-mobile-ml-lp-regularization.png",
+        "after": "math-plan-legacy-after-mobile-ml-lp-regularization.png"
+      },
+      {
+        "label": "lagrange-multipliers",
+        "before": "math-plan-legacy-a5-before-mobile-ml-lagrange-multipliers.png",
+        "after": "math-plan-legacy-after-mobile-ml-lagrange-multipliers.png"
+      },
+      {
+        "label": "log-likelihood",
+        "before": "math-plan-legacy-a5-before-mobile-probability-log-likelihood.png",
+        "after": "math-plan-legacy-after-mobile-probability-log-likelihood.png"
+      },
+      {
+        "label": "probability-vs-likelihood",
+        "before": "math-plan-legacy-a5-before-mobile-probability-probability-vs-likelihood.png",
+        "after": "math-plan-legacy-after-mobile-probability-probability-vs-likelihood.png"
+      },
+      {
+        "label": "jacobian-hessian",
+        "before": "math-plan-legacy-a5-before-mobile-calculus-jacobian-hessian.png",
+        "after": "math-plan-legacy-after-mobile-calculus-jacobian-hessian.png"
+      },
+      {
+        "label": "taylor-remainder",
+        "before": "math-plan-legacy-a5-before-mobile-calculus-taylor-remainder.png",
+        "after": "math-plan-legacy-after-mobile-calculus-taylor-remainder.png"
+      }
+    ]
+  },
+  {
+    "path": "visual-intuition-pairs-topics-desktop.jpg",
+    "viewport": "desktop",
+    "pairs": [
+      {
+        "label": "linear-algebra",
+        "before": "math-plan-topic-before-desktop-linear-algebra.png",
+        "after": "math-plan-topic-after-desktop-linear-algebra.png"
+      },
+      {
+        "label": "calculus",
+        "before": "math-plan-topic-before-desktop-calculus.png",
+        "after": "math-plan-topic-after-desktop-calculus.png"
+      },
+      {
+        "label": "probability",
+        "before": "math-plan-topic-before-desktop-probability.png",
+        "after": "math-plan-topic-after-desktop-probability.png"
+      },
+      {
+        "label": "ml",
+        "before": "math-plan-topic-before-desktop-ml.png",
+        "after": "math-plan-topic-after-desktop-ml.png"
+      }
+    ]
+  },
+  {
+    "path": "visual-intuition-pairs-topics-mobile.jpg",
+    "viewport": "mobile",
+    "pairs": [
+      {
+        "label": "linear-algebra",
+        "before": "math-plan-topic-before-mobile-linear-algebra.png",
+        "after": "math-plan-topic-after-mobile-linear-algebra.png"
+      },
+      {
+        "label": "calculus",
+        "before": "math-plan-topic-before-mobile-calculus.png",
+        "after": "math-plan-topic-after-mobile-calculus.png"
+      },
+      {
+        "label": "probability",
+        "before": "math-plan-topic-before-mobile-probability.png",
+        "after": "math-plan-topic-after-mobile-probability.png"
+      },
+      {
+        "label": "ml",
+        "before": "math-plan-topic-before-mobile-ml.png",
+        "after": "math-plan-topic-after-mobile-ml.png"
+      }
+    ]
+  },
+  {
+    "path": "visual-intuition-pairs-topic-previews-desktop.jpg",
+    "viewport": "desktop",
+    "pairs": [
+      {
+        "label": "linear-algebra",
+        "before": "math-plan-topic-previews-before-desktop-linear-algebra.png",
+        "after": "math-plan-topic-previews-after-desktop-linear-algebra.png"
+      },
+      {
+        "label": "calculus",
+        "before": "math-plan-topic-previews-before-desktop-calculus.png",
+        "after": "math-plan-topic-previews-after-desktop-calculus.png"
+      },
+      {
+        "label": "probability",
+        "before": "math-plan-topic-previews-before-desktop-probability.png",
+        "after": "math-plan-topic-previews-after-desktop-probability.png"
+      },
+      {
+        "label": "ml",
+        "before": "math-plan-topic-previews-before-desktop-ml.png",
+        "after": "math-plan-topic-previews-after-desktop-ml.png"
+      }
+    ]
+  },
+  {
+    "path": "visual-intuition-pairs-topic-previews-mobile.jpg",
+    "viewport": "mobile",
+    "pairs": [
+      {
+        "label": "linear-algebra",
+        "before": "math-plan-topic-previews-before-mobile-linear-algebra.png",
+        "after": "math-plan-topic-previews-after-mobile-linear-algebra.png"
+      },
+      {
+        "label": "calculus",
+        "before": "math-plan-topic-previews-before-mobile-calculus.png",
+        "after": "math-plan-topic-previews-after-mobile-calculus.png"
+      },
+      {
+        "label": "probability",
+        "before": "math-plan-topic-previews-before-mobile-probability.png",
+        "after": "math-plan-topic-previews-after-mobile-probability.png"
+      },
+      {
+        "label": "ml",
+        "before": "math-plan-topic-previews-before-mobile-ml.png",
+        "after": "math-plan-topic-previews-after-mobile-ml.png"
+      }
+    ]
+  }
+]

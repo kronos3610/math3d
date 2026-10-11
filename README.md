@@ -54,7 +54,7 @@ The expanded curriculum adds **38 labs** and upgrades the existing feedforward n
 | State-space models | 5 | Fixed SSM, Mamba, Mamba-2, Mamba-3, attention/state-space hybrids |
 | Shared concepts | 7 | Embeddings, softmax, normalization/residuals, temporal gradients, losses, conditioning, validation |
 
-`src/data/mlCurriculum.ts` and `src/data/mlVisualLessons.ts` define families, **11 learning paths**, prerequisites, related lessons, and the new lesson guides. A scene's Learn panel provides previous/next navigation and links to its concepts and prerequisites. Path context is retained only when the destination belongs to the selected path. Existing mathematical lessons link back to models that use them.
+`src/data/mlCurriculum.ts` and `src/data/mlVisualLessons.ts` define families, **16 learning paths**, prerequisites, related lessons, and the new lesson guides. A scene's Learn panel provides previous/next navigation and links to its concepts and prerequisites. Path context is retained only when the destination belongs to the selected path. Every topic page exposes relevant learning paths and distinct static lesson previews. Existing mathematical lessons link back to models that use them.
 
 Try `/ml/linear-regression`, `/ml/regression-solvers`, `/ml/decision-trees`, `/ml/lstm`, `/ml/attention`, or `/ml/mamba3` after starting the development server. New labs open with a large visualization, visible controls, a short observation, and calculated measurements. Play reveals precomputed steps only when requested. The optional Explain panel contains equations, assumptions, applications, and model-specific limits.
 
@@ -72,7 +72,9 @@ The new ML labs keep controls beside the visualization; older lessons place cont
 
 Focus a 3D canvas to rotate with arrow keys and zoom with +/−. Pause motion stops automatic animation and playback while keeping manual camera changes and Step available. The browser's reduced-motion preference pauses motion by default; explicit choices are saved locally. Formulas, UI fonts, and mathematical fonts are served with the app, without external CDN requests. A failed decorative homepage scene leaves topic navigation available, and failed speculative lesson imports can retry on a subsequent visit.
 
-Full 3D views require WebGL2. Of the 75 lessons, 49 retain native or SVG graphics when WebGL2 is unavailable. The remaining 26 older lessons retain their guide and controls with a rendering notice; use a browser with hardware acceleration to view their geometry.
+A shared semantic palette and plot keys explain the stage without opening the scene panel. The legacy upgrades include learning-rate regimes, secants approaching tangents, signed-area accumulation, two integration estimates, seeded Monte Carlo error traces, correlated Gaussian sampling, editable 3D boundaries, live subspace decomposition, and eigen-direction alignment maps. Bayes, gradient descent, eigenvalues and bias–variance offer skippable predictions with computed answers. All routes remain stable. The [visual-intuition validation report](docs/validation/visual-intuition.md) records the release checks, limitations and before/after screenshots.
+
+Full 3D views require WebGL2. Of the 75 lessons, 67 retain native or SVG graphics when WebGL2 is unavailable. The remaining 8 older lessons retain their guide and controls with a rendering notice; use a browser with hardware acceleration to view their geometry.
 
 Trees open in input space. A threshold wall is clipped to the current node's region, a white outline shows the query's active region, and the linked diagram follows the same computed path. Choose two features on a floor or three real features in a cube; x₃ is a feature, not prediction height. The separate prediction view plots output height, with a declared fixed-x₃ slice for three-feature models. Ensemble views distinguish one selected tree's correction/region from the aggregate prediction.
 
@@ -88,6 +90,7 @@ Install the locked dependencies with `npm ci`, then run:
 
 ```bash
 npm run lint
+npm run check:palette
 npm test
 npm run build
 ```
