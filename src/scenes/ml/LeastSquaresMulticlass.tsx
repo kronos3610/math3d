@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useState, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { SceneContainer } from '../../components/layout/SceneContainer';
@@ -33,7 +34,7 @@ const CLASS_COLORS = [
     {
         line: '#6366f1', fill: '#6366f1',
         region: 'rgba(99,102,241,0.08)',
-        target: '#a5b4fc', targetFill: 'rgba(199,210,254,0.15)',
+        target: VIZ.variation, targetFill: 'rgba(199,210,254,0.15)',
     },
 ];
 
@@ -153,7 +154,7 @@ export default function LeastSquaresMulticlass() {
                 <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'white', marginBottom: '4px' }}>
                     1-of-K Least Squares
                 </h2>
-                <p style={{ fontSize: '11px', color: '#94a3b8' }}>
+                <p style={{ fontSize: '11px', color: VIZ.axis }}>
                     Click the chart or focus it and press arrow keys, then Enter, to add observations. Fitted scores are not probabilities.
                 </p>
             </div>
@@ -171,7 +172,7 @@ export default function LeastSquaresMulticlass() {
 
             {/* Add Points */}
             <div>
-                <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                <div style={{ color: VIZ.axis, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
                     Add Points (Class)
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -183,8 +184,8 @@ export default function LeastSquaresMulticlass() {
                                 flex: 1, padding: '8px 6px', borderRadius: '8px', cursor: 'pointer',
                                 fontSize: '12px', fontWeight: 600, transition: 'all 0.2s',
                                 border: `1px solid ${selectedClass === k ? CLASS_COLORS[k].fill : '#334155'}`,
-                                background: selectedClass === k ? CLASS_COLORS[k].fill : '#1e293b',
-                                color: selectedClass === k ? 'white' : '#94a3b8',
+                                background: selectedClass === k ? CLASS_COLORS[k].fill : VIZ.grid,
+                                color: selectedClass === k ? 'white' : VIZ.axis,
                             }}
                         >
                             {CLASS_LABELS[k]}
@@ -195,7 +196,7 @@ export default function LeastSquaresMulticlass() {
 
             {/* Target View */}
             <div>
-                <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                <div style={{ color: VIZ.axis, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
                     Target View
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -207,8 +208,8 @@ export default function LeastSquaresMulticlass() {
                                 flex: 1, padding: '8px 6px', borderRadius: '8px', cursor: 'pointer',
                                 fontSize: '12px', fontWeight: 600, transition: 'all 0.2s',
                                 border: `1px solid ${showingTargetsFor === k ? CLASS_COLORS[k].fill : '#334155'}`,
-                                background: showingTargetsFor === k ? CLASS_COLORS[k].fill : '#1e293b',
-                                color: showingTargetsFor === k ? 'white' : '#94a3b8',
+                                background: showingTargetsFor === k ? CLASS_COLORS[k].fill : VIZ.grid,
+                                color: showingTargetsFor === k ? 'white' : VIZ.axis,
                             }}
                         >
                             {CLASS_LABELS[k]}
@@ -222,7 +223,7 @@ export default function LeastSquaresMulticlass() {
                 onClick={() => { setPoints(INITIAL_POINTS); setShowingTargetsFor(null); }}
                 style={{
                     padding: '8px 12px', borderRadius: '8px', border: '1px solid #334155',
-                    background: '#1e293b', color: '#94a3b8', cursor: 'pointer',
+                    background: VIZ.grid, color: VIZ.axis, cursor: 'pointer',
                     fontSize: '12px', fontWeight: 600, width: '100%',
                 }}
             >
@@ -252,7 +253,7 @@ export default function LeastSquaresMulticlass() {
                     <div style={{ fontSize: '12px', fontWeight: 700, color: card.color, marginBottom: '4px' }}>
                         {card.title}
                     </div>
-                    <p style={{ fontSize: '11px', color: '#94a3b8', margin: '0 0 6px', lineHeight: 1.5 }}>
+                    <p style={{ fontSize: '11px', color: VIZ.axis, margin: '0 0 6px', lineHeight: 1.5 }}>
                         {card.desc}
                     </p>
                     <div style={{ fontSize: '11px', background: 'rgba(0,0,0,0.25)', borderRadius: '6px', padding: '4px 8px', textAlign: 'center' }}>
@@ -261,14 +262,14 @@ export default function LeastSquaresMulticlass() {
                 </div>
             ))}
 
-            <p style={{ fontSize: '11px', color: '#475569', textAlign: 'center', fontStyle: 'italic' }}>
+            <p style={{ fontSize: '11px', color: VIZ.muted, textAlign: 'center', fontStyle: 'italic' }}>
                 Click chart to add · Toggle target view
             </p>
         </GlassPane>
     );
 
     return (
-        <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
+        <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls} legend={[{ label: 'Class colors', meaning: 'given one-of-K targets', color: VIZ.data }, { label: 'Lines', meaning: 'fitted scores; highest wins', color: VIZ.output, shape: 'line' }]}>
             <svg
                 ref={svgRef}
                 viewBox={`0 0 ${W} ${H}`}
@@ -278,7 +279,7 @@ export default function LeastSquaresMulticlass() {
                     height: '100%',
                     cursor: 'crosshair',
                     display: 'block',
-                    background: '#0b0f19',
+                    background: VIZ.background,
                 }}
                 role="img"
                 aria-label="Least-squares multiclass chart. Left and right arrows move a cursor; Enter or Space adds an observation for the selected class."
@@ -314,7 +315,7 @@ export default function LeastSquaresMulticlass() {
                 <line
                     x1={mapX(X_MIN)} y1={mapY(1)}
                     x2={mapX(X_MAX)} y2={mapY(1)}
-                    stroke="#1e293b" strokeWidth={1} strokeDasharray="4,4"
+                    stroke={VIZ.grid} strokeWidth={1} strokeDasharray="4,4"
                 />
 
                 {/* Axes */}
@@ -322,8 +323,8 @@ export default function LeastSquaresMulticlass() {
                 <line x1={mapX(X_MIN)} y1={mapY(Y_MIN)} x2={mapX(X_MIN)} y2={mapY(Y_MAX)} stroke="#e2e8f0" strokeWidth={2} />
 
                 {/* Y-axis labels */}
-                <text x={mapX(X_MIN) - 10} y={mapY(1)} textAnchor="end" dominantBaseline="middle" fill="#94a3b8" fontSize={13} fontWeight={700}>1.0</text>
-                <text x={mapX(X_MIN) - 10} y={mapY(0)} textAnchor="end" dominantBaseline="middle" fill="#94a3b8" fontSize={13} fontWeight={700}>0.0</text>
+                <text x={mapX(X_MIN) - 10} y={mapY(1)} textAnchor="end" dominantBaseline="middle" fill={VIZ.axis} fontSize={13} fontWeight={700}>1.0</text>
+                <text x={mapX(X_MIN) - 10} y={mapY(0)} textAnchor="end" dominantBaseline="middle" fill={VIZ.axis} fontSize={13} fontWeight={700}>0.0</text>
 
                 {/* Axis labels */}
                 <text x={mapX((X_MIN + X_MAX) / 2)} y={H - 8} textAnchor="middle" fill="#64748b" fontSize={12} fontWeight={600}>
@@ -392,7 +393,7 @@ export default function LeastSquaresMulticlass() {
                         <line
                             x1={mapX(tick)} y1={mapY(0)}
                             x2={mapX(tick)} y2={mapY(0) + 5}
-                            stroke="#475569" strokeWidth={1.5}
+                            stroke={VIZ.muted} strokeWidth={1.5}
                         />
                         <text x={mapX(tick)} y={mapY(0) + 20} textAnchor="middle" fill="#64748b" fontSize={11}>
                             {tick}

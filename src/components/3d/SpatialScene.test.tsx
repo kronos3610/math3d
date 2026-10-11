@@ -26,7 +26,7 @@ test('WebGL failure preserves a labeled SVG visualization of every computed prim
     expect(projection.textContent).toContain('same computed coordinates');
     expect(container.querySelector('canvas')).toBeNull();
     expect(container.querySelectorAll('circle')).toHaveLength(2);
-    expect(container.querySelectorAll('svg > g path, svg > path')).toHaveLength(9);
+    expect(container.querySelectorAll('svg > g path, svg > path')).toHaveLength(12);
     const annotations = [...container.querySelectorAll('svg > text')].map(label => label.textContent);
     expect(annotations).toContain('Origin');
     // Coincident point/vector labels share one readable annotation.
@@ -66,7 +66,8 @@ test('the fallback plots normalized model coordinates and updates when the model
 test('an empty model still exposes a finite projection and meaningful axis descriptions', () => {
     const { container } = render(<SpatialScene description="No observations have been added." axes={['Time', 'State', 'Channel']} />);
     expect(screen.getByRole('img').textContent).toContain('No observations have been added.');
-    expect(container.querySelectorAll('circle, svg > g path, svg > path')).toHaveLength(0);
+    expect(container.querySelectorAll('circle, svg > path')).toHaveLength(0);
+    expect(container.querySelectorAll('[data-axis]')).toHaveLength(3);
     expect(screen.getByLabelText('Coordinate axes').textContent).toContain('Time');
     expect(container.innerHTML).not.toMatch(/NaN|Infinity/);
 });

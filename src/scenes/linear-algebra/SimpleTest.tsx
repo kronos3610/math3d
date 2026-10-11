@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useMemo, useState } from 'react';
 import { SpatialScene, type SpatialPath } from '../../components/3d/SpatialScene';
 import { LabSelect, VisualLab } from '../../components/layout/VisualLab';
@@ -5,13 +6,14 @@ import { ExplanationSection, SceneExplanation } from '../../components/layout/Sc
 import type { Vector3Tuple } from './legacyLinearMath';
 
 const CORNERS: Vector3Tuple[] = Array.from({ length: 8 }, (_, i) => [i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1]);
-const EDGES: SpatialPath[] = CORNERS.flatMap((_, i) => [1, 2, 4].flatMap(bit => i < (i ^ bit) ? [{ points: [CORNERS[i], CORNERS[i ^ bit]], color: '#f472b6' }] : []));
+const EDGES: SpatialPath[] = CORNERS.flatMap((_, i) => [1, 2, 4].flatMap(bit => i < (i ^ bit) ? [{ points: [CORNERS[i], CORNERS[i ^ bit]], color: VIZ.data }] : []));
 
 export default function SimpleTest() {
     const [corner, setCorner] = useState(7);
     const point = CORNERS[corner];
-    const scene = useMemo(() => ({ paths: EDGES, points: [{ position: CORNERS[corner], color: '#facc15', label: `Selected (${CORNERS[corner].join(', ')})` }], vectors: [{ from: [0, 0, 0] as Vector3Tuple, to: CORNERS[corner], color: '#facc15', label: 'Position vector' }] }), [corner]);
+    const scene = useMemo(() => ({ paths: EDGES, points: [{ position: CORNERS[corner], color: VIZ.focus, label: `Selected (${CORNERS[corner].join(', ')})` }], vectors: [{ from: [0, 0, 0] as Vector3Tuple, to: CORNERS[corner], color: VIZ.focus, label: 'Position vector' }] }), [corner]);
     return <VisualLab backUrl="/linear-algebra" title="Explore 3D coordinates" subtitle="Read coordinates independently of the camera angle."
+        legend={[{label:'Cube',meaning:'given coordinate frame',color:VIZ.data,shape:'line'},{label:'Gold',meaning:'selected point and position vector',color:VIZ.focus}]}
         controls={<LabSelect label="Select cube corner" value={String(corner)} options={CORNERS.map((value, i) => ({ value: String(i), label: `(${value.join(', ')})` }))} onChange={value => setCorner(Number(value))} />}
         metrics={[{ label: 'X coordinate', value: String(point[0]) }, { label: 'Y coordinate', value: String(point[1]) }, { label: 'Z coordinate', value: String(point[2]) }]}
         insight="Each corner is one unit from the origin along each axis. Orbiting the camera changes the view, not the cube’s coordinates."

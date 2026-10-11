@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useMemo, useState } from 'react';
 import { VisualLab, LabPlayback, LabRange, LabSelect } from '../../components/layout/VisualLab';
 import { SpatialScene } from '../../components/3d/SpatialScene';
@@ -70,18 +71,18 @@ export default function RegressionLab({ mode = 'fit' }: RegressionLabProps) {
             const vertices: LabVector[] = [];
             for (let row = 0; row < 5; row++) for (let column = 0; column < 5; column++) vertices.push(u.map((value, axis) => value * (-extent + column * extent / 2) + v[axis] * (-extent + row * extent / 2)) as LabVector);
             const vectors: SpatialVector[] = [
-                { from: [0, 0, 0], to: projection.interceptColumn, color: '#fbbf24', label: '1 column' },
-                { from: [0, 0, 0], to: projection.featureColumn, color: '#c084fc', label: 'x column' },
-                { from: [0, 0, 0], to: projection.response, color: '#60a5fa', label: 'y' },
-                { from: [0, 0, 0], to: projection.fitted, color: '#2dd4bf', label: 'ŷ' },
-                { from: projection.fitted, to: projection.response, color: '#fb7185', label: 'Residual' },
+                { from: [0, 0, 0], to: projection.interceptColumn, color: VIZ.focus, label: '1 column' },
+                { from: [0, 0, 0], to: projection.featureColumn, color: VIZ.output, label: 'x column' },
+                { from: [0, 0, 0], to: projection.response, color: VIZ.data, label: 'y' },
+                { from: [0, 0, 0], to: projection.fitted, color: VIZ.truth, label: 'ŷ' },
+                { from: projection.fitted, to: projection.response, color: VIZ.error, label: 'Residual' },
             ];
-            const points: SpatialPoint[] = [{ position: projection.response, color: '#60a5fa', radius: 0.09 }, { position: projection.fitted, color: '#2dd4bf', radius: 0.09 }];
-            return { points, paths: [], vectors, surfaces: [{ vertices, columns: 5, color: '#2dd4bf', opacity: 0.18 }] };
+            const points: SpatialPoint[] = [{ position: projection.response, color: VIZ.data, radius: 0.09 }, { position: projection.fitted, color: VIZ.truth, radius: 0.09 }];
+            return { points, paths: [], vectors, surfaces: [{ vertices, columns: 5, color: VIZ.truth, opacity: 0.18 }] };
         }
         const points: SpatialPoint[] = samples.map((sample, index) => ({
             position: display === 'residuals' ? [preset === 'correlated-errors' ? index / 10 : sample.x1, sample.y - regressionPrediction(coefficients, sample.x1, sample.x2, basis), sample.x2] : [sample.x1, sample.y, sample.x2],
-            color: index === selectedIndex ? '#fbbf24' : showHidden && preset === 'confounded' ? (sample.hidden ?? 0) > 0 ? '#fb7185' : '#60a5fa' : '#60a5fa',
+            color: index === selectedIndex ? VIZ.focus : showHidden && preset === 'confounded' ? (sample.hidden ?? 0) > 0 ? VIZ.error : VIZ.data : VIZ.data,
             radius: index === selectedIndex ? 0.13 : 0.07, label: index === selectedIndex ? `Observation ${index + 1}` : undefined,
         }));
         const paths: SpatialPath[] = [];
@@ -93,23 +94,23 @@ export default function RegressionLab({ mode = 'fit' }: RegressionLabProps) {
                 const slope1 = -2 + column * 4 / 18; const slope2 = -2 + row * 4 / 18;
                 grid.push([slope1, regressionLoss(samples, [mean(slope1, slope2), slope1, slope2], 'linear', ridge), slope2]);
             }
-            surfaces.push({ vertices: grid, columns: 19, color: '#2dd4bf', opacity: 0.24 });
+            surfaces.push({ vertices: grid, columns: 19, color: VIZ.truth, opacity: 0.24 });
             const trace = fit.trace.slice(0, currentStep + 1).map(frame => [frame.coefficients[1], frame.loss, frame.coefficients[2]] as LabVector);
-            paths.push({ points: trace, color: '#fbbf24', width: 3 });
-            const solverPoints: SpatialPoint[] = [{ position: trace[trace.length - 1], color: '#fbbf24', radius: 0.12, label: 'Current coefficients' },
-                { position: [reference.coefficients[1], regressionLoss(samples, reference.coefficients, 'linear', ridge), reference.coefficients[2]], color: '#f8fafc', radius: 0.1, label: 'Direct optimum' }];
+            paths.push({ points: trace, color: VIZ.focus, width: 3 });
+            const solverPoints: SpatialPoint[] = [{ position: trace[trace.length - 1], color: VIZ.focus, radius: 0.12, label: 'Current coefficients' },
+                { position: [reference.coefficients[1], regressionLoss(samples, reference.coefficients, 'linear', ridge), reference.coefficients[2]], color: VIZ.white, radius: 0.1, label: 'Direct optimum' }];
             return { points: solverPoints, paths, surfaces };
         }
         for (let row = 0; row < 17; row++) for (let column = 0; column < 17; column++) {
             const x1 = -1.5 + column * 3 / 16; const x2 = -1.5 + row * 3 / 16;
             grid.push([x1, display === 'residuals' ? 0 : regressionPrediction(coefficients, x1, x2, basis), x2]);
         }
-        if (display === 'fit' || preset !== 'correlated-errors') surfaces.push({ vertices: grid, columns: 17, color: '#2dd4bf', opacity: 0.35 });
+        if (display === 'fit' || preset !== 'correlated-errors') surfaces.push({ vertices: grid, columns: 17, color: VIZ.truth, opacity: 0.35 });
         if (display === 'fit') samples.forEach((sample, index) => {
             if (index >= 10 && index !== selectedIndex) return;
-            paths.push({ points: [[sample.x1, regressionPrediction(coefficients, sample.x1, sample.x2, basis), sample.x2], [sample.x1, sample.y, sample.x2]], color: index === selectedIndex ? '#fbbf24' : '#94a3b8', width: 1.5 });
+            paths.push({ points: [[sample.x1, regressionPrediction(coefficients, sample.x1, sample.x2, basis), sample.x2], [sample.x1, sample.y, sample.x2]], color: index === selectedIndex ? VIZ.focus : VIZ.axis, width: 1.5 });
         });
-        else if (preset === 'correlated-errors') paths.push({ points: points.map(point => point.position), color: '#94a3b8', width: 1 });
+        else if (preset === 'correlated-errors') paths.push({ points: points.map(point => point.position), color: VIZ.axis, width: 1 });
         return { points, paths, surfaces };
     }, [samples, coefficients, basis, selectedIndex, display, preset, showHidden, mode, fit.trace, currentStep, reference.coefficients, ridge, isProjection, projection]);
     const changePreset = (value: string) => { setPreset(value as RegressionPreset); setEdits({}); setStep(0); };
@@ -167,6 +168,7 @@ export default function RegressionLab({ mode = 'fit' }: RegressionLabProps) {
             { label: 'Design rank', value: `${fit.rank}/${dimensions}` }, { label: 'Condition number', value: fmt(fit.conditionNumber) },
             { label: mode === 'assumptions' ? 'Residual lag correlation' : 'Objective', value: fmt(mode === 'assumptions' ? residualLagCorrelation(samples, coefficients, basis) : regressionLoss(samples, coefficients, basis, ridge)) }];
     return <VisualLab title={TITLES[mode]} subtitle={isProjection ? 'Three responses form a vector; least squares projects it onto the design-column plane.' : mode === 'solvers' ? 'Compare computed routes to the same weighted least-squares objective.' : 'Manipulate observations and inspect a computed numeric prediction surface.'}
+        legend={isProjection ? [{ label: 'y', meaning: 'given responses', color: VIZ.data, shape: 'line' }, { label: 'ŷ', meaning: 'fitted projection', color: VIZ.truth, shape: 'line' }, { label: 'Residual', meaning: 'y − ŷ', color: VIZ.error, shape: 'line' }, { label: '1 / x', meaning: 'design columns', color: VIZ.focus, shape: 'line' }] : [{ label: 'Dots', meaning: 'observations', color: VIZ.data }, { label: 'Teal', meaning: mode === 'solvers' ? 'objective surface' : 'fitted response', color: VIZ.truth, shape: 'square' }, { label: 'Gold', meaning: mode === 'solvers' ? 'current coefficients' : 'selected observation', color: VIZ.focus }, { label: 'Gaps', meaning: 'response residuals', color: VIZ.axis, shape: 'line' }]}
         controls={controls} metrics={metrics}
         insight={isProjection ? <>Separate three-observation dataset: x=(−1, 0, 1), y=({projectionResponses.map(fmt).join(', ')}). ŷ={fmt(projection.coefficients[0])}1 + {fmt(projection.coefficients[1])}x. Gold is 1; purple is x; blue is y; teal is ŷ; pink is the orthogonal residual.</>
             : <>{equation}. {mode === 'fit' && coefficientSource === 'manual' && 'Manually chosen coefficients; errors describe this plane. '}{mode === 'solvers' ? `${fit.method}: shown step ${currentStep}; final gradient norm ${fmt(fit.gradientNorm)}${fit.converged ? ' (converged).' : ' (iteration budget or step size leaves optimization error).'}` : NOTES[preset]}</>}

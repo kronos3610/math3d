@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useMemo, useState } from 'react';
 import { SpatialScene, type SpatialPoint, type SpatialPath } from '../../components/3d/SpatialScene';
 import { LabPlayback, LabRange, LabSelect, VisualLab } from '../../components/layout/VisualLab';
@@ -30,10 +31,10 @@ function LossGeometry() {
             const x = -width + index * 2 * width / 80;
             return [x, target, measureLoss(kind, x, target, delta).loss];
         });
-        const paths: SpatialPath[] = [{ points: slice, color: '#2dd4bf', width: 3 }];
-        if (measurement.slope !== null) paths.push({ points: [[prediction - 0.35, target, measurement.loss - 0.35 * measurement.slope], [prediction + 0.35, target, measurement.loss + 0.35 * measurement.slope]], color: '#fbbf24', width: 3 });
-        return { surfaces: [{ vertices, columns: 31, color: '#60a5fa', opacity: 0.42 }], paths,
-            points: [{ position: [prediction, target, measurement.loss] as Position, color: '#fbbf24', radius: 0.13, label: `Loss = ${measurement.loss.toFixed(3)}` }] };
+        const paths: SpatialPath[] = [{ points: slice, color: VIZ.truth, width: 3 }];
+        if (measurement.slope !== null) paths.push({ points: [[prediction - 0.35, target, measurement.loss - 0.35 * measurement.slope], [prediction + 0.35, target, measurement.loss + 0.35 * measurement.slope]], color: VIZ.focus, width: 3 });
+        return { surfaces: [{ vertices, columns: 31, color: VIZ.data, opacity: 0.42 }], paths,
+            points: [{ position: [prediction, target, measurement.loss] as Position, color: VIZ.focus, radius: 0.13, label: `Loss = ${measurement.loss.toFixed(3)}` }] };
     }, [kind, prediction, target, delta, measurement]);
     const controls = <>
         <LabSelect label="Loss function" value={kind} options={Object.entries(LOSS_NAMES).map(([value, label]) => ({ value, label }))} onChange={value => {
@@ -97,7 +98,7 @@ function ConditioningLab() {
             const first = -radius + column * 2 * radius / 30; const second = -radius + row * 2 * radius / 30;
             vertices.push([first, second, featureLoss(problem, [first, second])]);
         }
-        return { vertices, columns: 31, color: '#60a5fa', opacity: 0.42 };
+        return { vertices, columns: 31, color: VIZ.data, opacity: 0.42 };
     }, [problem]);
     const controls = <>
         <LabRange label="Feature 2 scale" value={scale} min={0.2} max={8} step={0.2} decimals={1} onChange={value => { setScale(value); setStep(0); }} />
@@ -122,7 +123,7 @@ function ConditioningLab() {
             <p>The sampled surface shows a bounded neighborhood around the optimum. Diverging iterates can leave that neighborhood. The plotted path is not clipped or fabricated; changing the rate recomputes it.</p>
         </ExplanationSection>
     </SceneExplanation>;
-    const featurePoints: SpatialPoint[] = problem.points.map(point => ({ position: [...point.features, point.target] as Position, color: '#2dd4bf', radius: 0.07 }));
+    const featurePoints: SpatialPoint[] = problem.points.map(point => ({ position: [...point.features, point.target] as Position, color: VIZ.truth, radius: 0.07 }));
     const path: Position[] = descent.steps.slice(0, currentStep + 1).map(row => [...row.weights, row.loss] as Position);
     return <VisualLab title="Scaling and conditioning" subtitle="Change feature units and correlation, then watch real gradient-descent updates." controls={controls}
         metrics={[
@@ -135,9 +136,9 @@ function ConditioningLab() {
         explanation={explanation}>
         {view === 'features' ? <SpatialScene points={featurePoints} axes={['feature 1', 'feature 2', 'target']}
             description="Actual two-feature regression data. Scaling changes feature units; correlation narrows the feature cloud. Equal scaling preserves the feature geometry." />
-            : <SpatialScene surfaces={[surface]} paths={[{ points: path, color: '#2dd4bf', width: 3 }]} points={[
-                { position: [...problem.optimum, featureLoss(problem, problem.optimum)] as Position, color: '#fb7185', label: 'Exact optimum' },
-                { position: [...current.weights, current.loss] as Position, color: '#fbbf24', radius: 0.12, label: `Update ${currentStep}` },
+            : <SpatialScene surfaces={[surface]} paths={[{ points: path, color: VIZ.truth, width: 3 }]} points={[
+                { position: [...problem.optimum, featureLoss(problem, problem.optimum)] as Position, color: VIZ.error, label: 'Exact optimum' },
+                { position: [...current.weights, current.loss] as Position, color: VIZ.focus, radius: 0.12, label: `Update ${currentStep}` },
             ]} equalScale={false} axes={['weight 1', 'weight 2', 'half mean squared error']}
                 description="Actual two-weight quadratic loss landscape with the computed gradient-descent path and exact least-squares optimum. Axes are independently scaled." />}
     </VisualLab>;
@@ -157,16 +158,16 @@ function ValidationLab() {
     const scene = useMemo(() => {
         const predict = (input: number) => polynomialPrediction(input, coefficients);
         const points: SpatialPoint[] = [
-            ...data.training.map(point => ({ position: [point.input, predict(point.input), point.target] as Position, color: '#60a5fa', radius: 0.09 })),
-            ...data.validation.map(point => ({ position: [point.input, predict(point.input), point.target] as Position, color: '#fb7185', radius: 0.05 })),
+            ...data.training.map(point => ({ position: [point.input, predict(point.input), point.target] as Position, color: VIZ.data, radius: 0.09 })),
+            ...data.validation.map(point => ({ position: [point.input, predict(point.input), point.target] as Position, color: VIZ.error, radius: 0.05 })),
         ];
-        const paths: SpatialPath[] = data.training.map(point => ({ points: [[point.input, predict(point.input), predict(point.input)], [point.input, predict(point.input), point.target]], color: '#60a5fa', width: 1 }));
+        const paths: SpatialPath[] = data.training.map(point => ({ points: [[point.input, predict(point.input), predict(point.input)], [point.input, predict(point.input), point.target]], color: VIZ.data, width: 1 }));
         const truth: Position[] = []; const fitted: Position[] = [];
         for (let index = 0; index <= 80; index++) {
             const input = -1 + index / 40; const target = regressionTruth(input, nonlinear);
             truth.push([input, target, target]); fitted.push([input, predict(input), target]);
         }
-        paths.push({ points: truth, color: '#94a3b8', dashed: true }, { points: fitted, color: '#2dd4bf', width: 3 });
+        paths.push({ points: truth, color: VIZ.axis, dashed: true }, { points: fitted, color: VIZ.truth, width: 3 });
         const extent = Math.max(1.5, ...points.flatMap(point => [Math.abs(point.position[1]), Math.abs(point.position[2])]));
         return { points, paths, surfaces: [{ vertices: [[-1, -extent, -extent], [1, -extent, -extent], [-1, extent, extent], [1, extent, extent]] as Position[], columns: 2, color: '#64748b', opacity: 0.18 }] };
     }, [data, coefficients, nonlinear]);

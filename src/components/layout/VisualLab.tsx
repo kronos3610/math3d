@@ -1,6 +1,7 @@
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { SceneContainer } from './SceneContainer';
 import { useSceneMotion } from '../../hooks/useSceneMotion';
+import { SceneKey, type KeyEntry } from '../3d/SceneKey';
 
 export interface LabMetric { label: string; value: string | number; }
 interface VisualLabProps {
@@ -13,10 +14,12 @@ interface VisualLabProps {
     children: ReactNode;
     challenge?: string;
     backUrl?: string;
+    legend?: readonly KeyEntry[];
+    prediction?: ReactNode;
 }
 
 /** A visual experiment keeps its controls close and its longer lesson optional. */
-export function VisualLab({ title, subtitle, controls, metrics = [], insight, explanation, children, challenge, backUrl = '/ml' }: VisualLabProps) {
+export function VisualLab({ title, subtitle, controls, metrics = [], insight, explanation, children, challenge, backUrl = '/ml', legend, prediction }: VisualLabProps) {
     const id = useId();
     return <SceneContainer backUrl={backUrl} defaultPanel="closed" explanation={explanation}>
         <section className="visual-lab" aria-labelledby={`${id}-title`}>
@@ -25,12 +28,14 @@ export function VisualLab({ title, subtitle, controls, metrics = [], insight, ex
                 {metrics.length > 0 && <dl className="visual-lab-metrics" aria-label={`${title} measurements`}>
                     {metrics.map(metric => <div key={metric.label}><dt>{metric.label}</dt><dd>{metric.value}</dd></div>)}
                 </dl>}
+                {legend && <SceneKey entries={legend} aria-label="Plot key" inline />}
             </header>
             <div className="visual-lab-stage">{children}</div>
             <div className="visual-lab-console">
                 <div className="visual-lab-controls">{controls}</div>
                 <p className="visual-lab-insight" aria-live="polite">{insight}</p>
                 {challenge && <p className="visual-lab-challenge"><strong>Try:</strong> {challenge}</p>}
+                {prediction}
                 <p className="visual-lab-panel-hint">In 3D, drag to rotate and scroll or pinch to zoom; focus the view to use arrow keys and +/−. Open the scene panel for Guide, Explain, and connected lessons.</p>
             </div>
         </section>

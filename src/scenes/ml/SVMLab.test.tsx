@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -74,8 +75,8 @@ test('the kernel linear option labels its score surface and zero threshold corre
     fireEvent.change(screen.getByRole('combobox', { name: 'Kernel' }), { target: { value: 'linear' } });
     const surfaces = JSON.parse(screen.getByTestId('surfaces').textContent!) as SpatialSurface[];
     expect(surfaces).toHaveLength(2);
-    expect(surfaces[0].color).toBe('#2dd4bf');
-    expect(surfaces[1].color).toBe('#fbbf24');
+    expect(surfaces[0].color).toBe(VIZ.truth);
+    expect(surfaces[1].color).toBe(VIZ.focus);
     expect(surfaces[1].vertices.every(vertex => vertex[1] === 0)).toBe(true);
     expect(screen.getByText(/Teal shows f\(x\); the gold zero plane is the decision threshold/)).toBeDefined();
     expect(screen.queryByText(/Green marks score zero; gold marks score ±1/)).toBeNull();

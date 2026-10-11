@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import LessonGuide from '../LessonGuide';
 import GraphicsQualityControl from '../GraphicsQualityControl';
 import SceneMotionControl from '../SceneMotionControl';
+import { SceneKey, type KeyEntry } from '../3d/SceneKey';
 import { getLessonGuide } from '../../data/lessonGuides';
 import { getSubtopicById } from '../../data/topics';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -17,6 +18,7 @@ interface SceneContainerProps {
     defaultPanel?: 'controls' | 'explanation' | 'closed';
     onBack?: () => void; // Optional override, defaults to Link
     backUrl?: string;    // Defaults to '/topicId'
+    legend?: readonly KeyEntry[];
 }
 
 export function SceneContainer({
@@ -24,7 +26,8 @@ export function SceneContainer({
     controls,
     explanation,
     defaultPanel = 'closed',
-    backUrl
+    backUrl,
+    legend,
 }: SceneContainerProps) {
     const panelId = useId();
     const toggleRef = useRef<HTMLButtonElement>(null);
@@ -108,7 +111,7 @@ export function SceneContainer({
                     <h1>{lesson.title}</h1><p>{guide.meaning}</p>
                     <small>Open Guide & controls to change the experiment and see how to use this view.</small>
                 </header>}
-                <div className="scene-content">{children}</div>
+                <div className="scene-content">{children}{legend && <SceneKey entries={legend} aria-label="Plot key" />}</div>
             </div>
 
             {/* 3. Scene Drawer (Top Right / Right Slide-in) */}

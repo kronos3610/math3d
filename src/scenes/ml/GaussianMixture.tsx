@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
@@ -229,8 +230,8 @@ function Scene3D({ gmmRef }: Scene3DProps) {
 
     return (
         <>
-            <color attach="background" args={['#0f172a']} />
-            <fogExp2 attach="fog" args={['#0f172a', 0.015]} />
+            <color attach="background" args={[VIZ.surface]} />
+            <fogExp2 attach="fog" args={[VIZ.surface, 0.015]} />
             <ambientLight intensity={0.4} />
             <directionalLight position={[10, 20, 10]} intensity={0.8} />
 
@@ -323,21 +324,21 @@ export default function GaussianMixture() {
 
     // ----- UI -----
     const stageMeta = {
-        estep: { color: '#60a5fa', label: 'E-Step Ready', desc: 'Compute responsibilities — color each point by P(cluster | point).' },
-        mstep: { color: '#a78bfa', label: 'M-Step Ready', desc: 'Update each Gaussian — refit mean and variance to weighted points.' },
+        estep: { color: VIZ.data, label: 'E-Step Ready', desc: 'Compute responsibilities — color each point by P(cluster | point).' },
+        mstep: { color: VIZ.output, label: 'M-Step Ready', desc: 'Update each Gaussian — refit mean and variance to weighted points.' },
     }[stage];
 
     const controls = (
         <GlassPane style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {/* Title */}
             <div>
-                <div style={{ fontSize: '10px', letterSpacing: '3px', color: '#a78bfa', marginBottom: '4px', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '10px', letterSpacing: '3px', color: VIZ.output, marginBottom: '4px', textTransform: 'uppercase' }}>
                     Bishop § 9.2
                 </div>
                 <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'white', marginBottom: '3px' }}>
                     Gaussian Mixture Models
                 </h2>
-                <p style={{ fontSize: '11px', color: '#94a3b8' }}>
+                <p style={{ fontSize: '11px', color: VIZ.axis }}>
                     Expectation–Maximization on 3D data
                 </p>
             </div>
@@ -375,13 +376,13 @@ export default function GaussianMixture() {
                 border: '1px solid #1e293b',
                 borderRadius: '10px', padding: '12px',
             }}>
-                <div style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                <div style={{ color: VIZ.axis, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
                     Log-Likelihood
                 </div>
                 <div style={{ color: 'white', fontFamily: 'monospace', fontWeight: 700, fontSize: '20px' }}>
                     {logL !== null ? logL.toFixed(1) : '—'}
                 </div>
-                <div style={{ color: '#475569', fontSize: '10px', marginTop: '3px' }}>
+                <div style={{ color: VIZ.muted, fontSize: '10px', marginTop: '3px' }}>
                     Higher = better fit
                 </div>
             </div>
@@ -415,7 +416,7 @@ export default function GaussianMixture() {
                 onClick={reset}
                 style={{
                     padding: '8px 12px', borderRadius: '8px',
-                    border: '1px solid #334155', background: '#1e293b',
+                    border: '1px solid #334155', background: VIZ.grid,
                     color: '#cbd5e1', cursor: 'pointer',
                     fontSize: '12px', fontWeight: 600, transition: 'all 0.2s',
                 }}
@@ -450,7 +451,7 @@ export default function GaussianMixture() {
                 background: 'rgba(99,102,241,0.1)',
                 border: '1px solid rgba(99,102,241,0.2)',
                 borderRadius: '10px', padding: '12px',
-                fontSize: '11px', color: '#a5b4fc', lineHeight: 1.7,
+                fontSize: '11px', color: VIZ.variation, lineHeight: 1.7,
             }}>
                 <b style={{ color: '#818cf8', display: 'block', marginBottom: '6px' }}>What you're seeing:</b>
                 <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -461,14 +462,14 @@ export default function GaussianMixture() {
                 </ul>
             </div>
 
-            <p style={{ fontSize: '11px', color: '#475569', textAlign: 'center', fontStyle: 'italic' }}>
+            <p style={{ fontSize: '11px', color: VIZ.muted, textAlign: 'center', fontStyle: 'italic' }}>
                 Drag to orbit · scroll to zoom
             </p>
         </GlassPane>
     );
 
     return (
-        <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
+        <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls} legend={[{ label: 'Dots', meaning: 'observations colored by responsibilities', color: VIZ.data }, { label: 'Ellipsoids', meaning: 'current Gaussian components', color: VIZ.output, shape: 'square' }]}>
             <SceneCanvas frameloop="always" dpr={[1, 1.5]} camera={{ position: [25, 20, 35], fov: 60 }} aria-label="Gaussian mixture with axis-aligned covariance ellipsoids and points colored by cluster responsibility">
                 <Scene3D gmmRef={gmmRef} />
             </SceneCanvas>
@@ -483,7 +484,7 @@ function btnStyle(active: string | null): React.CSSProperties {
         borderRadius: '8px',
         border: 'none',
         background: active ?? 'rgba(255,255,255,0.05)',
-        color: active ? 'white' : '#475569',
+        color: active ? 'white' : VIZ.muted,
         cursor: active ? 'pointer' : 'not-allowed',
         fontSize: '12px',
         fontWeight: 700,

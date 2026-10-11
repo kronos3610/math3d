@@ -11,6 +11,8 @@ export interface SpatialSceneProps {
     /** Preserve geometry within a coordinate pair while scaling the third, unrelated axis. */
     equalAxes?: readonly [0 | 1 | 2, 0 | 1 | 2];
     cameraPosition?: LabVector;
+    /** Fit a sampled direction cloud itself, rather than its conservative bounding cube. */
+    fitPoints?: boolean;
 }
 /** Shared normalization is isotropic by default so angles and margins remain meaningful. */
 export function spatialTransform(props: SpatialSceneProps) {

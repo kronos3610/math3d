@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useEffect, useId, useMemo, useState } from 'react';
 import type { TreeNode } from '../../utils/ml-trees';
 import { treeDiagramLayout, treeNodeRule } from '../../utils/ml-tree-space';
@@ -34,8 +35,8 @@ export function TreeDiagram({ tree, path, selectedId, compact = false, onSelect 
             if (!child) return [];
             const [x, y] = position(node.id); const [cx, cy] = position(child.id);
             return [<g key={`${node.id}-${child.id}`}><path d={`M${x},${y} L${cx},${cy}`} fill="none"
-                stroke={visited.has(child.id) ? '#fbbf24' : wholePath.has(child.id) ? '#a16207' : '#475569'} strokeWidth={visited.has(child.id) ? 5 : 2} />
-                {!compact && wholePath.has(child.id) && <text x={(x + cx) / 2 + (side === 0 ? -12 : 12)} y={(y + cy) / 2} textAnchor="middle" fill="#fbbf24" fontSize={14}>{side === 0 ? '≤' : '>'}</text>}</g>];
+                stroke={visited.has(child.id) ? VIZ.focus : wholePath.has(child.id) ? VIZ.focusDim : VIZ.muted} strokeWidth={visited.has(child.id) ? 5 : 2} />
+                {!compact && wholePath.has(child.id) && <text x={(x + cx) / 2 + (side === 0 ? -12 : 12)} y={(y + cy) / 2} textAnchor="middle" fill={VIZ.focus} fontSize={14}>{side === 0 ? '≤' : '>'}</text>}</g>];
         }))}
         {layout.cells.map(({ node }) => {
             const [x, y] = position(node.id); const selected = node.id === selectedId;
@@ -47,10 +48,10 @@ export function TreeDiagram({ tree, path, selectedId, compact = false, onSelect 
                 onKeyDown={onSelect ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(node); } } : undefined}
                 className={onSelect ? 'tree-diagram-node' : undefined}>
                 <title>{label}; {node.indices.length} training rows; depth {node.depth}</title>
-                <circle cx={x} cy={y} r={compact ? selected ? 14 : 9 : selected ? 13 : 9} fill={visited.has(node.id) ? '#fbbf24' : leaf ? '#2dd4bf' : '#60a5fa'}
-                    stroke={selected ? '#ffffff' : '#0f172a'} strokeWidth={selected ? 4 : 2} />
-                {!compact && wholePath.has(node.id) && <><rect x={labelX - 66} y={y - 37} width={132} height={23} rx={5} fill="#0b0f19" opacity={0.93} />
-                    <text x={labelX} y={y - 20} textAnchor="middle" fill={selected ? '#ffffff' : '#fbbf24'} fontSize={15}>{label}</text></>}
+                <circle cx={x} cy={y} r={compact ? selected ? 14 : 9 : selected ? 13 : 9} fill={visited.has(node.id) ? VIZ.focus : leaf ? VIZ.truth : VIZ.data}
+                    stroke={selected ? VIZ.white : VIZ.surface} strokeWidth={selected ? 4 : 2} />
+                {!compact && wholePath.has(node.id) && <><rect x={labelX - 66} y={y - 37} width={132} height={23} rx={5} fill={VIZ.background} opacity={0.93} />
+                    <text x={labelX} y={y - 20} textAnchor="middle" fill={selected ? VIZ.white : VIZ.focus} fontSize={15}>{label}</text></>}
             </g>;
         })}
     </svg>;

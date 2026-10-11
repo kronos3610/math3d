@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useMemo, useState } from 'react';
 import { VisualLab, LabPlayback, LabRange, LabSelect } from '../../components/layout/VisualLab';
 import { SpatialScene, type SpatialPoint, type SpatialPath, type SpatialVector, type SpatialBox, type LabVector } from '../../components/3d/SpatialScene';
@@ -12,7 +13,7 @@ const TITLES: Record<AttentionLabMode, string> = {
     experts: 'Mixture of experts', vision: 'Vision transformers: patches to tokens', flash: 'Tiled exact attention', memory: 'Transformer segment memory',
     hybrid: 'Hybrid attention & state-space models', embeddings: 'Embeddings & representation space', softmax: 'Softmax & weighted mixtures', normalization: 'Normalization & residual paths',
 };
-const PALETTE = ['#fbbf24','#60a5fa','#2dd4bf','#fb7185','#a78bfa','#fb923c'];
+const PALETTE = [VIZ.focus,VIZ.data,VIZ.truth,VIZ.error,VIZ.output,'#fb923c'];
 const vec3 = (values: readonly number[]): LabVector => [values[0] ?? 0, values[1] ?? 0, values[2] ?? 0];
 const f = (value: number) => value.toFixed(3);
 
@@ -88,16 +89,16 @@ export default function AttentionLab({ mode = 'attention' }: { mode?: AttentionL
             axes = ['token index','selected mixture weight','expert index']; description = 'Tokens route to three numerical feed-forward experts. Height and line width use the renormalized top-k mixture weight, not the original router probability; red paths exceed capacity.';
             inputs.forEach((_, time) => {
                 points.push({ position: [time,0,-1], color: PALETTE[time % 6], label: tokens[time].label });
-                experts.routes[time].forEach(route => paths.push({ points: [[time,0,-1],[time,route.weight,route.expert]], color: route.accepted ? PALETTE[route.expert] : '#fb7185', width: 1 + 7 * route.weight, dashed: !route.accepted }));
+                experts.routes[time].forEach(route => paths.push({ points: [[time,0,-1],[time,route.weight,route.expert]], color: route.accepted ? PALETTE[route.expert] : VIZ.error, width: 1 + 7 * route.weight, dashed: !route.accepted }));
             });
             for (let expert = 0; expert < 3; expert++) boxes.push({ position: [2.5,1.2,expert], size: [5.8,0.15,0.2], color: PALETTE[expert], label: `Expert ${expert + 1}: load ${experts.loads[expert]}/${experts.capacity}` });
         } else if (mode === 'vision') {
             axes = ['image column','pixel intensity','image row']; description = 'An eight-by-eight image becomes patch tokens. Patch vectors contain mean intensity and two directional contrasts; links show computed attention.';
-            patches.pixels.forEach((row, r) => row.forEach((value, c) => boxes.push({ position: [c,value / 2,r], size: [0.85,Math.max(0.05,value),0.85], color: value > 0.5 ? '#60a5fa' : '#172c4a', opacity: 0.85 })));
+            patches.pixels.forEach((row, r) => row.forEach((value, c) => boxes.push({ position: [c,value / 2,r], size: [0.85,Math.max(0.05,value),0.85], color: value > 0.5 ? VIZ.data : '#172c4a', opacity: 0.85 })));
             patches.patches.forEach((patch, index) => {
                 const p: LabVector = [patch.column + patchSize / 2 - 0.5,1.5,patch.row + patchSize / 2 - 0.5];
-                points.push({ position: p, color: index === selected ? '#fbbf24' : '#2dd4bf', radius: 0.1, label: index === selected ? `Patch ${index + 1}` : undefined });
-                if (weights[index] > 0.02) paths.push({ points: [[patches.patches[selected].column + patchSize / 2 - 0.5,1.5,patches.patches[selected].row + patchSize / 2 - 0.5],p], color: '#fbbf24', width: weights[index] * 20 });
+                points.push({ position: p, color: index === selected ? VIZ.focus : VIZ.truth, radius: 0.1, label: index === selected ? `Patch ${index + 1}` : undefined });
+                if (weights[index] > 0.02) paths.push({ points: [[patches.patches[selected].column + patchSize / 2 - 0.5,1.5,patches.patches[selected].row + patchSize / 2 - 0.5],p], color: VIZ.focus, width: weights[index] * 20 });
             });
         } else if (mode === 'block' || mode === 'normalization' || mode === 'hybrid') {
             const phases = mode === 'hybrid' ? hybridTrace.layers : [block.input,block.attention,block.residual,block.normalized,block.output];
@@ -106,15 +107,15 @@ export default function AttentionLab({ mode = 'attention' }: { mode?: AttentionL
             phase.forEach((value, time) => { points.push({ position: value, color: PALETTE[time % 6], label: tokens[time].label }); vectors.push({ from: previous[time], to: value, color: PALETTE[time % 6] }); });
         } else if (mode === 'embeddings') {
             description = 'Each token uses a shared, editable three-coordinate embedding lookup. These demonstration coordinates have no pretrained semantic meaning.';
-            inputs.forEach((value, time) => { points.push({ position: value, color: PALETTE[time % 6], label: `${time + 1}: ${tokens[time].label}` }); if (time === selected) vectors.push({ from: [0,0,0], to: value, label: 'Selected embedding', color: '#fbbf24' }); });
+            inputs.forEach((value, time) => { points.push({ position: value, color: PALETTE[time % 6], label: `${time + 1}: ${tokens[time].label}` }); if (time === selected) vectors.push({ from: [0,0,0], to: value, label: 'Selected embedding', color: VIZ.focus }); });
         } else if (mode === 'softmax') {
             axes = ['key index','weight','scaled score']; description = 'Height is a computed softmax weight. Score changes alter a normalized mixture whose weights sum to one.';
             weights.forEach((weight, key) => { const score = selectedHead.scores[selected][key]; boxes.push({ position: [key,weight / 2,Number.isFinite(score) ? score : 0], size: [0.6,Math.max(0.005,weight),0.25], color: PALETTE[key % 6], opacity: 0.8, label: `${key + 1}: ${weight.toFixed(2)}` }); });
         } else if (mode === 'architectures') {
             axes = ['token index','representation magnitude','stream / block']; description = 'Nodes show actual token representation magnitudes. Connections follow the selected attention mask; encoder-decoder mode reads encoder outputs through cross-attention.';
             const sourceLabels = architecture === 'encoder-decoder' ? inputs.map((_, i) => `Encoder ${i + 1}`) : tokens.map(token => token.label);
-            selectedHead.keys.forEach((key, index) => { points.push({ position: [index,magnitude(key),0], color: PALETTE[index % 6], label: sourceLabels[index] }); if (weights[index] > 0) paths.push({ points: [[index,magnitude(key),0],[selected,magnitude(selectedHead.queries[selected]),2]], color: '#2dd4bf', width: 1 + weights[index] * 9 }); });
-            points.push({ position: [selected,magnitude(selectedHead.queries[selected]),2], color: '#fbbf24', label: architecture === 'encoder-decoder' ? 'Decoder query' : 'Selected query' });
+            selectedHead.keys.forEach((key, index) => { points.push({ position: [index,magnitude(key),0], color: PALETTE[index % 6], label: sourceLabels[index] }); if (weights[index] > 0) paths.push({ points: [[index,magnitude(key),0],[selected,magnitude(selectedHead.queries[selected]),2]], color: VIZ.truth, width: 1 + weights[index] * 9 }); });
+            points.push({ position: [selected,magnitude(selectedHead.queries[selected]),2], color: VIZ.focus, label: architecture === 'encoder-decoder' ? 'Decoder query' : 'Selected query' });
         } else if (mode === 'cache' || mode === 'memory' || mode === 'flash' || mode === 'efficient') {
             axes = ['key position','attention weight','query position']; description = 'Links show computed query-key mixing. Height is an attention weight. Past memory, sparse masks, and active tiles change which links are visible.';
             const currentQuery = mode === 'cache' ? Math.min(safeStage, inputs.length - 1) : selected;
@@ -125,19 +126,19 @@ export default function AttentionLab({ mode = 'attention' }: { mode?: AttentionL
                 const weight = currentWeights[key];
                 const activeTile = mode !== 'flash' || Math.floor(key / tileSize) === safeStage;
                 const visible = mode !== 'cache' || key <= currentQuery;
-                points.push({ position: [key,0,0], color: !visible ? '#24405c' : mode === 'memory' && key < memoryLength ? '#a78bfa' : PALETTE[key % 6], label: !visible ? `Future token ${key + 1}` : mode === 'memory' && key < memoryLength ? `Memory ${key + 1}` : `K${key + 1}` });
-                if (weight > 0 && visible) { points.push({ position: [key,weight,currentQuery + 1], color: activeTile ? '#fbbf24' : '#24405c', radius: 0.08 }); paths.push({ points: [[key,0,0],[key,weight,currentQuery + 1]], color: activeTile ? '#2dd4bf' : '#24405c', width: 1 + weight * 10 }); }
+                points.push({ position: [key,0,0], color: !visible ? '#24405c' : mode === 'memory' && key < memoryLength ? VIZ.output : PALETTE[key % 6], label: !visible ? `Future token ${key + 1}` : mode === 'memory' && key < memoryLength ? `Memory ${key + 1}` : `K${key + 1}` });
+                if (weight > 0 && visible) { points.push({ position: [key,weight,currentQuery + 1], color: activeTile ? VIZ.focus : '#24405c', radius: 0.08 }); paths.push({ points: [[key,0,0],[key,weight,currentQuery + 1]], color: activeTile ? VIZ.truth : '#24405c', width: 1 + weight * 10 }); }
             });
-            if (mode === 'efficient' && efficient === 'linear') boxes.push({ position: [2,0.4,-1], size: [3,0.1,0.6], color: '#a78bfa', label: 'Kernel state: Σ φ(K) Vᵀ' });
+            if (mode === 'efficient' && efficient === 'linear') boxes.push({ position: [2,0.4,-1], size: [3,0.1,0.6], color: VIZ.output, label: 'Kernel state: Σ φ(K) Vᵀ' });
         } else if (view === 'values') {
             description = 'Value vectors are mixed using the selected attention weights. The yellow output lies at their weighted centroid; arrows show the accumulated weighted contributions.';
             let accumulated: LabVector = [0,0,0];
             selectedHead.values.forEach((value, key) => { points.push({ position: value, color: PALETTE[key % 6], label: `V${key + 1}: ${weights[key].toFixed(2)}` }); const next = accumulated.map((v, axis) => v + weights[key] * value[axis]) as LabVector; vectors.push({ from: accumulated, to: next, color: PALETTE[key % 6] }); accumulated = next; });
-            points.push({ position: selectedHead.outputs[selected], color: '#fbbf24', radius: 0.15, label: 'Weighted value output' });
+            points.push({ position: selectedHead.outputs[selected], color: VIZ.focus, radius: 0.15, label: 'Weighted value output' });
         } else {
             description = `Query and key vectors share a dot-product space. Color and line width show attention weight. ${position === 'rope' ? 'RoPE rotates the first coordinate pair; the third teaching coordinate is unchanged.' : 'All three coordinates are computed from explicit projection matrices.'}`;
-            vectors.push({ from: [0,0,0], to: vec3(selectedHead.queries[selected]), color: '#fbbf24', label: `Q${selected + 1}` });
-            selectedHead.keys.forEach((key, index) => { vectors.push({ from: [0,0,0], to: vec3(key), color: weights[index] > 0 ? PALETTE[index % 6] : '#24405c', label: `K${index + 1}` }); paths.push({ points: [vec3(selectedHead.queries[selected]),vec3(key)], color: weights[index] > 0 ? '#2dd4bf' : '#24405c', width: 0.5 + 8 * weights[index], dashed: weights[index] === 0 }); });
+            vectors.push({ from: [0,0,0], to: vec3(selectedHead.queries[selected]), color: VIZ.focus, label: `Q${selected + 1}` });
+            selectedHead.keys.forEach((key, index) => { vectors.push({ from: [0,0,0], to: vec3(key), color: weights[index] > 0 ? PALETTE[index % 6] : '#24405c', label: `K${index + 1}` }); paths.push({ points: [vec3(selectedHead.queries[selected]),vec3(key)], color: weights[index] > 0 ? VIZ.truth : '#24405c', width: 0.5 + 8 * weights[index], dashed: weights[index] === 0 }); });
         }
         return { points,paths,vectors,boxes,axes,description };
     }, [mode, inputs, tokens, selected, selectedHead, weights, view, experts, patches, patchSize, block, hybridTrace, architecture, safeStage, linear, tileSize, memoryLength, position, efficient, liveTile]);

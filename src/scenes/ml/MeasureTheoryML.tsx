@@ -1,3 +1,5 @@
+import { SceneKey } from '../../components/3d/SceneKey';
+import { VIZ } from '../../data/palette';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useRef, useMemo, useLayoutEffect } from 'react';
@@ -35,7 +37,7 @@ function ManifoldScene({ isActive }: SceneProps) {
             <mesh rotation={[-Math.PI / 2, 0, 0]}>
                 <planeGeometry args={[12, 12, 32, 32]} />
                 <meshStandardMaterial
-                    color="#ef4444"
+                    color={VIZ.axis}
                     transparent
                     opacity={0.2}
                     side={THREE.DoubleSide}
@@ -50,7 +52,7 @@ function ManifoldScene({ isActive }: SceneProps) {
                         args={[new Float32Array(MANIFOLD_POINTS.flatMap(p => [p.x, p.y, p.z])), 3]}
                     />
                 </bufferGeometry>
-                <pointsMaterial size={0.08} color="#60a5fa" transparent opacity={0.8} />
+                <pointsMaterial size={0.08} color={VIZ.data} transparent opacity={0.8} />
             </points>
         </group>
     );
@@ -137,7 +139,7 @@ function ReLUScene({ isActive }: SceneProps) {
 
             <mesh position={[0, 0, 0]}>
                 <sphereGeometry args={[0.2, 16, 16]} />
-                <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={0.5} />
+                <meshStandardMaterial color={VIZ.focus} emissive="#f59e0b" emissiveIntensity={0.5} />
             </mesh>
         </group>
     );
@@ -158,13 +160,13 @@ export default function MeasureTheoryML() {
             title: "Normalizing Flows",
             description: "This untrained, invertible affine flow deforms a uniform radius-two ball. Its triangular Jacobian has determinant s₁s₂s₃ > 0. All points have the same density inside each transformed solid: p = 3/(32π s₁s₂s₃). Color changes with inverse volume. Learned normalizing flows can use much richer invertible maps.",
             math: "p_x(x) = p_z(z) \\left| \\det \\frac{\\partial z}{\\partial x} \\right|",
-            color: '#60a5fa'
+            color: VIZ.data
         },
         relu: {
             title: "ReLU & Singularity",
             description: "ReLU is f(x) = max(0, x), with a corner at zero. That single point has Lebesgue measure zero, but software can reach it exactly. Training implementations choose a derivative convention there, commonly zero.",
             math: "\\lambda(\\{x : f'(x) \\text{ undefined}\\}) = 0",
-            color: '#fbbf24'
+            color: VIZ.focus
         }
     };
 
@@ -190,9 +192,10 @@ export default function MeasureTheoryML() {
                         </span>
                         <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Measure Theory in Machine Learning</h2>
                     </div>
-                    <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
+                    <p style={{ fontSize: '14px', color: VIZ.axis, margin: 0 }}>
                         Why &quot;size&quot; and &quot;sets&quot; matter for generative models and deep learning.
                     </p>
+                    <SceneKey inline aria-label="Plot key" entries={scene === 'manifold' ? [{label:'Blue cloud',meaning:'noisy observations near a graph',color:VIZ.data},{label:'Plane',meaning:'reference input domain',color:VIZ.axis,shape:'square'}] : scene === 'flows' ? [{label:'Shaded solid',meaning:'affine transformed ball; shade follows density',color:VIZ.data,shape:'square'}] : [{label:'Curve',meaning:'ReLU output max(0,x)',color:VIZ.focus,shape:'line'}]} />
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -207,7 +210,7 @@ export default function MeasureTheoryML() {
                                 border: '1px solid',
                                 borderColor: scene === key ? '#3b82f6' : '#334155',
                                 backgroundColor: scene === key ? '#1d4ed8' : '#050508',
-                                color: scene === key ? 'white' : '#94a3b8',
+                                color: scene === key ? 'white' : VIZ.axis,
                                 cursor: 'pointer',
                                 fontSize: '13px',
                                 fontWeight: 600,
@@ -284,7 +287,7 @@ export default function MeasureTheoryML() {
                     borderRadius: '8px',
                     border: '1px solid #334155',
                     fontSize: '11px',
-                    color: '#94a3b8',
+                    color: VIZ.axis,
                     pointerEvents: 'none'
                 }}>
                     DRAG TO ROTATE • SCROLL TO ZOOM

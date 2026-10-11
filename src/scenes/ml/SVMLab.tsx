@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useMemo, useState } from 'react';
 import { VisualLab, LabRange, LabSelect } from '../../components/layout/VisualLab';
 import { SpatialScene } from '../../components/3d/SpatialScene';
@@ -85,25 +86,25 @@ export default function SVMLab({ mode = 'margin' }: SVMLabProps) {
                 const value = svmPrediction(model, [x1, x2, 0]);
                 grid.push([x1, value, x2]); lower.push([x1, mode === 'regression' ? value - epsilon : 0, x2]); upper.push([x1, mode === 'regression' ? value + epsilon : 1, x2]);
             }
-            surfaces.push({ vertices: grid, columns: 19, color: '#2dd4bf', opacity: 0.4 }, { vertices: lower, columns: 19, color: '#fbbf24', opacity: 0.14 });
-            if (mode === 'regression') surfaces.push({ vertices: upper, columns: 19, color: '#fbbf24', opacity: 0.14 });
+            surfaces.push({ vertices: grid, columns: 19, color: VIZ.truth, opacity: 0.4 }, { vertices: lower, columns: 19, color: VIZ.focus, opacity: 0.14 });
+            if (mode === 'regression') surfaces.push({ vertices: upper, columns: 19, color: VIZ.focus, opacity: 0.14 });
             if (mode === 'regression') regression.forEach((sample, index) => {
-                points.push({ position: [sample.x[0], sample.y, sample.x[1]], color: support.has(index) ? '#fbbf24' : '#60a5fa', radius: index === selectedIndex ? 0.13 : support.has(index) ? 0.09 : 0.06, label: index === selectedIndex ? 'Selected observation' : undefined });
+                points.push({ position: [sample.x[0], sample.y, sample.x[1]], color: support.has(index) ? VIZ.focus : VIZ.data, radius: index === selectedIndex ? 0.13 : support.has(index) ? 0.09 : 0.06, label: index === selectedIndex ? 'Selected observation' : undefined });
                 const prediction = svmPrediction(model, sample.x);
-                if (index < 10 && Math.abs(sample.y - prediction) > epsilon) paths.push({ points: [[sample.x[0], prediction + Math.sign(sample.y - prediction) * epsilon, sample.x[1]], [sample.x[0], sample.y, sample.x[1]]], color: '#fb7185', width: 1.5 });
+                if (index < 10 && Math.abs(sample.y - prediction) > epsilon) paths.push({ points: [[sample.x[0], prediction + Math.sign(sample.y - prediction) * epsilon, sample.x[1]], [sample.x[0], sample.y, sample.x[1]]], color: VIZ.error, width: 1.5 });
             });
-            else classification.forEach((sample, index) => points.push({ position: [sample.x[0], svmPrediction(model, sample.x), sample.x[1]], color: sample.label > 0 ? '#60a5fa' : '#fb7185', radius: index === selectedIndex ? 0.13 : support.has(index) ? 0.11 : 0.06, label: index === selectedIndex ? `Selected class ${sample.label > 0 ? '+1' : '−1'}` : undefined }));
+            else classification.forEach((sample, index) => points.push({ position: [sample.x[0], svmPrediction(model, sample.x), sample.x[1]], color: sample.label > 0 ? VIZ.data : VIZ.error, radius: index === selectedIndex ? 0.13 : support.has(index) ? 0.11 : 0.06, label: index === selectedIndex ? `Selected class ${sample.label > 0 ? '+1' : '−1'}` : undefined }));
         } else {
             const plane = kernel === 'lift' ? model.featureWeights ? { weights: model.featureWeights, bias: model.bias } : null : svmRawLinearPlane(model);
             if (plane) {
                 for (const level of [-1, 0, 1]) {
-                    const surface = marginPlane(plane.weights, plane.bias, level, level === 0 ? '#2dd4bf' : '#fbbf24', level === 0 ? 0.25 : 0.12);
+                    const surface = marginPlane(plane.weights, plane.bias, level, level === 0 ? VIZ.truth : VIZ.focus, level === 0 ? 0.25 : 0.12);
                     if (surface) surfaces.push(surface);
                 }
                 const length = Math.hypot(...plane.weights);
-                if (length > 1e-8) vectors.push({ from: [0, 0, 0], to: plane.weights.map(value => value / length) as LabVector, color: '#2dd4bf', label: 'Plane normal' });
+                if (length > 1e-8) vectors.push({ from: [0, 0, 0], to: plane.weights.map(value => value / length) as LabVector, color: VIZ.truth, label: 'Plane normal' });
             }
-            classification.forEach((sample, index) => points.push({ position: kernel === 'lift' ? svmFeaturePoint(model, sample.x) : sample.x, color: sample.label > 0 ? '#60a5fa' : '#fb7185', radius: index === selectedIndex ? 0.13 : support.has(index) ? 0.11 : 0.06, label: index === selectedIndex ? `Selected class ${sample.label > 0 ? '+1' : '−1'}` : undefined }));
+            classification.forEach((sample, index) => points.push({ position: kernel === 'lift' ? svmFeaturePoint(model, sample.x) : sample.x, color: sample.label > 0 ? VIZ.data : VIZ.error, radius: index === selectedIndex ? 0.13 : support.has(index) ? 0.11 : 0.06, label: index === selectedIndex ? `Selected class ${sample.label > 0 ? '+1' : '−1'}` : undefined }));
         }
         return { points, surfaces, paths, vectors };
     }, [mode, kernel, model, epsilon, regression, classification, selectedIndex, support]);

@@ -1,6 +1,7 @@
+import { VIZ } from '../../data/palette';
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { FitSceneCamera } from '../../components/3d/FitSceneCamera';
-import { useState, useMemo, useRef, useEffect, useLayoutEffect, type ComponentRef } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, type ComponentRef } from 'react';
 import { useSceneMotion } from '../../hooks/useSceneMotion';
 import { OrbitControls, Line, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -11,6 +12,7 @@ import {
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { GlassPane } from '../../components/layout/GlassPane';
 import { useParams } from 'react-router-dom';
+import { HeightField } from '../../components/3d/HeightField';
 import { SceneAxisKey } from '../../components/3d/SceneAxisKey';
 
 const SURFACE_CAMERA = { position: [8, 6, 8] as [number, number, number], fov: 50 };
@@ -26,11 +28,11 @@ const df_dy = (x: number, y: number) => -Math.sin(x) * Math.sin(y);
 
 // --- Constants & Config ---
 const CONF = {
-    colorSurface: '#3b82f6', // Blue-500
-    colorX: '#f43f5e',       // Rose-500
-    colorY: '#10b981',       // Emerald-500
-    colorGrad: '#facc15',    // Yellow-400
-    colorLift: '#f97316',    // Orange-500
+    colorSurface: VIZ.data, // Blue-500
+    colorX: VIZ.basis1,       // Rose-500
+    colorY: VIZ.basis2,       // Emerald-500
+    colorGrad: VIZ.focus,    // Yellow-400
+    colorLift: VIZ.output,    // Orange-500
     floorY: -2.0,
     axisLength: 4
 };
@@ -38,45 +40,14 @@ const CONF = {
 // --- Sub-components (Unchanged Math Logic) ---
 
 function RigorousSurface() {
-    const geometry = useMemo(() => {
-        const size = 6; // Domain -3 to 3 in both input directions
-        const res = 80;
-        const geo = new THREE.PlaneGeometry(size, size, res, res);
-        const pos = geo.attributes.position;
-        for (let i = 0; i < pos.count; i++) {
-            const x = pos.getX(i);
-            const y = pos.getY(i);
-            const z = f(x, y);
-            pos.setZ(i, z);
-        }
-        geo.computeVertexNormals();
-        return geo;
-    }, []);
-
-    useEffect(() => () => geometry.dispose(), [geometry]);
-    return (
-        <group rotation={[-Math.PI / 2, 0, 0]}>
-            <mesh geometry={geometry}>
-                <meshStandardMaterial
-                    color={CONF.colorSurface}
-                    roughness={0.4}
-                    metalness={0.1}
-                    side={THREE.DoubleSide}
-                    transparent
-                    opacity={0.8}
-                />
-            </mesh>
-            <mesh geometry={geometry}>
-                <meshBasicMaterial color="#000000" wireframe transparent opacity={0.1} />
-            </mesh>
-        </group>
-    );
+    return <><HeightField f={f} extent={6} resolution={80} color={CONF.colorSurface} opacity={0.8} />
+        <HeightField f={f} extent={6} resolution={80} color={VIZ.axis} wireframe opacity={0.1} /></>;
 }
 
 function BaseGrid() {
     return (
         <gridHelper
-            args={[10, 20, '#475569', '#1e293b']}
+            args={[10, 20, VIZ.muted, VIZ.grid]}
             position={[0, CONF.floorY, 0]}
         />
     );
@@ -100,9 +71,9 @@ function VectorSystem({ x, y }: { x: number; y: number }) {
 
     return (
         <group>
-            <Line points={[pointPos, floorPos]} color="#94a3b8" dashed dashSize={0.2} gapSize={0.1} opacity={0.5} transparent />
-            <mesh position={pointPos}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color="#ffffff" /></mesh>
-            <mesh position={floorPos}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color="#94a3b8" /></mesh>
+            <Line points={[pointPos, floorPos]} color={VIZ.axis} dashed dashSize={0.2} gapSize={0.1} opacity={0.5} transparent />
+            <mesh position={pointPos}><sphereGeometry args={[0.12, 16, 16]} /><meshBasicMaterial color={VIZ.white} /></mesh>
+            <mesh position={floorPos}><sphereGeometry args={[0.08, 16, 16]} /><meshBasicMaterial color={VIZ.axis} /></mesh>
             <ArrowHelper dir={tanXDir} origin={pointPos} len={1.0} color={CONF.colorX} width={0.15} />
             <ArrowHelper dir={tanYDir} origin={pointPos} len={1.0} color={CONF.colorY} width={0.15} />
             {gradMag > 0.001 && <ArrowHelper dir={floorGradDir} origin={floorPos} len={gradMag} color={CONF.colorGrad} width={0.25} />}
@@ -142,7 +113,7 @@ function TangentPlane({ x, y, z, dx, dy }: { x: number, y: number, z: number, dx
     return (
         <mesh ref={planeRef}>
             <planeGeometry args={[2.5, 2.5]} />
-            <meshPhongMaterial color="#ffffff" side={THREE.DoubleSide} transparent opacity={0.15} shininess={100} depthWrite={false} />
+            <meshPhongMaterial color={VIZ.white} side={THREE.DoubleSide} transparent opacity={0.15} shininess={100} depthWrite={false} />
         </mesh>
     );
 }
@@ -150,10 +121,10 @@ function TangentPlane({ x, y, z, dx, dy }: { x: number, y: number, z: number, dx
 function RigorousAxes() {
     return (
         <group>
-            <Line points={[new THREE.Vector3(-CONF.axisLength, 0, 0), new THREE.Vector3(CONF.axisLength, 0, 0)]} color={CONF.colorX} lineWidth={2} opacity={0.5} transparent />
-            <Html position={[CONF.axisLength + 0.2, 0, 0]} center zIndexRange={[40, 0]} pointerEvents="none"><div style={{ color: CONF.colorX, fontWeight: 'bold' }}>X</div></Html>
-            <Line points={[new THREE.Vector3(0, 0, -CONF.axisLength), new THREE.Vector3(0, 0, CONF.axisLength)]} color={CONF.colorY} lineWidth={2} opacity={0.5} transparent />
-            <Html position={[0, 0, CONF.axisLength + 0.2]} center zIndexRange={[40, 0]} pointerEvents="none"><div style={{ color: CONF.colorY, fontWeight: 'bold' }}>Y</div></Html>
+            <Line points={[new THREE.Vector3(-CONF.axisLength, 0, 0), new THREE.Vector3(CONF.axisLength, 0, 0)]} color={VIZ.axis} lineWidth={2} opacity={0.5} transparent />
+            <Html position={[CONF.axisLength + 0.2, 0, 0]} center zIndexRange={[40, 0]} pointerEvents="none"><div style={{ color: VIZ.axis, fontWeight: 'bold' }}>X</div></Html>
+            <Line points={[new THREE.Vector3(0, 0, -CONF.axisLength), new THREE.Vector3(0, 0, CONF.axisLength)]} color={VIZ.axis} lineWidth={2} opacity={0.5} transparent />
+            <Html position={[0, 0, CONF.axisLength + 0.2]} center zIndexRange={[40, 0]} pointerEvents="none"><div style={{ color: VIZ.axis, fontWeight: 'bold' }}>Y</div></Html>
         </group>
     );
 }
@@ -185,18 +156,18 @@ export default function PartialDerivatives() {
         <GlassPane className="scene-controls" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
                 <h1 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: 'white' }}>Calculus Visualizer</h1>
-                <p style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'monospace' }}>z = sin(x) · cos(y)</p>
+                <p style={{ fontSize: '12px', color: VIZ.axis, fontFamily: 'monospace' }}>z = sin(x) · cos(y)</p>
             </div>
 
             <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: VIZ.axis, marginBottom: '8px' }}>
                     <span>Coordinate X</span><span style={{ color: 'white' }}>{coords.x.toFixed(2)}</span>
                 </div>
                 <input aria-label="Coordinate X" type="range" min="-3" max="3" step="0.1" value={coords.x} onChange={(e) => { setCoords(p => ({ ...p, x: parseFloat(e.target.value) })); setAutoRotate(false); }} style={{ width: '100%', accentColor: '#6366f1', cursor: 'pointer' }} />
             </div>
 
             <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600, color: VIZ.axis, marginBottom: '8px' }}>
                     <span>Coordinate Y</span><span style={{ color: 'white' }}>{coords.y.toFixed(2)}</span>
                 </div>
                 <input aria-label="Coordinate Y" type="range" min="-3" max="3" step="0.1" value={coords.y} onChange={(e) => { setCoords(p => ({ ...p, y: parseFloat(e.target.value) })); setAutoRotate(false); }} style={{ width: '100%', accentColor: '#6366f1', cursor: 'pointer' }} />
@@ -208,14 +179,14 @@ export default function PartialDerivatives() {
                 <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '8px 0' }}></div>
                 <MathRow label="∇f (2D)" val={gradMag.toFixed(2)} color={CONF.colorGrad} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', color: '#94a3b8' }}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: CONF.colorLift, marginRight: 8 }}></span>Tangent Gradient</span>
+                    <span style={{ fontSize: '12px', color: VIZ.axis }}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: CONF.colorLift, marginRight: 8 }}></span>Tangent Gradient</span>
                     <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#fb923c' }}>STEEPEST ASCENT</span>
                 </div>
             </GlassPane>
 
             <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => setAutoRotate(!autoRotate)} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #334155', background: autoRotate ? '#6366f1' : '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><RotateCw size={14} />{autoRotate ? 'On' : 'Off'}</button>
-                <button onClick={() => { setResetCount(c => c + 1); setAutoRotate(false); setCoords({ x: 0.5, y: 0.5 }); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><RefreshCcw size={14} />Reset</button>
+                <button onClick={() => setAutoRotate(!autoRotate)} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #334155', background: autoRotate ? '#6366f1' : VIZ.grid, color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><RotateCw size={14} />{autoRotate ? 'On' : 'Off'}</button>
+                <button onClick={() => { setResetCount(c => c + 1); setAutoRotate(false); setCoords({ x: 0.5, y: 0.5 }); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #334155', background: VIZ.grid, color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}><RefreshCcw size={14} />Reset</button>
             </div>
         </GlassPane>
     );
@@ -224,7 +195,7 @@ export default function PartialDerivatives() {
         <SceneContainer backUrl={`/${topicId}`} controls={controls}>
             <SceneCanvas frameloop={moving && autoRotate ? 'always' : 'demand'} dpr={[1, 1.5]} shadows camera={SURFACE_CAMERA} aria-label="3D visualization of partial derivatives showing how functions change along individual axes">
                 <FitSceneCamera bounds={SURFACE_BOUNDS} />
-                <color attach="background" args={['#0b0f19']} />
+                <color attach="background" args={[VIZ.background]} />
                 <ambientLight intensity={0.5} />
                 <directionalLight position={[5, 10, 5]} intensity={1.0} />
 
@@ -235,7 +206,7 @@ export default function PartialDerivatives() {
 
                 <CameraController autoRotate={autoRotate} reset={resetCount} />
             </SceneCanvas>
-            <SceneAxisKey axes={[{ label: 'X', meaning: 'input x', color: CONF.colorX }, { label: 'Y', meaning: 'input y on the floor', color: CONF.colorY }, { label: 'Height', meaning: 'z = f(x, y)', color: CONF.colorSurface }]} />
+            <SceneAxisKey axes={[{ label: 'X', meaning: 'input x', color: VIZ.axis }, { label: 'Y', meaning: 'input y on the floor', color: VIZ.axis }, { label: 'Height', meaning: 'z = f(x, y)', color: VIZ.axis }]} />
         </SceneContainer>
     );
 }
@@ -243,7 +214,7 @@ export default function PartialDerivatives() {
 function MathRow({ label, val, color }: { label: string, val: string, color: string }) {
     return (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '12px', color: '#94a3b8' }}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: color, marginRight: 8 }}></span>{label}</span>
+            <span style={{ fontSize: '12px', color: VIZ.axis }}><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: color, marginRight: 8 }}></span>{label}</span>
             <span style={{ fontSize: '12px', fontWeight: 'bold', color: color === CONF.colorX ? '#f87171' : color === CONF.colorY ? '#34d399' : '#facc15' }}>{val}</span>
         </div>
     )

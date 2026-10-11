@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useRef, useMemo, useLayoutEffect } from 'react';
@@ -57,13 +58,13 @@ function RiemannScene({ nPartitions }: RiemannSceneProps) {
                         args={[new Float32Array(curvePoints.flatMap((p) => [p.x, p.y, p.z])), 3]}
                     />
                 </bufferGeometry>
-                <lineBasicMaterial color={0x00cec9} linewidth={3} />
+                <lineBasicMaterial color={VIZ.truth} linewidth={3} />
             </line>
 
             {/* Riemann boxes */}
             <instancedMesh ref={meshRef} args={[undefined, undefined, boxes.length]}>
                 <boxGeometry args={[1, 1, 1]} />
-                <meshPhongMaterial color={0x6c5ce7} transparent opacity={0.5} />
+                <meshPhongMaterial color={VIZ.output} transparent opacity={0.5} />
             </instancedMesh>
 
             <directionalLight position={[5, 5, 5]} intensity={1} />
@@ -83,7 +84,7 @@ export default function RiemannIntegral() {
                     background: 'rgba(5, 5, 8, 0.8)',
                     backdropFilter: 'blur(12px)',
                     borderRight: '1px solid rgba(255, 255, 255, 0.06)',
-                    color: '#f8fafc',
+                    color: VIZ.white,
                     fontFamily: 'Inter, system-ui, sans-serif',
                     overflowY: 'auto',
                     padding: '28px 24px',
@@ -109,7 +110,7 @@ export default function RiemannIntegral() {
                         <Activity size={24} style={{ color: '#00cec9' }} />
                         <span>Riemann Integral</span>
                     </h2>
-                    <p style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.6 }}>
+                    <p style={{ fontSize: '13px', color: VIZ.axis, lineHeight: 1.6 }}>
                         Visualizing domain partitioning and the limits of integration
                     </p>
                 </div>
@@ -171,7 +172,7 @@ export default function RiemannIntegral() {
                             justifyContent: 'space-between',
                             fontSize: '13px',
                             fontWeight: 600,
-                            color: '#94a3b8',
+                            color: VIZ.axis,
                             marginBottom: '12px',
                         }}
                     >
@@ -238,7 +239,7 @@ export default function RiemannIntegral() {
                         padding: '16px',
                     }}
                 >
-                    <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#94a3b8', marginBottom: '12px' }}>
+                    <h4 style={{ fontSize: '13px', fontWeight: 700, color: VIZ.axis, marginBottom: '12px' }}>
                         Visualization
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
@@ -270,7 +271,7 @@ export default function RiemannIntegral() {
     );
 
     return (
-        <SceneContainer backUrl="/calculus" controls={controls}>
+        <SceneContainer backUrl="/calculus" controls={controls} legend={[{ label: 'Curve', meaning: 'sin(x) + 2', color: VIZ.truth, shape: 'line' }, { label: 'Rectangles', meaning: 'sampled height × full partition width', color: VIZ.output, shape: 'square' }]}>
             <SceneCanvas frameloop="demand" camera={{ position: [0, 4, 8], fov: 75 }} aria-label="3D Riemann sum: rectangles approximate the area under sin(x) + 2">
                 <color attach="background" args={['#050508']} />
                 <RiemannScene nPartitions={riemannN} />

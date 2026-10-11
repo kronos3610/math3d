@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -92,7 +93,7 @@ test('bagging exposes genuine OOB coverage and independent bootstrap variability
     const firstCoverage = Number(metric('OOB coverage').split('/')[0]);
     expect(firstCoverage).toBeGreaterThan(0);
     expect(firstCoverage).toBeLessThan(48);
-    expect(geometry().points?.slice(0, 48).filter(point => point.color === '#64748b')).toHaveLength(firstCoverage);
+    expect(geometry().points?.slice(0, 48).filter(point => point.color === VIZ.axis)).toHaveLength(firstCoverage);
     fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
     expect(metric('Trees included')).toBe('0');
     expect(metric('OOB coverage')).toBe('0/48');
@@ -160,9 +161,9 @@ test('LightGBM GOSS visibly retains actual rows and exclusive packing preserves 
     expect(geometry().surfaces?.[0].vertices).not.toEqual(initialVertices);
     choose('Gradient sampling', 'goss');
     const points = geometry().points?.slice(0, 48) ?? [];
-    expect(points.filter(point => point.color === '#fbbf24')).toHaveLength(12);
-    expect(points.filter(point => point.color === '#2dd4bf')).toHaveLength(12);
-    expect(points.filter(point => point.color === '#64748b')).toHaveLength(24);
+    expect(points.filter(point => point.color === VIZ.focus)).toHaveLength(12);
+    expect(points.filter(point => point.color === VIZ.truth)).toHaveLength(12);
+    expect(points.filter(point => point.color === VIZ.axis)).toHaveLength(24);
     expect(screen.getByText(/GOSS retained 24\/48 rows/).textContent).toContain('weight 3.000');
     const prediction = metric('Query prediction');
     choose('Visualization', 'bundle');

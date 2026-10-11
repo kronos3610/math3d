@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useMemo, useState } from 'react';
 import { LabPlayback, LabRange, LabSelect, VisualLab } from '../../components/layout/VisualLab';
 import { SpatialScene, type SpatialPoint, type SpatialPath, type SpatialVector, type SpatialBox } from '../../components/3d/SpatialScene';
@@ -23,32 +24,32 @@ export default function StateSpaceLab({ mode = 'ssm' }: { mode?: StateSpaceVaria
             axes = ['input timestep','mixing coefficient','output timestep']; description = 'The lower-triangular mixing matrix weights each past input. Heights are signed coefficients, not probabilities. Matrix and recurrence outputs agree.';
             dual.matrix.slice(0,current + 1).forEach((row,time) => row.forEach((weight,source) => {
                 if (source > time) return;
-                boxes.push({ position:[source,weight / 2,time], size:[0.75,Math.max(0.003,Math.abs(weight)),0.75], color:weight >= 0 ? '#2dd4bf' : '#fb7185',opacity:0.8 });
+                boxes.push({ position:[source,weight / 2,time], size:[0.75,Math.max(0.003,Math.abs(weight)),0.75], color:weight >= 0 ? VIZ.truth : VIZ.error,opacity:0.8 });
             }));
         } else if (view === 'flow') {
             axes = ['timestep',mode === 'mamba3' ? 'real state / input value' : 'state / input value','state coordinate']; description = `An unrolled selective recurrence shows each ${mode === 'mamba3' ? 'real state component' : 'state coordinate'} through time. Input points and retained-state links use the same calculated update.`;
             inputs.slice(0,current + 1).forEach((input,time) => {
-                points.push({position:[time,input[channel],-1],color:'#fbbf24',label:time === current ? 'Input' : undefined});
+                points.push({position:[time,input[channel],-1],color:VIZ.focus,label:time === current ? 'Input' : undefined});
                 for (let n = 0; n < 3; n++) {
                     const p: [number,number,number] = [time,trace.states[time][channel][n],n];
-                    points.push({position:p,color:['#60a5fa','#2dd4bf','#a78bfa'][n],label:time === current ? `h${n + 1}: ${p[1].toFixed(2)}` : undefined});
-                    paths.push({points:[[time,input[channel],-1],p],color:'#fbbf24',width:0.8});
-                    if (time > 0) paths.push({points:[[time - 1,trace.states[time - 1][channel][n],n],p],color:'#2dd4bf',width:1 + trace.transitions[time][channel][n] * 2});
+                    points.push({position:p,color:[VIZ.data,VIZ.truth,VIZ.output][n],label:time === current ? `h${n + 1}: ${p[1].toFixed(2)}` : undefined});
+                    paths.push({points:[[time,input[channel],-1],p],color:VIZ.focus,width:0.8});
+                    if (time > 0) paths.push({points:[[time - 1,trace.states[time - 1][channel][n],n],p],color:VIZ.truth,width:1 + trace.transitions[time][channel][n] * 2});
                 }
             });
         } else if (mode === 'mamba3') {
             axes = ['real state coordinate 1','imaginary state coordinate 1','timestep']; description = 'A complex state rotates and decays. The first state component is shown in its real/imaginary plane with time on the third axis; all three complex components are computed.';
             const trajectory = trace.states.slice(0,current + 1).map((value,time) => [value[channel][0],trace.imaginary[time][channel][0],time] as [number,number,number]);
-            paths.push({points:trajectory,color:'#a78bfa',width:3});
-            trajectory.forEach((position,time) => points.push({position,color:time === current ? '#fbbf24' : '#a78bfa',label:time === current ? 'Current complex state' : undefined}));
+            paths.push({points:trajectory,color:VIZ.output,width:3});
+            trajectory.forEach((position,time) => points.push({position,color:time === current ? VIZ.focus : VIZ.output,label:time === current ? 'Current complex state' : undefined}));
         } else {
             axes = ['state coordinate 1','state coordinate 2','state coordinate 3']; description = 'The state trajectory uses actual three-coordinate hidden states for one selected channel. Retained memory and the new write add to the yellow current state.';
             const trajectory = trace.states.slice(0,current + 1).map(value => value[channel] as [number,number,number]);
-            paths.push({points:trajectory,color:'#60a5fa',width:2});
-            trajectory.forEach((position,time) => points.push({position,color:time === current ? '#fbbf24' : '#60a5fa',radius:time === current ? 0.13 : 0.07,label:time === current ? 'Current state' : undefined}));
+            paths.push({points:trajectory,color:VIZ.data,width:2});
+            trajectory.forEach((position,time) => points.push({position,color:time === current ? VIZ.focus : VIZ.data,radius:time === current ? 0.13 : 0.07,label:time === current ? 'Current state' : undefined}));
             const retained = trace.retained[current][channel] as [number,number,number];
-            vectors.push({from:[0,0,0],to:retained,color:'#a78bfa',label:'Retained'});
-            vectors.push({from:retained,to:state as [number,number,number],color:'#2dd4bf',label:'New write'});
+            vectors.push({from:[0,0,0],to:retained,color:VIZ.output,label:'Retained'});
+            vectors.push({from:retained,to:state as [number,number,number],color:VIZ.truth,label:'New write'});
         }
         return {points,paths,vectors,boxes,axes,description};
     }, [view,dual,current,inputs,trace,channel,mode,state]);

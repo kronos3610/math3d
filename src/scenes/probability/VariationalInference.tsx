@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
@@ -49,7 +50,7 @@ function TruePosterior() {
         <>
             <mesh geometry={geom} castShadow receiveShadow>
                 <meshStandardMaterial
-                    color="#3b82f6"
+                    color={VIZ.truth}
                     transparent
                     opacity={0.7}
                     side={THREE.DoubleSide}
@@ -57,7 +58,7 @@ function TruePosterior() {
             </mesh>
             <mesh geometry={geom}>
                 <meshBasicMaterial
-                    color="#60a5fa"
+                    color={VIZ.truth}
                     wireframe
                     transparent
                     opacity={0.3}
@@ -104,8 +105,8 @@ function ApproximateHill({ progress }: { progress: number }) {
     return (
         <mesh ref={meshRef} geometry={geom} position={[0, 0.1, 0]} castShadow>
             <meshStandardMaterial
-                color="#f97316"
-                emissive="#f97316"
+                color={VIZ.focus}
+                emissive={VIZ.focus}
                 emissiveIntensity={0.2}
                 transparent
                 opacity={0.9}
@@ -133,7 +134,7 @@ function EquationRoom({ progress }: { progress: number }) {
             <mesh position={[0, CEILING_HEIGHT, 0]}>
                 <boxGeometry args={[BOX_W + 1, 0.2, BOX_D + 1]} />
                 <meshStandardMaterial
-                    color="#ffffff"
+                    color={VIZ.white}
                     transparent
                     opacity={0.3}
                     roughness={0.1}
@@ -144,21 +145,21 @@ function EquationRoom({ progress }: { progress: number }) {
             {/* Outline frame */}
             <lineSegments position={[0, CEILING_HEIGHT / 2, 0]}>
                 <edgesGeometry args={[frameGeometry]} />
-                <lineBasicMaterial color="#ffffff" transparent opacity={0.25} />
+                <lineBasicMaterial color={VIZ.white} transparent opacity={0.25} />
             </lineSegments>
 
             {/* ELBO box (green) */}
             <mesh position={[0, elboH / 2, 0]} scale={[1, elboH, 1]} castShadow>
                 <boxGeometry args={[BOX_W, 1, BOX_D]} />
-                <meshStandardMaterial color="#10b981" />
+                <meshStandardMaterial color={VIZ.truth} />
             </mesh>
 
             {/* KL gap box (red) */}
             <mesh position={[0, elboH + klH / 2, 0]} scale={[1, klH, 1]}>
                 <boxGeometry args={[BOX_W, 1, BOX_D]} />
                 <meshStandardMaterial
-                    color="#ef4444"
-                    emissive="#ef4444"
+                    color={VIZ.error}
+                    emissive={VIZ.error}
                     emissiveIntensity={0.3}
                     transparent
                     opacity={0.85}
@@ -178,7 +179,7 @@ function EquationRoom({ progress }: { progress: number }) {
             </Html>
             <Html position={[BOX_W / 2 + 0.8, elboH / 2, 0]} center>
                 <span style={{
-                    color: '#34d399', fontSize: '11px', fontWeight: 700,
+                    color: VIZ.truth, fontSize: '11px', fontWeight: 700,
                     background: 'rgba(11,15,25,0.85)', padding: '2px 8px',
                     borderRadius: '5px', pointerEvents: 'none', whiteSpace: 'nowrap',
                     border: '1px solid rgba(16,185,129,0.3)',
@@ -189,7 +190,7 @@ function EquationRoom({ progress }: { progress: number }) {
             {klH > 0.4 && (
                 <Html position={[BOX_W / 2 + 0.8, elboH + klH / 2, 0]} center>
                     <span style={{
-                        color: '#f87171', fontSize: '11px', fontWeight: 700,
+                        color: VIZ.error, fontSize: '11px', fontWeight: 700,
                         background: 'rgba(11,15,25,0.85)', padding: '2px 8px',
                         borderRadius: '5px', pointerEvents: 'none', whiteSpace: 'nowrap',
                         border: '1px solid rgba(239,68,68,0.3)',
@@ -266,7 +267,7 @@ function Scene3D({ progress, playing, onTick }: {
             {/* Landscape labels */}
             <Html position={[TARGET_X, 7, TARGET_Z]} center>
                 <span style={{
-                    color: '#60a5fa', fontSize: '12px', fontWeight: 700,
+                    color: VIZ.data, fontSize: '12px', fontWeight: 700,
                     background: 'rgba(11,15,25,0.85)', padding: '3px 10px',
                     borderRadius: '6px', pointerEvents: 'none', whiteSpace: 'nowrap',
                     border: '1px solid rgba(96,165,250,0.3)',
@@ -325,13 +326,13 @@ export default function VariationalInference() {
         <GlassPane style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {/* Title */}
             <div>
-                <div style={{ fontSize: '10px', letterSpacing: '3px', color: '#10b981', marginBottom: '4px', textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '10px', letterSpacing: '3px', color: VIZ.truth, marginBottom: '4px', textTransform: 'uppercase' }}>
                     Bayesian Inference
                 </div>
                 <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'white', marginBottom: '3px' }}>
                     Variational Inference
                 </h2>
-                <p style={{ fontSize: '11px', color: '#94a3b8' }}>
+                <p style={{ fontSize: '11px', color: VIZ.axis }}>
                     Conceptual illustration of the ELBO–KL relationship
                 </p>
             </div>
@@ -361,24 +362,24 @@ export default function VariationalInference() {
                 borderRadius: '10px',
                 padding: '12px',
             }}>
-                <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
+                <div style={{ color: VIZ.axis, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
                     Illustrative Values
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <div>
-                        <div style={{ color: '#475569', fontSize: '10px', marginBottom: '2px' }}>ELBO ℒ(q)</div>
-                        <div style={{ color: '#34d399', fontFamily: 'monospace', fontWeight: 700, fontSize: '15px' }}>
+                        <div style={{ color: VIZ.muted, fontSize: '10px', marginBottom: '2px' }}>ELBO ℒ(q)</div>
+                        <div style={{ color: VIZ.truth, fontFamily: 'monospace', fontWeight: 700, fontSize: '15px' }}>
                             {elboVal.toFixed(2)}
                         </div>
                     </div>
                     <div>
-                        <div style={{ color: '#475569', fontSize: '10px', marginBottom: '2px' }}>KL(q ‖ p)</div>
-                        <div style={{ color: '#f87171', fontFamily: 'monospace', fontWeight: 700, fontSize: '15px' }}>
+                        <div style={{ color: VIZ.muted, fontSize: '10px', marginBottom: '2px' }}>KL(q ‖ p)</div>
+                        <div style={{ color: VIZ.error, fontFamily: 'monospace', fontWeight: 700, fontSize: '15px' }}>
                             {klVal.toFixed(2)}
                         </div>
                     </div>
                     <div style={{ gridColumn: '1 / -1' }}>
-                        <div style={{ color: '#475569', fontSize: '10px', marginBottom: '2px' }}>log P(X) (fixed)</div>
+                        <div style={{ color: VIZ.muted, fontSize: '10px', marginBottom: '2px' }}>log P(X) (fixed)</div>
                         <div style={{ color: 'white', fontFamily: 'monospace', fontWeight: 700, fontSize: '15px' }}>
                             {CEILING_HEIGHT.toFixed(2)}
                         </div>
@@ -389,7 +390,7 @@ export default function VariationalInference() {
             {/* Progress / Play */}
             <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <span style={{ color: VIZ.axis, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Illustration progress
                     </span>
                     <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>
@@ -415,7 +416,7 @@ export default function VariationalInference() {
                         style={{ width: '100%' }}
                     />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#475569', marginTop: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: VIZ.muted, marginTop: '4px' }}>
                     <span>Start</span>
                     <span>End of illustration →</span>
                 </div>
@@ -426,7 +427,7 @@ export default function VariationalInference() {
                 background: 'rgba(99,102,241,0.1)',
                 border: '1px solid rgba(99,102,241,0.2)',
                 borderRadius: '10px', padding: '12px',
-                fontSize: '11px', color: '#a5b4fc', lineHeight: 1.7,
+                fontSize: '11px', color: VIZ.variation, lineHeight: 1.7,
             }}>
                 {statusText}
             </div>
@@ -440,22 +441,22 @@ export default function VariationalInference() {
             }}>
                 <b style={{ color: 'white', display: 'block', marginBottom: '6px' }}>What you're seeing:</b>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <Row color="#3b82f6" label="True posterior P(Z|X) — fixed mountain" />
-                    <Row color="#f97316" label="Approximate Q(Z) — moldable hill" />
-                    <Row color="#ffffff" label="log P(X) — fixed ceiling (evidence)" outline />
-                    <Row color="#10b981" label="ELBO — box we maximize" />
-                    <Row color="#ef4444" label="KL — gap we shrink" />
+                    <Row color={VIZ.truth} label="True posterior P(Z|X) — fixed mountain" />
+                    <Row color={VIZ.focus} label="Approximate Q(Z) — moldable hill" />
+                    <Row color={VIZ.white} label="log P(X) — fixed ceiling (evidence)" outline />
+                    <Row color={VIZ.truth} label="ELBO — box we maximize" />
+                    <Row color={VIZ.error} label="KL — gap we shrink" />
                 </div>
             </div>
 
-            <p style={{ fontSize: '11px', color: '#475569', textAlign: 'center', fontStyle: 'italic' }}>
+            <p style={{ fontSize: '11px', color: VIZ.muted, textAlign: 'center', fontStyle: 'italic' }}>
                 Drag to orbit · slider or play to explore
             </p>
         </GlassPane>
     );
 
     return (
-        <SceneContainer backUrl={`/${topicId || 'probability'}`} controls={controls}>
+        <SceneContainer backUrl={`/${topicId || 'probability'}`} controls={controls} legend={[{ label: 'Target', meaning: 'illustrative unnormalized posterior shape', color: VIZ.truth, shape: 'line' }, { label: 'Approximation', meaning: 'illustrative Gaussian family', color: VIZ.focus, shape: 'line' }, { label: 'ELBO', meaning: 'illustrative lower-bound block', color: VIZ.truth, shape: 'square' }, { label: 'Gap', meaning: 'illustrative KL block', color: VIZ.error, shape: 'square' }]}>
             <SceneCanvas frameloop="always"
                 aria-label="Conceptual illustration of approximate inference and the ELBO–KL identity; values are illustrative"
                 shadows

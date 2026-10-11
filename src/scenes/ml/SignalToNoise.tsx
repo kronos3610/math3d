@@ -67,7 +67,7 @@ function SignalChart({ experiment, amplitude, noiseStd }: SignalChartProps) {
                 <title id={`${id}-title`}>Signal, noisy observations, and fitted polynomial</title>
                 <desc id={`${id}-description`}>
                     The cyan curve is the true signal A sin(πx). Filled circles are training observations;
-                    pink hollow squares are independent test observations. The dashed yellow curve is the fitted model.
+                    blue hollow squares are independent test observations. The dashed yellow curve is the fitted model.
                     {clipped ? ' Some observations or predictions extend beyond the vertical plot range.' : ''}
                 </desc>
                 <defs><clipPath id={`${id}-clip`}><rect x={left} y={top} width={right - left} height={bottom - top} /></clipPath></defs>
@@ -88,10 +88,10 @@ function SignalChart({ experiment, amplitude, noiseStd }: SignalChartProps) {
                 <g clipPath={`url(#${id}-clip)`}>
                     {experiment.testSamples.slice(0, 70).map((sample, i) => (
                         <rect key={i} x={sx(sample.x) - 2.5} y={sy(sample.y) - 2.5} width={5} height={5}
-                            fill="none" stroke="var(--lab-noise)" opacity={0.7} />
+                            fill="none" stroke="var(--viz-data)" opacity={0.7} />
                     ))}
                     {experiment.trainingSamples.map((sample, i) => (
-                        <circle key={i} cx={sx(sample.x)} cy={sy(sample.y)} r={3} fill="var(--text-primary)" opacity={0.8} />
+                        <circle key={i} cx={sx(sample.x)} cy={sy(sample.y)} r={3} fill="var(--viz-data)" opacity={0.8} />
                     ))}
                     <path d={path(x => signalValue(x, amplitude))} fill="none" stroke="var(--lab-truth)" strokeWidth={3} />
                     <path d={fitPath} fill="none" stroke="var(--lab-fit)" strokeWidth={2.5} strokeDasharray="8 5" />
@@ -102,8 +102,8 @@ function SignalChart({ experiment, amplitude, noiseStd }: SignalChartProps) {
             <figcaption className="lab-legend">
                 <span style={{ color: 'var(--lab-truth)' }}>━ True signal</span>
                 <span style={{ color: 'var(--lab-fit)' }}>┄ Polynomial fit</span>
-                <span>● Training observations</span>
-                <span style={{ color: 'var(--lab-noise)' }}>□ Test observations (70 shown)</span>
+                <span className="viz-data-text">● Training observations</span>
+                <span style={{ color: 'var(--viz-data)' }}>□ Test observations (70 shown)</span>
             </figcaption>
             {clipped && <p className="lab-note">Some observations or predictions extend beyond the plotted range. Error metrics include them.</p>}
         </figure>
@@ -138,7 +138,7 @@ export default function SignalToNoise() {
 
     return (
         <SceneContainer backUrl="/ml" explanation={explanation} defaultPanel="closed">
-            <ExperimentLayout title="Signal-to-Noise Ratio" subtitle="Separate the quality of the data from the quality of the fitted model.">
+            <ExperimentLayout legend={[{label:'Signal',meaning:'true generating curve',color:'var(--lab-truth)',shape:'line'},{label:'Dashed fit',meaning:'fitted polynomial',color:'var(--viz-focus)',shape:'line'},{label:'Circles / squares',meaning:'training / held-out observations',color:'var(--viz-data)',shape:'dot'}]} title="Signal-to-Noise Ratio" subtitle="Separate the quality of the data from the quality of the fitted model.">
                 <div className="learning-lab">
                 <SignalChart experiment={experiment} amplitude={amplitude} noiseStd={noiseStd} />
                 <div className="lab-controls">
