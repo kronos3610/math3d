@@ -1,0 +1,71 @@
+{
+  "status": "pass",
+  "build": "BUILD2",
+  "productionBase": "http://127.0.0.1:4280",
+  "sourceEdits": false,
+  "commits": false,
+  "viewports": {
+    "desktop": [
+      1440,
+      1000
+    ],
+    "mobile": [
+      390,
+      900
+    ]
+  },
+  "renderers": [
+    "Chrome genuine WebGL2 via SwiftShader",
+    "Chrome --disable-webgl"
+  ],
+  "cases": {
+    "predictionWorkflows": 16,
+    "MLModelControlsAndSemanticAxes": 16,
+    "reducedMotionPauseManualStepAndGraphicsQuality": 4,
+    "nonMLLearningPathJourneys": 12,
+    "additionalBayesMobileKeys": 2,
+    "additionalSVGEigenRevealProofs": 2,
+    "total": 52
+  },
+  "recordedFailures": {
+    "runtimeExceptions": 0,
+    "consoleErrors": 0,
+    "networkFailures": 0,
+    "horizontalOverflow": 0,
+    "unnamedNativeControls": 0,
+    "failedBooleanAssertions": []
+  },
+  "verified": [
+    "Four PredictPrompt adopters: keyboard Space selects radio, Enter locks; computed feedback receives focus; changing context clears feedback and selection; Skip reveals; dismissal survives reload; Reveal result unblocks the model.",
+    "Default reduced motion pauses gradient descent. Reveal stays at step 1 until manual Step. Explicit Resume plus Play advances; global Pause holds the step, with Step still available.",
+    "Light and Detailed quality both render; genuine WebGL canvas pixel width increases under Detailed at device scale factor 2; model metrics remain equal; quality preference persists.",
+    "Regression, SVM, decision trees and attention controls change the model/readouts; visible axes use neutral rgb(148,163,184).",
+    "Native SceneKey mobile disclosures on regression and Bayes open and close by keyboard, remain within viewport, and do not overlap controls.",
+    "All representative scene drawers close on Escape and restore focus to Open scene panel.",
+    "LA/calculus/probability Start path and in-scene Next work by keyboard and retain their path id; mobile initial drawer is closed.",
+    "All non-ML card thumbnails are static SVG, with multiple artworks per topic and no thumbnail canvas."
+  ],
+  "previewArtworksPerTopic": {
+    "linear-algebra": 2,
+    "calculus": 3,
+    "probability": 2
+  },
+  "coverageNotes": [
+    "Family preview motifs are intentionally reused; plan.md P6.2 asks for approximately ten motifs over 75 lessons, so this does not claim unique artwork for every lesson.",
+    "SVM, tree and attention do not instantiate native SceneKey; their captions/labels explain geometry instead. The common disclosure checks apply to actual regression and Bayes instances.",
+    "Disabled-WebGL Eigen uses aria-labelledby SVG; a supplementary direct check verifies Reveal grows the alignment map from 0 to 306 circles and updates its SVG description.",
+    "Targeted browser QA, not a physical-device GPU performance benchmark or formal WCAG certification."
+  ],
+  "evidence": {
+    "details": "Full per-case logs retained locally under /tmp/math-plan-interaction-*."
+  },
+  "additionalReviewEvidence": {
+    "exactA5LegacyBeforeManifest": "/tmp/math-plan-legacy-a5-before-manifest.json",
+    "exactA5LegacyBeforeScreenshots": 18,
+    "topicPreviewsBeforeAfterManifest": "/tmp/math-plan-topic-previews-manifest.json",
+    "topicPreviewsBeforeAfterScreenshots": 16,
+    "topicPreviewsBeforeBase": "http://127.0.0.1:4281",
+    "topicPreviewsAfterBuild": "BUILD3",
+    "topicPreviewChecks": "All first cards and their artwork visible; all after cards use native SVG without canvas; no recorded errors."
+  }
+}

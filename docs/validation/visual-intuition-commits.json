@@ -1,0 +1,692 @@
+{
+  "dependencySource": "Each clean Git archive uses the repository installed node_modules, from its unchanged package lock.",
+  "timingRetry": "Snapshot 7 hit a 5-second test timeout under simultaneous browser/archive load; it passed the entire suite with --maxWorkers=2. The first failure log and rerun are retained locally.",
+  "commits": [
+    {
+      "branch": "feat/intuition-baseline",
+      "base": "feat/public-beta-readiness",
+      "sha": "6b891280928d681a89d61a15cb9100bcaff831b7",
+      "title": "Confirm the visual-intuition baseline",
+      "number": 1,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 7.5
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.63,
+          "summary": [
+            "71 passed (71)",
+            "395 passed (395)"
+          ]
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.97
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-grammar",
+      "base": "feat/intuition-baseline",
+      "sha": "1fc6d88f026a309dac8b79983d67f6bcf88339f7",
+      "title": "Unify plot keys, semantic colours and shared scene geometry",
+      "number": 2,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 7.76
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.73,
+          "summary": [
+            "75 passed (75)",
+            "405 passed (405)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.05
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-descent",
+      "base": "feat/intuition-grammar",
+      "sha": "e9adb584f384519c4c1e19f07c7ad6e12fc9a090",
+      "title": "Expose gradient-descent learning rates and starting points",
+      "number": 3,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 7.77
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.9,
+          "summary": [
+            "75 passed (75)",
+            "408 passed (408)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.45
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-integration-slices",
+      "base": "feat/intuition-descent",
+      "sha": "51c7053b903c1f34f317b59b5a31d7486ccc1419",
+      "title": "Show Riemann and Lebesgue estimates beside their slices",
+      "number": 4,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.54
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 11.04,
+          "summary": [
+            "75 passed (75)",
+            "412 passed (412)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 10.25
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-monte-carlo",
+      "base": "feat/intuition-integration-slices",
+      "sha": "97cd803f12d4a24ff860ccfea10f73fdb9b526a9",
+      "title": "Make Monte Carlo reproducible and show error convergence",
+      "number": 5,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 15.37
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 15.1,
+          "summary": [
+            "77 passed (77)",
+            "415 passed (415)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.03
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 12.22
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-derivatives",
+      "base": "feat/intuition-monte-carlo",
+      "sha": "46631e0b61434cf7253f73f996906b2c2dbc6964",
+      "title": "Link surface slices, secants and tangent slopes",
+      "number": 6,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 19.44
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 12.78,
+          "summary": [
+            "77 passed (77)",
+            "418 passed (418)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 10.33
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-accumulation",
+      "base": "feat/intuition-derivatives",
+      "sha": "cf31c42b36eef05755111237ecc515521e855b20",
+      "title": "Connect signed-area accumulation with its slope",
+      "number": 7,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 14.41
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 40.34,
+          "summary": [
+            "78 passed (78)",
+            "423 passed (423)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 10.04
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-eigenvalues",
+      "base": "feat/intuition-accumulation",
+      "sha": "cb9e7ee216dde3a066c395c5f6adfe21d022256d",
+      "title": "Let learners find eigen-directions with an alignment map",
+      "number": 8,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 10.68
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 46.31,
+          "summary": [
+            "78 passed (78)",
+            "426 passed (426)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.03
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 10.29
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-distributions",
+      "base": "feat/intuition-eigenvalues",
+      "sha": "ba61532d4c5a9030b08bdbdaf528124ac23bc08c",
+      "title": "Manipulate Gaussian spread, correlation and seeded samples",
+      "number": 9,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.78
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 45.23,
+          "summary": [
+            "80 passed (80)",
+            "431 passed (431)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.05
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 11.16
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-boundaries",
+      "base": "feat/intuition-distributions",
+      "sha": "b6209565bdfcecfdd717d0c919189b44636836e0",
+      "title": "Move 3D decision boundaries and count their mistakes",
+      "number": 10,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 11.43
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 38.23,
+          "summary": [
+            "82 passed (82)",
+            "435 passed (435)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.1
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-subspace-input",
+      "base": "feat/intuition-boundaries",
+      "sha": "358aed16979fb615bda658b9ddcfb019455d0352",
+      "title": "Drive input vectors through orthogonal subspace components",
+      "number": 11,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.06
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 32.13,
+          "summary": [
+            "84 passed (84)",
+            "438 passed (438)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.08
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-predict",
+      "base": "feat/intuition-subspace-input",
+      "sha": "20164b20dd623d168b9f81c852366b00dfb55d41",
+      "title": "Reveal computed Bayes and bias-variance results after a prediction",
+      "number": 12,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.05
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 28.96,
+          "summary": [
+            "84 passed (84)",
+            "439 passed (439)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.11
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-sigma-algebra",
+      "base": "feat/intuition-predict",
+      "sha": "30840885c045d65912d219fe721947bba723d87e",
+      "title": "Expose sigma-algebra atoms and closure operations",
+      "number": 13,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.97
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 15.03,
+          "summary": [
+            "84 passed (84)",
+            "439 passed (439)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.04
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 18.91
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-lebesgue-measure",
+      "base": "feat/intuition-sigma-algebra",
+      "sha": "74cbed738baaee20a3d728095fd739c29c7b6eac",
+      "title": "Expose measure-covering controls and live estimates",
+      "number": 14,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 10.66
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 16.41,
+          "summary": [
+            "84 passed (84)",
+            "439 passed (439)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.04
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 16.35
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-linear-discriminants",
+      "base": "feat/intuition-lebesgue-measure",
+      "sha": "b56845d73d63cf7d57a07928caecb2497fbd05ce",
+      "title": "Keep discriminant controls and query points visible",
+      "number": 15,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.0
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 18.13,
+          "summary": [
+            "85 passed (85)",
+            "442 passed (442)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.09
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 15.2
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-lp-regularization",
+      "base": "feat/intuition-linear-discriminants",
+      "sha": "ac6d511fdbb5d087fcdbf68fa36121f364c46d8d",
+      "title": "Show the live regularization budget and feasible region",
+      "number": 16,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.31
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 12.03,
+          "summary": [
+            "85 passed (85)",
+            "442 passed (442)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.92
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-lagrange-multipliers",
+      "base": "feat/intuition-lp-regularization",
+      "sha": "277ccd6e466d3499e934921683e95e45aea28ae2",
+      "title": "Link constrained positions to objective and multiplier",
+      "number": 17,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.05
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 12.79,
+          "summary": [
+            "85 passed (85)",
+            "442 passed (442)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.03
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 11.05
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-log-likelihood",
+      "base": "feat/intuition-lagrange-multipliers",
+      "sha": "cb97e1cdd2ef211a67d463933e13244b8ce18cca",
+      "title": "Show Gaussian likelihood and log scores beside their controls",
+      "number": 18,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.77
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 14.05,
+          "summary": [
+            "85 passed (85)",
+            "442 passed (442)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.7
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-probability-likelihood",
+      "base": "feat/intuition-log-likelihood",
+      "sha": "91fdc6a2c8b435e018b480cd7c3f37509537ed85",
+      "title": "Separate the varied axes for probability and likelihood",
+      "number": 19,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.54
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 14.37,
+          "summary": [
+            "85 passed (85)",
+            "442 passed (442)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 11.05
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-jacobian-hessian",
+      "base": "feat/intuition-probability-likelihood",
+      "sha": "fb4436e88bf7461399deca97d9db94d05958e86e",
+      "title": "Link the surface point to its gradient and Hessian",
+      "number": 20,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 10.58
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 14.98,
+          "summary": [
+            "85 passed (85)",
+            "442 passed (442)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.58
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-taylor-remainder",
+      "base": "feat/intuition-jacobian-hessian",
+      "sha": "cc8448dfc770ea6a03c4a7dba16af91826128ca6",
+      "title": "Expose Taylor approximation controls and live remainder",
+      "number": 21,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.7
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 14.64,
+          "summary": [
+            "86 passed (86)",
+            "454 passed (454)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.9
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-paths",
+      "base": "feat/intuition-taylor-remainder",
+      "sha": "3269aed0119534de18b1af4e9be8b83cc2431a46",
+      "title": "Surface learning paths on every topic page",
+      "number": 22,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 8.82
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 14.47,
+          "summary": [
+            "86 passed (86)",
+            "455 passed (455)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.4
+        }
+      }
+    },
+    {
+      "branch": "feat/intuition-previews",
+      "base": "feat/intuition-paths",
+      "sha": "68541e93b4c2aed789b2f2fc5d8ba97968268d67",
+      "title": "Give lesson cards ten distinct static visual previews",
+      "number": 23,
+      "node": "v24.21.0",
+      "checks": {
+        "lint": {
+          "exit_code": 0,
+          "elapsed_seconds": 11.4
+        },
+        "tests": {
+          "exit_code": 0,
+          "elapsed_seconds": 15.04,
+          "summary": [
+            "86 passed (86)",
+            "455 passed (455)"
+          ]
+        },
+        "palette": {
+          "exit_code": 0,
+          "elapsed_seconds": 0.02
+        },
+        "build": {
+          "exit_code": 0,
+          "elapsed_seconds": 9.77
+        }
+      }
+    }
+  ]
+}

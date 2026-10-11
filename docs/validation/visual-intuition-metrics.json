@@ -1,0 +1,34 @@
+{
+  "baselineCommit": "a5b3c9d",
+  "method": "Non-test .ts/.tsx files; counts of #[0-9a-fA-F]{3,8}\\b, style={{ and challenge= matches. The final measurement corrects the original source-inferred literal/prop counts in the plan.",
+  "before": {
+    "sceneHexLiterals": 1046,
+    "shared3dHexLiterals": 29,
+    "sceneInlineStyles": 723,
+    "challengeProps": 14,
+    "predictAdopters": 0,
+    "noWebglGraphics": 49,
+    "noWebglGuideOnly": 26,
+    "learningPaths": 11,
+    "familiesAtLeast5": 1
+  },
+  "after": {
+    "sceneHexLiterals": 197,
+    "shared3dHexLiterals": 0,
+    "sceneInlineStyles": 241,
+    "challengeProps": 34,
+    "predictAdopters": 4,
+    "noWebglGraphics": 67,
+    "noWebglGuideOnly": 8,
+    "learningPaths": 16,
+    "familiesAtLeast5": 10
+  },
+  "targets": {
+    "sceneHexLiteralsLessThan": 400,
+    "shared3dHexLiterals": 0,
+    "sceneInlineStylesLessThan": 250,
+    "challengesOrPromptsAtLeast": 25,
+    "noWebglGuideOnlyAtMost": 10,
+    "familiesAtLeast5": 10
+  }
+}

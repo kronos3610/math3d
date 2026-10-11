@@ -1,0 +1,315 @@
+{
+  "productionUrl": "http://127.0.0.1:4280",
+  "phase": "Final production Build3; all targeted recaptures complete",
+  "rubricNotes": "Native mobile keys intentionally collapse to the visible Key summary with object names, as specified in P1.2; opening meanings is keyboard accessible. Scores assess the six pedagogical criteria using screenshots and controls, not formal WCAG certification. Desktop 1440\u00d71000/mobile 390\u00d7900; genuine WebGL2 via ANGLE SwiftShader and disabled WebGL.",
+  "tenFamilyScorecard": [
+    {
+      "lesson": "ml/regression-* (fit representative)",
+      "before": [
+        0.5,
+        1,
+        1,
+        0.5,
+        1,
+        1
+      ],
+      "beforeTotal": 5,
+      "after": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "afterTotal": 6,
+      "evidence": "Native semantic key identifies observations, target, selected point and residual gaps. Existing scenario/observation/solver controls, computed train/test errors, onstage challenge and numeric SVG projection remain functional."
+    },
+    {
+      "lesson": "probability/bayes-theorem",
+      "before": [
+        1,
+        1,
+        1,
+        0.5,
+        0,
+        1
+      ],
+      "beforeTotal": 4.5,
+      "after": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "afterTotal": 6,
+      "evidence": "Population key and natural-frequency levers remain visible; the default starts with all 1,000 emails. A computed and skippable keyboard prediction precedes flagged-result reveal; context changes reset feedback, and dismissal persists."
+    },
+    {
+      "lesson": "linear-algebra/matrix-transformations",
+      "before": [
+        0.5,
+        1,
+        1,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "beforeTotal": 4,
+      "after": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "afterTotal": 6,
+      "evidence": "Native key identifies original cube, transformed cube and selected corner. Rotation/shear/scale changes update actual matrix/determinant/corner displacement; both renderer label layouts are readable at 390px."
+    },
+    {
+      "lesson": "linear-algebra/vector-operations",
+      "before": [
+        0.5,
+        1,
+        0.5,
+        0.5,
+        0,
+        0
+      ],
+      "beforeTotal": 2.5,
+      "after": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "afterTotal": 6,
+      "evidence": "Visible A/B/sum readouts and six sliders update the head-to-tail diagram. Input/current/output roles are distinct and named; native equal-model projection, cancellation challenge and Reset work."
+    },
+    {
+      "lesson": "linear-algebra/eigenvalues",
+      "before": [
+        0.5,
+        1,
+        0.5,
+        0,
+        0,
+        1
+      ],
+      "beforeTotal": 3,
+      "after": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "afterTotal": 6,
+      "evidence": "Direction cloud, original/output arrows and power path use computed matrix/residual values. Scale/shear/rotation modes and a skippable computed prediction remain unsolved initially. Actual direction-cloud fitting makes portrait markers readable; keyboard map/renderer fallback work."
+    },
+    {
+      "lesson": "calculus/riemann-vs-lebesgue",
+      "before": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "beforeTotal": 1,
+      "after": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "afterTotal": 6,
+      "evidence": "Linked shared-floor 3D bars and projected fallback show both live sums and errors. Partition/refinement controls, semantic key and estimate/refinement challenge are visible; mobile projected captions fit."
+    },
+    {
+      "lesson": "probability/monte-carlo",
+      "before": [
+        0,
+        0,
+        0.5,
+        0,
+        0,
+        0
+      ],
+      "beforeTotal": 0.5,
+      "after": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "afterTotal": 6,
+      "evidence": "Seeded batches, reveal/budget/play/restart/new-run controls tie inside counts to pi estimate and actual log-log error. Shape and color identify purple inside cubes versus blue outside spheres; native projection preserves3D membership, and the error plot is available without WebGL."
+    },
+    {
+      "lesson": "calculus/gradient-descent-calc",
+      "before": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "beforeTotal": 0,
+      "after": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "afterTotal": 6,
+      "evidence": "Starting point and rate presets lead to computed position/loss/norm/step readouts and a skippable next-step prediction. Step/replay/manual controls remain usable when motion is paused; bowl fits 390px and native projection preserves update mathematics."
+    },
+    {
+      "lesson": "calculus/derivatives",
+      "before": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "beforeTotal": 0,
+      "after": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "afterTotal": 6,
+      "evidence": "Movable evaluation point and secant offset link actual curve/section, secant and tangent to derivative/secant/error values. Named key, challenge and keyboard-operable native controls/projection work on both renderers."
+    },
+    {
+      "lesson": "calculus/integrals",
+      "before": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "beforeTotal": 0,
+      "after": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "afterTotal": 6,
+      "evidence": "Both linked native charts fit stage dimensions. Start/end/partition controls update integral, area sum and error; the curve, signed area, accumulated function and endpoint tangent are named, with a sign/refinement challenge."
+    }
+  ],
+  "atLeast5Before": 1,
+  "atLeast5After": 10,
+  "allRoutes": {
+    "cases": 300,
+    "routes": 75,
+    "firstRangeChanges": 252,
+    "runtimeErrors": 0,
+    "horizontalOverflows": 0,
+    "unnamedControls": 0,
+    "webglGraphicRoutes": 75,
+    "noWebglGraphicRoutes": 67,
+    "noWebglGuideOnlyRoutes": [
+      "linear-algebra/fundamental-subspaces",
+      "linear-algebra/banach-tarski",
+      "calculus/partial-derivatives",
+      "calculus/riemann-integral",
+      "probability/variational-inference",
+      "ml/measure-theory-ml",
+      "ml/lagrange-constraints",
+      "ml/gaussian-mixture"
+    ]
+  },
+  "focusedBuild2Cases": 52,
+  "ownedModeCases": 88,
+  "numericalChecks": [
+    "All Monte Carlo budgets (100, 500, 2,000 and 10,000) reproduce identical same-seed estimates; Restart resets the revealed count to zero.",
+    "Native Decision Boundary point titles and mistake rings independently match the misclassified readouts for all eight dataset/boundary combinations.",
+    "Gaussian density heights stay finite at sigmaX=sigmaY=0.6, rho=0.9 (peak12.745); equal-density contour curves show the surface. Top view preserves the same sample statistics and membership.",
+    "Subspace zero/default/large input cases have finite values and zero reconstruction and orthogonality readouts. The final camera change exposes the row plane without changing coordinates or mathematics."
+  ],
+  "evidence": {
+    "baseline": "visual-intuition-baseline.json",
+    "fullRoutes": "visual-intuition-routes.json",
+    "workflows": "visual-intuition-interactions.json",
+    "pairs": [
+      "visual-intuition-before-after-no-webgl-desktop-1.jpg",
+      "visual-intuition-before-after-no-webgl-desktop-2.jpg",
+      "visual-intuition-before-after-no-webgl-mobile-1.jpg",
+      "visual-intuition-before-after-no-webgl-mobile-2.jpg",
+      "visual-intuition-before-after-webgl-desktop-1.jpg",
+      "visual-intuition-before-after-webgl-desktop-2.jpg",
+      "visual-intuition-before-after-webgl-mobile-1.jpg",
+      "visual-intuition-before-after-webgl-mobile-2.jpg",
+      "visual-intuition-pairs-extra-pilots-no-webgl-desktop.jpg",
+      "visual-intuition-pairs-extra-pilots-no-webgl-mobile.jpg",
+      "visual-intuition-pairs-extra-pilots-webgl-desktop.jpg",
+      "visual-intuition-pairs-extra-pilots-webgl-mobile.jpg",
+      "visual-intuition-pairs-legacy-desktop.jpg",
+      "visual-intuition-pairs-legacy-mobile.jpg",
+      "visual-intuition-pairs-topic-previews-desktop.jpg",
+      "visual-intuition-pairs-topic-previews-mobile.jpg",
+      "visual-intuition-pairs-topics-desktop.jpg",
+      "visual-intuition-pairs-topics-mobile.jpg"
+    ],
+    "supplementalLogs": "Full browser logs and individual screenshot PNGs retained in local /tmp/math-plan-* files."
+  },
+  "limitations": [
+    "Eight routes without WebGL provide guides, controls and a status notice without a graphical fallback; the plan target of at most ten is met.",
+    "Software GPU browser checks do not establish physical-device frame rates or formal WCAG conformance.",
+    "Family preview motifs are intentionally reused across related lessons; multiple SVG artworks exist per topic, rather than a unique image per lesson."
+  ],
+  "interactiveWorkflowCases": {
+    "predictionWorkflows": 16,
+    "MLModelControlsAndSemanticAxes": 16,
+    "reducedMotionPauseManualStepAndGraphicsQuality": 4,
+    "nonMLLearningPathJourneys": 12,
+    "additionalBayesMobileKeys": 2,
+    "additionalSVGEigenRevealProofs": 2,
+    "total": 52
+  },
+  "finalLiteCases": 4,
+  "finalLegacyScreenshotCases": 18,
+  "finalTopicScreenshotCases": 8,
+  "totalFunctionalCases": 496,
+  "ownedNumericalAndUIVerification": {
+    "testFiles": 9,
+    "tests": 16,
+    "status": "pass",
+    "strictTypeScript": "pass",
+    "scopedESLint": "pass",
+    "evidence": [
+      "/tmp/math-plan-owned-final-tests.log",
+      "/tmp/math-plan-owned-final-tsc.log",
+      "/tmp/math-plan-owned-final-eslint.log"
+    ]
+  },
+  "remainingMaterialBrowserBugs": [],
+  "complete": true
+}

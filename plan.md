@@ -1,6 +1,6 @@
 # Plan: make Math3D a visual, intuitive explanation tool
 
-Status: implementation in progress · Branch base: `feat/public-beta-readiness` · Written against commit `a5b3c9d`
+Status: implemented and validated; review series [PR #35–#58](docs/validation/visual-intuition-review.md) published · Branch base: `feat/public-beta-readiness` · Written against commit `a5b3c9d`
 
 ## 0. How to read this document
 
@@ -56,11 +56,13 @@ A lesson is scored 0/1/½ on each line. This is the yardstick for every phase be
 | Lessons scoring ≥ 5/6 on the rubric (✓ = 1, ~ = ½; of the 10 assessed) | 1 (RegressionLab; browser-confirmed) | 10 |
 | Lessons with **zero** interactive state | 5 (`derivatives`, `integrals`, `fundamental-subspaces-lite`, `decision-boundaries`, `distributions`) | 0 |
 | Lessons using the shared always-visible key (`SceneAxisKey`) | 3 (full R1 audit happens in P0) | all non-VisualLab lessons |
-| Hex literals in `src/scenes` | 1029 | < 400 (palette tokens replace them as scenes are touched) |
-| Hex literals in `src/components/3d` | 32 | 0 outside `palette.ts` |
+| Hex literals in non-test `src/scenes` (3–8 hex digits) | 1046 | < 400 (palette tokens replace them as scenes are touched) |
+| Hex literals in non-test `src/components/3d` | 29 | 0 outside `palette.ts` |
 | Inline `style={{…}}` objects in scenes | 723 (722 in non-`VisualLab` scenes) | < 250 |
 | Lessons without a non-WebGL fallback | 26 of 75 (README) | ≤ 10 |
-| `challenge=` / predict prompts in scenes | 11 `challenge=` props, 0 predict prompts | ≥ 25 combined |
+| `challenge=` / predict prompts in scenes | 14 `challenge=` matches, 0 predict prompts | ≥ 25 combined |
+
+The final reproducible count in [the metrics report](docs/validation/visual-intuition-metrics.json) corrects the original literal and prop counts; Appendix A keeps the historical source notes.
 
 ---
 
@@ -417,14 +419,14 @@ Add `preview?: 'surface' | 'vectors' | 'bars' | 'bell' | 'scatter' | 'tree' | 'n
 
 ### P7 — Release gates (every PR)
 
-- [ ] `npm run lint` clean · `npm test` green · `npm run build` green.
-- [ ] Manual check, desktop **and** 390 px: first paint shows key + lever + readout without opening the drawer.
-- [ ] WebGL2 off: lesson still meaningful (SVG fallback) or shows the guide; no blank stage.
-- [ ] Keyboard only: reach every control, operate sliders with arrow keys, `Esc` closes the drawer, focus is visible.
-- [ ] Reduced motion + "Pause motion": nothing auto-plays; manual control still works.
-- [ ] Light vs Detailed graphics both fine.
-- [ ] Guide updated (`meaning`, `steps`, `observe`, `limitations`) and `lessonGuides.test.ts` passes (2–3 steps each; each step > 15 chars).
-- [ ] Screenshot before/after attached to the PR.
+- [x] `npm run lint` clean · `npm test` green · `npm run build` green.
+- [x] Manual check, desktop **and** 390 px: first paint shows key + lever + readout without opening the drawer.
+- [x] WebGL2 off: lesson still meaningful (SVG fallback) or shows the guide; no blank stage.
+- [x] Keyboard only: reach every control, operate sliders with arrow keys, `Esc` closes the drawer, focus is visible.
+- [x] Reduced motion + "Pause motion": nothing auto-plays; manual control still works.
+- [x] Light vs Detailed graphics both fine.
+- [x] Guide updated (`meaning`, `steps`, `observe`, `limitations`) and `lessonGuides.test.ts` passes (2–3 steps each; each step > 15 chars).
+- [x] Screenshot before/after attached to each PR; the paired galleries and complete review order are linked below.
 
 ---
 
@@ -497,6 +499,29 @@ A lesson PR is done when: rubric R1–R6 all ✓ (or ~ with a written reason), P
 - `STATUS.md` is untracked orchestrator metadata; keep out of commits.
 - `Math.random()` at module scope in `Distributions` and `DecisionBoundaries` makes their output differ on every load (addressed in 2.5/2.7).
 - `README.md` should be updated at the end of P2/P6 (feature list, lesson counts, fallback counts).
+
+---
+
+## 9. Implementation record
+
+P0–P6 are implemented on `feat/visual-intuition-plan`. The work has 23 scoped review branches, including one per legacy migration, followed by a release-evidence branch. All lesson URLs remain stable.
+
+| Measure | Before | Implemented | Target |
+|---|---:|---:|---:|
+| Assessed families scoring at least 5/6 | 1/10 | 10/10 (all 6/6) | 10/10 |
+| Dead lessons without an interactive lever | 5 | 0 | 0 |
+| Scene hex literals (non-test, 3–8 digits) | 1046 | 197 | < 400 |
+| Shared 3D hex literals outside the palette | 29 | 0 | 0 |
+| Inline scene style objects | 723 | 241 | < 250 |
+| Challenges / prediction adopters | 14 / 0 | 34 / 4 | ≥ 25 combined |
+| Graphic lessons without WebGL2 | 49/75 | 67/75 | ≥ 65/75 |
+| Learning paths | 11 | 16 | 5 added |
+
+Resolved decisions: D1 neutral named axes; D2 signed accumulation; D3 surface plus slice/secant; D4 improve both existing routes; D5 local prediction dismissal; D6 use the existing release branch `feat/public-beta-readiness`; D7 include ten static preview motifs. The output role is `#8b5cf6` after the proposed lighter violet failed color-vision distinguishability. The palette script reports no failures.
+
+The optional anisotropic-bowl control (2.1b) and exact cubic eigenpair solver (3b) remain stretch work. The eigen alignment map is sampled and does not claim exact eigen-lines. Eight older lessons retain a guide and controls without a graphical non-WebGL fallback, meeting the plan’s ≤ 10 limit.
+
+Validation and screenshot evidence live in [docs/validation/visual-intuition.md](docs/validation/visual-intuition.md). `STATUS.md` remains untracked and untouched.
 
 ---
 
