@@ -126,6 +126,11 @@ export const learningPaths: readonly LearningPath[] = [
         description: 'Follow partial derivatives into gradient descent, then connect the learning rule to a layered model.',
         lessons: [calculus('partial-derivatives'), calculus('gradient-descent-calc'), ml('gradient-descent-ml'), ml('neural-networks')],
     },
+    { id: 'la-foundations', title: 'Linear algebra foundations', description: 'Explore coordinates, add moves, transform space and find directions a matrix preserves.', lessons: ['simple-test','vector-operations','matrix-transformations','eigenvalues','fundamental-subspaces'].map(linearAlgebra) },
+    { id: 'calculus-core', title: 'From slopes to optimization', description: 'Trace a slice, compare partial slopes and curvature, then choose an optimization step.', lessons: ['derivatives','partial-derivatives','jacobian-hessian','gradient-descent-calc'].map(calculus) },
+    { id: 'calculus-accumulation', title: 'Accumulation and approximation', description: 'Connect signed area to slope, refine a sum and compare local polynomial approximations.', lessons: ['integrals','riemann-integral','taylor-remainder'].map(calculus) },
+    { id: 'measure-theory', title: 'Two ways to measure', description: 'Move from partitions to level sets, measurable events, coverings and the limits of ordinary volume.', lessons: [calculus('riemann-integral'),calculus('riemann-vs-lebesgue'),calculus('sigma-algebra'),calculus('lebesgue-measure'),linearAlgebra('banach-tarski')] },
+    { id: 'probability-core', title: 'From samples to inference', description: 'Sample a distribution, estimate with randomness, condition on evidence and compare inference objectives.', lessons: ['distributions','monte-carlo','bayes-theorem','probability-vs-likelihood','log-likelihood','variational-inference'].map(probability) },
     ...mlVisualPaths,
 ];
 
@@ -254,4 +259,9 @@ export function hasLessonConnections(topicId: string, subtopicId: string): boole
     if (!resolveLesson(reference)) return false;
     const relationships = getLessonRelationships(reference);
     return relationships.prerequisites.length > 0 || relationships.related.length > 0 || getLearningPaths(reference).length > 0;
+}
+
+/** Include cross-topic sequences only where at least one lesson belongs to this topic. */
+export function getTopicLearningPaths(topicId: string): readonly LearningPath[] {
+    return learningPaths.filter(path => path.lessons.some(lesson => lesson.topicId === topicId));
 }

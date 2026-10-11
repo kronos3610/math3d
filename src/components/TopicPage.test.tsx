@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import TopicPage from './TopicPage';
-import { learningPaths } from '../data/mlCurriculum';
+import { getTopicLearningPaths } from '../data/mlCurriculum';
 import { getTopicById } from '../data/topics';
 
 vi.mock('../utils/lazy', () => ({
@@ -43,7 +43,7 @@ test('the full curriculum has labeled search, complete family anchors, and learn
         expect(heading?.tagName).toBe('H3');
         expect(heading?.getAttribute('tabindex')).toBe('-1');
     }
-    expect(container.querySelectorAll('.ml-path-start')).toHaveLength(learningPaths.length);
+    expect(container.querySelectorAll('.ml-path-start')).toHaveLength(getTopicLearningPaths('ml').length);
 });
 
 test('search supports acronyms and independent words, updates URL, and leaves paths available', () => {
@@ -56,7 +56,7 @@ test('search supports acronyms and independent words, updates URL, and leaves pa
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'SVM kernel' } });
     expect(screen.getByRole('heading', { name: 'Kernel SVM: Transforming Feature Space' })).toBeDefined();
     expect(screen.queryByRole('heading', { name: 'Hidden Markov Models' })).toBeNull();
-    expect(screen.getAllByRole('link', { name: /Start path/ })).toHaveLength(learningPaths.length);
+    expect(screen.getAllByRole('link', { name: /Start path/ })).toHaveLength(getTopicLearningPaths('ml').length);
 });
 
 test('section changes preserve search and clear preserves the selected section', () => {
@@ -78,7 +78,7 @@ test('an unmatched search announces zero results and recovers without losing rou
     expect(within(screen.getByRole('search')).getByRole('status').textContent).toContain('0 of');
     expect(screen.getByText(/No lessons match this search/)).toBeDefined();
     expect(screen.queryByRole('navigation', { name: 'Machine learning families' })).toBeNull();
-    expect(screen.getAllByRole('link', { name: /Start path/ })).toHaveLength(learningPaths.length);
+    expect(screen.getAllByRole('link', { name: /Start path/ })).toHaveLength(getTopicLearningPaths('ml').length);
     fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
     expect(screen.queryByText(/No lessons match this search/)).toBeNull();
     expect(screen.getByRole('heading', { name: 'Linear Regression' })).toBeDefined();
@@ -89,4 +89,15 @@ test('non-ML topics retain their direct lesson grid', () => {
     expect(screen.queryByRole('searchbox')).toBeNull();
     expect(screen.queryByText('Jump to a family')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Derivatives' })).toBeDefined();
+});
+
+test('each topic exposes paths with their topic lessons and preserves the path query', () => {
+    for (const topicId of ['linear-algebra','calculus','probability']) {
+        const { unmount, container } = renderTopic(`/${topicId}`);
+        expect(screen.getByRole('heading', { name: 'Learning paths' })).toBeDefined();
+        const links = container.querySelectorAll<HTMLAnchorElement>('.ml-path-start');
+        expect(links.length).toBe(getTopicLearningPaths(topicId).length);
+        for (const link of links) expect(link.getAttribute('href')).toContain('?path=');
+        unmount();
+    }
 });
