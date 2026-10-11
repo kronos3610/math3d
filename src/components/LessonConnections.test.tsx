@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, expect, test, vi } from 'vitest';
 import LessonConnections from './LessonConnections';
 import TopicPage from './TopicPage';
-import { learningPaths } from '../data/mlCurriculum';
+import { getTopicLearningPaths } from '../data/mlCurriculum';
 
 // UI tests validate navigation without loading a scene or WebGL renderer.
 vi.mock('../utils/lazy', () => ({
@@ -63,7 +63,7 @@ test('ML section links filter canonical cards while other topic pages stay ungro
     expect(screen.queryByRole('region', { name: 'Algorithms' })).toBeNull();
     expect(screen.getByRole('region', { name: 'Core Concepts' })).toBeDefined();
     expect(screen.getAllByText('Interactive experiment')).toHaveLength(2);
-    expect(screen.getAllByRole('link', { name: /Start path/ })).toHaveLength(learningPaths.length);
+    expect(screen.getAllByRole('link', { name: /Start path/ })).toHaveLength(getTopicLearningPaths('ml').length);
     cleanup();
     render(<MemoryRouter initialEntries={['/calculus']}><Routes><Route path="/:topicId" element={<TopicPage />} /></Routes></MemoryRouter>);
     expect(screen.queryByRole('navigation', { name: 'Machine learning sections' })).toBeNull();

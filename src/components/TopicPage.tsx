@@ -1,7 +1,8 @@
 import { useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { getTopicById, type Topic, type Subtopic } from '../data/topics';
-import { learningPaths, lessonUrl, mlFoundations, mlSections, resolveLesson } from '../data/mlCurriculum';
+import { lessonUrl, mlFoundations, mlSections, resolveLesson } from '../data/mlCurriculum';
+import LearningPaths from './LearningPaths';
 import SubtopicCardPreview from './SubtopicCardPreview';
 
 const ML_SEARCH_ALIASES: Readonly<Record<string, string>> = {
@@ -141,30 +142,7 @@ function MLCurriculum({ topic, selectedSection }: { topic: Topic; selectedSectio
                 </section>
             ))}
 
-            <section id="ml-learning-paths" className="ml-learning-paths" aria-labelledby="ml-paths-title">
-                <div className="ml-section-heading">
-                    <h2 id="ml-paths-title">Learning paths</h2>
-                    <p>Follow a sequence from the mathematical foundations to a model or experiment. Open the Learn panel in any lesson to continue.</p>
-                </div>
-                <div className="ml-path-grid">
-                    {learningPaths.map(path => (
-                        <article key={path.id} className="ml-path-card">
-                            <h3>{path.title}</h3>
-                            <p>{path.description}</p>
-                            <Link className="ml-path-start" to={lessonUrl(path.lessons[0], path.id)}>Start path <span aria-hidden="true">→</span></Link>
-                            <details>
-                                <summary>{path.lessons.length} lessons · View sequence</summary>
-                                <ol>
-                                    {path.lessons.map(reference => {
-                                        const lesson = resolveLesson(reference);
-                                        return lesson ? <li key={lessonUrl(reference)}><Link to={lessonUrl(reference, path.id)}>{lesson.title}<span>{lesson.topicTitle}</span></Link></li> : null;
-                                    })}
-                                </ol>
-                            </details>
-                        </article>
-                    ))}
-                </div>
-            </section>
+            <LearningPaths topicId={topic.id} />
         </>
     );
 }
@@ -205,9 +183,9 @@ export default function TopicPage() {
             {topic.id === 'ml' ? (
                 <MLCurriculum topic={topic} selectedSection={searchParams.get('section')} />
             ) : (
-                <div className="subtopic-grid">
+                <><div className="subtopic-grid">
                     {topic.subtopics.map((subtopic, index) => <LessonCard key={subtopic.id} topic={topic} subtopic={subtopic} index={index} />)}
-                </div>
+                </div><LearningPaths topicId={topic.id} /></>
             )}
         </div>
     );

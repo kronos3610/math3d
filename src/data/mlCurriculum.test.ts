@@ -52,7 +52,7 @@ describe('ML curriculum integrity', () => {
         expect(lessonUrl(noise, 'network-optimization')).toBe('/ml/signal-to-noise');
         expect(lessonUrl(noise, 'missing')).toBe('/ml/signal-to-noise');
         expect(getPathNavigation('missing', noise)).toBeUndefined();
-        expect(getLearningPaths({ topicId: 'probability', subtopicId: 'distributions' }).map(path => path.id)).toEqual(['generalization', 'mixture-estimation']);
+        expect(getLearningPaths({ topicId: 'probability', subtopicId: 'distributions' }).map(path => path.id)).toEqual(['generalization', 'mixture-estimation', 'probability-core']);
     });
 
     it('links mathematical foundations back to ML without duplicate references', () => {
@@ -63,6 +63,6 @@ describe('ML curriculum integrity', () => {
         expect(new Set(relationships.related.map(reference => lessonUrl(reference))).size).toBe(relationships.related.length);
         expect(hasLessonConnections(distributions.topicId, distributions.subtopicId)).toBe(true);
         expect(hasLessonConnections('ml', 'missing')).toBe(false);
-        expect(hasLessonConnections('linear-algebra', 'simple-test')).toBe(false);
+        expect(hasLessonConnections('linear-algebra', 'simple-test')).toBe(true);
     });
 });
