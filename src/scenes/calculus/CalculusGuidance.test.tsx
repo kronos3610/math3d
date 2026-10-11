@@ -43,9 +43,6 @@ test('switching from sine to logarithm resets an invalid expansion center and re
     render(<MemoryRouter initialEntries={['/calculus/taylor-remainder']}>
         <Routes><Route path="/:topicId/:subtopicId" element={<TaylorRemainder />} /></Routes>
     </MemoryRouter>);
-    const openPanel = screen.queryByRole('button', { name: 'Open scene panel' });
-    if (openPanel) fireEvent.click(openPanel);
-    fireEvent.click(screen.getByRole('tab', { name: 'Controls' }));
     const center = screen.getByRole('slider', { name: 'Center' }) as HTMLInputElement;
     const functionSelector = screen.getByRole('combobox', { name: 'Function' }) as HTMLSelectElement;
     expect(functionSelector.value).toBe('sin');

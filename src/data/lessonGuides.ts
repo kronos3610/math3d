@@ -82,10 +82,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: "This isotropic convex quadratic has a known minimum. Traces stop before leaving the plotted ±6 domain or after 160 updates. Height is independently scaled; X/Z retain equal input units.",
         },
         'taylor-remainder': {
-            meaning: 'A Taylor polynomial approximates a function near an expansion point. The remainder is the difference between the function and that polynomial.',
-            steps: ['Choose Sine Wave, Exponential, or Logarithm, then adjust Degree.', 'Move Center to relocate the expansion point and compare the function, polynomial, and error.'],
-            observe: 'Approximation is local: accuracy near the center does not guarantee accuracy far away.',
-            limitations: 'Curves and errors are sampled and clipped for display. The logarithm is shown only on its valid domain x > −1.',
+            meaning: "A Taylor polynomial approximates a function near an expansion point. The remainder is the gap between the exact function and the polynomial at the selected input.",
+            steps: ["Change Degree and Center, then move Probe x to compare the exact function, polynomial, and absolute-error readouts.", "Switch Function among sine, exponential, and logarithm; compare local agreement with the error farther from the center."],
+            observe: "Function and polynomial agree at the expansion center. Increasing degree often improves a nearby approximation without guaranteeing a better fit everywhere. Ribbon depth shows the displayed gap.",
+            limitations: "The exact probe readout is computed before display clipping. Function and polynomial heights are clipped to [−10,10]; ribbon depth is their displayed gap capped at 15. The logarithm is drawn only for x > −1. This is not a formal global Taylor remainder bound.",
         },
         'riemann-integral': {
             meaning: 'Riemann integration partitions the input domain and sums rectangle areas sampled from the function.',
