@@ -76,10 +76,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'These 24 bars use left-endpoint heights, with visual gaps between boxes. Animation changes the function, not the partition count. Use Riemann Integral to refine a partition.',
         },
         'gradient-descent-calc': {
-            meaning: 'Gradient descent repeatedly moves opposite the gradient to reduce an objective. This lesson uses a convex quadratic bowl.',
-            steps: ['Watch the point and its computed trail move down the bowl.', 'Use Pause to inspect the route and Reset to replay it.'],
-            observe: 'The updates approach the bottom as the gradient becomes smaller.',
-            limitations: 'The starting point and step size are fixed. This simple convex example does not show every possible optimization behavior.',
+            meaning: "Gradient descent repeatedly moves opposite the gradient. On a quadratic bowl, the learning rate determines whether updates approach, overshoot or escape.",
+            steps: ["Choose a starting point and Learning rate, then use Step or Play to inspect actual updates.", "Compare Just right, Overshoots and Diverges from the same start; make a prediction before revealing the first update."],
+            observe: "Each coordinate is multiplied by 1−η: below 1 it approaches smoothly, at 1 it reaches zero, between 1 and 2 it alternates and converges, at 2 it keeps its distance, above 2 it escapes unless already at zero.",
+            limitations: "This isotropic convex quadratic has a known minimum. Traces stop before leaving the plotted ±6 domain or after 160 updates. Height is independently scaled; X/Z retain equal input units.",
         },
         'taylor-remainder': {
             meaning: 'A Taylor polynomial approximates a function near an expansion point. The remainder is the difference between the function and that polynomial.',
@@ -180,10 +180,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'The plane is fixed for this illustration. Use Linear Models for Classification to fit boundaries to editable training data.',
         },
         'gradient-descent-ml': {
-            meaning: 'Gradient descent updates model parameters by subtracting a step along the gradient. A non-convex objective can have multiple stationary points.',
-            steps: ['Follow the pink point and its computed trail over the gold loss surface.', 'Use Pause to inspect the trajectory and Reset to replay it.'],
-            observe: 'The route reduces the objective from its starting position and approaches a stationary point.',
-            limitations: 'The starting point and step size are fixed. Reaching a stationary point does not guarantee the global minimum.',
+            meaning: "Gradient descent updates model parameters by subtracting a step along the gradient. A non-convex objective can have multiple stationary points.",
+            steps: ["Change Learning rate and Start x/y, then Step or Play the actual computed trajectory.", "Compare starts at the same rate; use Optimization step to inspect loss and gradient norm along the path."],
+            observe: "The final stationary point depends on the start and step size. A small gradient alone does not prove the lowest possible loss.",
+            limitations: "This is an illustrative analytic nonconvex objective, not a trained model. Runs stop before leaving ±6 or after 500 updates. A stationary point need not be a global minimum; height is independently scaled.",
         },
         'measure-theory-ml': {
             meaning: 'Measure and transformations help explain low-dimensional data, changes in probability density, and the non-invertibility of some activations.',
