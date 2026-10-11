@@ -1,0 +1,298 @@
+{
+  "contrast": {
+    "data": [
+      7.53,
+      8.01
+    ],
+    "truth": [
+      11.2,
+      11.91
+    ],
+    "focus": [
+      11.47,
+      12.19
+    ],
+    "variation": [
+      9.61,
+      10.21
+    ],
+    "error": [
+      7.12,
+      7.56
+    ],
+    "output": [
+      4.52,
+      4.81
+    ],
+    "axis": [
+      7.47,
+      7.94
+    ],
+    "basis1": [
+      6.92,
+      7.36
+    ],
+    "basis2": [
+      9.96,
+      10.59
+    ],
+    "basis3": [
+      7.53,
+      8.01
+    ]
+  },
+  "distances": {
+    "normal": [
+      {
+        "pair": "data/truth",
+        "deltaE76": 64.67
+      },
+      {
+        "pair": "data/focus",
+        "deltaE76": 126.93
+      },
+      {
+        "pair": "data/variation",
+        "deltaE76": 16.03
+      },
+      {
+        "pair": "data/error",
+        "deltaE76": 81.9
+      },
+      {
+        "pair": "data/output",
+        "deltaE76": 56.32
+      },
+      {
+        "pair": "truth/focus",
+        "deltaE76": 90.87
+      },
+      {
+        "pair": "truth/variation",
+        "deltaE76": 61.45
+      },
+      {
+        "pair": "truth/error",
+        "deltaE76": 94.58
+      },
+      {
+        "pair": "truth/output",
+        "deltaE76": 118.07
+      },
+      {
+        "pair": "focus/variation",
+        "deltaE76": 114.71
+      },
+      {
+        "pair": "focus/error",
+        "deltaE76": 78.25
+      },
+      {
+        "pair": "focus/output",
+        "deltaE76": 157.03
+      },
+      {
+        "pair": "variation/error",
+        "deltaE76": 68.63
+      },
+      {
+        "pair": "variation/output",
+        "deltaE76": 58.17
+      },
+      {
+        "pair": "error/output",
+        "deltaE76": 87.07
+      }
+    ],
+    "protanopia": [
+      {
+        "pair": "data/truth",
+        "deltaE76": 52.52
+      },
+      {
+        "pair": "data/focus",
+        "deltaE76": 125.33
+      },
+      {
+        "pair": "data/variation",
+        "deltaE76": 11.08
+      },
+      {
+        "pair": "data/error",
+        "deltaE76": 51.8
+      },
+      {
+        "pair": "data/output",
+        "deltaE76": 31.59
+      },
+      {
+        "pair": "truth/focus",
+        "deltaE76": 74.51
+      },
+      {
+        "pair": "truth/variation",
+        "deltaE76": 42.28
+      },
+      {
+        "pair": "truth/error",
+        "deltaE76": 24.34
+      },
+      {
+        "pair": "truth/output",
+        "deltaE76": 82.77
+      },
+      {
+        "pair": "focus/variation",
+        "deltaE76": 115.98
+      },
+      {
+        "pair": "focus/error",
+        "deltaE76": 77.12
+      },
+      {
+        "pair": "focus/output",
+        "deltaE76": 153.03
+      },
+      {
+        "pair": "variation/error",
+        "deltaE76": 44.96
+      },
+      {
+        "pair": "variation/output",
+        "deltaE76": 42.55
+      },
+      {
+        "pair": "error/output",
+        "deltaE76": 77.19
+      }
+    ],
+    "deuteranopia": [
+      {
+        "pair": "data/truth",
+        "deltaE76": 49.95
+      },
+      {
+        "pair": "data/focus",
+        "deltaE76": 128.95
+      },
+      {
+        "pair": "data/variation",
+        "deltaE76": 16.44
+      },
+      {
+        "pair": "data/error",
+        "deltaE76": 73.46
+      },
+      {
+        "pair": "data/output",
+        "deltaE76": 23.67
+      },
+      {
+        "pair": "truth/focus",
+        "deltaE76": 79.82
+      },
+      {
+        "pair": "truth/variation",
+        "deltaE76": 34.73
+      },
+      {
+        "pair": "truth/error",
+        "deltaE76": 26.77
+      },
+      {
+        "pair": "truth/output",
+        "deltaE76": 72.47
+      },
+      {
+        "pair": "focus/variation",
+        "deltaE76": 114.41
+      },
+      {
+        "pair": "focus/error",
+        "deltaE76": 56.24
+      },
+      {
+        "pair": "focus/output",
+        "deltaE76": 149.93
+      },
+      {
+        "pair": "variation/error",
+        "deltaE76": 59.86
+      },
+      {
+        "pair": "variation/output",
+        "deltaE76": 39.99
+      },
+      {
+        "pair": "error/output",
+        "deltaE76": 94.18
+      }
+    ],
+    "tritanopia": [
+      {
+        "pair": "data/truth",
+        "deltaE76": 18.25
+      },
+      {
+        "pair": "data/focus",
+        "deltaE76": 72.59
+      },
+      {
+        "pair": "data/variation",
+        "deltaE76": 21.4
+      },
+      {
+        "pair": "data/error",
+        "deltaE76": 103.48
+      },
+      {
+        "pair": "data/output",
+        "deltaE76": 38.49
+      },
+      {
+        "pair": "truth/focus",
+        "deltaE76": 78.8
+      },
+      {
+        "pair": "truth/variation",
+        "deltaE76": 31.23
+      },
+      {
+        "pair": "truth/error",
+        "deltaE76": 112.77
+      },
+      {
+        "pair": "truth/output",
+        "deltaE76": 54.79
+      },
+      {
+        "pair": "focus/variation",
+        "deltaE76": 52.36
+      },
+      {
+        "pair": "focus/error",
+        "deltaE76": 36.95
+      },
+      {
+        "pair": "focus/output",
+        "deltaE76": 52.59
+      },
+      {
+        "pair": "variation/error",
+        "deltaE76": 84.1
+      },
+      {
+        "pair": "variation/output",
+        "deltaE76": 28.35
+      },
+      {
+        "pair": "error/output",
+        "deltaE76": 73.41
+      }
+    ]
+  },
+  "minimumContrast": 3,
+  "minimumDeltaE76": 10,
+  "failures": 0,
+  "note": "Basis glyphs use coordinate letters and are assessed for contrast, not as semantic roles."
+}

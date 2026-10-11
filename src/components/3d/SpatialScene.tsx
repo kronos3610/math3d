@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react';
 import { Html, Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -8,10 +9,10 @@ import { spatialTransform } from './spatial-model';
 import type { LabVector, SpatialPoint, SpatialSurface, SpatialVector, SpatialSceneProps } from './spatial-model';
 export type { LabVector, SpatialPoint, SpatialPath, SpatialVector, SpatialBox, SpatialSurface, SpatialSceneProps } from './spatial-model';
 const EMPTY: never[] = [];
-const COLORS = { point: '#60a5fa', line: '#2dd4bf', x: '#fb7185', y: '#fbbf24', z: '#60a5fa' };
+const COLORS = { point: VIZ.data, line: VIZ.truth, x: VIZ.axis, y: VIZ.axis, z: VIZ.axis };
 const axisValue = (value: number) => value === 0 ? '0' : Math.abs(value) < 0.01 || Math.abs(value) >= 10000 ? value.toExponential(1) : value.toPrecision(3);
 
-function FitSpatialCamera({ extent }: { extent: LabVector }) {
+function FitSpatialCamera({ extent, coordinates }: { extent: LabVector; coordinates?: readonly LabVector[] }) {
     const { camera, size, invalidate } = useThree();
     const [x,y,z] = extent;
     useLayoutEffect(() => {
@@ -22,13 +23,14 @@ function FitSpatialCamera({ extent }: { extent: LabVector }) {
         const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
         const aspect = Math.max(0.2,size.width / Math.max(1,size.height));
         let distance = 6;
-        for (const sx of [-1,1]) for (const sy of [-1,1]) for (const sz of [-1,1]) {
-            const corner = new THREE.Vector3(sx * x / 2,sy * y / 2,sz * z / 2).applyMatrix4(camera.matrixWorldInverse);
+        const bounds: LabVector[] = [-1,1].flatMap(sx => [-1,1].flatMap(sy => [-1,1].map(sz => [sx*x/2,sy*y/2,sz*z/2] as LabVector)));
+        for (const point of coordinates ?? bounds) {
+            const corner = new THREE.Vector3(...point).applyMatrix4(camera.matrixWorldInverse);
             const depthOffset = corner.z + oldDistance;
             distance = Math.max(distance,Math.abs(corner.x) / (tangent * aspect * 0.82) + depthOffset,Math.abs(corner.y) / (tangent * 0.77) + depthOffset);
         }
         camera.position.copy(direction.multiplyScalar(distance)); camera.lookAt(0,0,0); camera.updateProjectionMatrix(); invalidate();
-    }, [camera,size.width,size.height,x,y,z,invalidate]);
+    }, [camera,size.width,size.height,x,y,z,invalidate,coordinates]);
     return null;
 }
 
@@ -106,7 +108,7 @@ function mergeLabels(points: readonly SpatialPoint[], measure: (point: LabVector
 function SpatialLabels({ points }: { points: readonly SpatialPoint[] }) {
     return <>{mergeLabels(points).map((point,index) => <Html key={index} center zIndexRange={[40,0]}
         position={[point.position[0],point.position[1] + 0.25,point.position[2]]} style={{pointerEvents:'none'}}>
-        <div className="spatial-point-label" style={{color:point.color ?? '#e2e8f0'}}>{point.label!.split(' / ').map((label,line) => <span key={line}>{label}{line < point.label!.split(' / ').length - 1 ? ' /' : ''}</span>)}</div>
+        <div className="spatial-point-label" style={{color:point.color ?? VIZ.text}}>{point.label!.split(' / ').map((label,line) => <span key={line}>{label}{line < point.label!.split(' / ').length - 1 ? ' /' : ''}</span>)}</div>
     </Html>)}</>;
 }
 
@@ -144,6 +146,13 @@ function SpatialFallback({ props }: { props: SpatialSceneProps }) {
     return <figure className="spatial-fallback"><svg viewBox="0 0 800 480" role="img" aria-labelledby={`${id}-title ${id}-desc`}>
         <title id={`${id}-title`}>Spatial model — 2D projection</title><desc id={`${id}-desc`}>{props.description} This is an oblique 2D projection of the same computed coordinates.</desc>
         <defs><marker id={`${id}-arrow`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="context-stroke" /></marker></defs>
+        {(props.axes ?? ['x','y','z']).map((_, axis) => {
+            const from: LabVector = [0,0,0]; const to: LabVector = [0,0,0];
+            from[axis] = transform.minimum[axis]; to[axis] = transform.maximum[axis];
+            const end = project(to);
+            return <g key={`axis-${axis}`} data-axis={axis}><path d={pathData([from,to])} stroke={VIZ.axis} strokeWidth={1} opacity={0.4} />
+                <text x={end[0]+5} y={end[1]-5} fill={VIZ.axis} fontSize={16}>{['x','y','z'][axis]}</text></g>;
+        })}
         {(props.surfaces ?? []).map((surface, index) => {
             const rows = Math.floor(surface.vertices.length / surface.columns);
             const corners = [surface.vertices[0], surface.vertices[surface.columns - 1], surface.vertices[rows * surface.columns - 1], surface.vertices[(rows - 1) * surface.columns]];
@@ -178,11 +187,12 @@ export function SpatialScene(props: SpatialSceneProps) {
             surfaces: surfaces.map(surface => ({ ...surface, vertices: surface.vertices.map(transform.map) })),
         };
     }, [points, paths, vectors, boxes, surfaces, description, equalScale, equalAxes]);
-    const colors = [COLORS.x, COLORS.y, COLORS.z];
+    const fitCoordinates = useMemo(() => props.fitPoints ? [...transformed.points.map(point => point.position), ...transformed.vectors.flatMap(vector => [vector.from,vector.to]), ...transformed.paths.flatMap(path => path.points)] : undefined, [props.fitPoints,transformed]);
+    const colors = [VIZ.axis, VIZ.axis, VIZ.axis];
     const extent = transformed.transform.maximum.map((value,axis) => (value - transformed.transform.minimum[axis]) * transformed.transform.scale[axis]) as LabVector;
     return <div className="spatial-stage"><SceneCanvas camera={{ position: props.cameraPosition ?? [8, 6, -9], fov: 48 }} frameloop="demand" role="img" aria-label={description} fallback={<SpatialFallback props={props} />}>
-        <FitSpatialCamera extent={extent} />
-        <color attach="background" args={['#0b0f19']} /><ambientLight intensity={0.75} /><directionalLight position={[5, 10, 8]} intensity={1.2} />
+        <FitSpatialCamera extent={extent} coordinates={fitCoordinates} />
+        <color attach="background" args={[VIZ.background]} /><ambientLight intensity={0.75} /><directionalLight position={[5, 10, 8]} intensity={1.2} />
         <PointCloud points={transformed.points} />
         <SpatialLabels points={[...transformed.points,...transformed.vectors.map(vector => ({ position:vector.to,label:vector.label,color:vector.color })),...transformed.boxes.map(box => ({ position:box.position,label:box.label,color:box.color }))]} />
         {transformed.paths.filter(path => path.points.length > 1).map((path, index) => <Line key={index} points={path.points} color={path.color ?? COLORS.line} lineWidth={path.width ?? 2} dashed={path.dashed} dashSize={0.12} gapSize={0.08} />)}
@@ -192,7 +202,8 @@ export function SpatialScene(props: SpatialSceneProps) {
         {axes.map((_, axis) => {
             const from: LabVector = [0,0,0]; const to: LabVector = [0,0,0];
             from[axis] = transformed.transform.minimum[axis]; to[axis] = transformed.transform.maximum[axis];
-            return <Line key={axis} points={[transformed.transform.map(from), transformed.transform.map(to)]} color={colors[axis]} lineWidth={1} transparent opacity={0.6} />;
+            return <group key={axis}><Line points={[transformed.transform.map(from), transformed.transform.map(to)]} color={VIZ.axis} lineWidth={1} transparent opacity={0.4} />
+                <Html center position={transformed.transform.map(to)} zIndexRange={[35,0]} style={{ pointerEvents: 'none' }}><span className="spatial-axis-label">{['x','y','z'][axis]}</span></Html></group>;
         })}
         <OrbitControls makeDefault enableDamping dampingFactor={0.08} minDistance={5} maxDistance={45} />
     </SceneCanvas><div className="spatial-axis-key" aria-label="Coordinate axes">{axes.map((name,axis) => <span key={axis} style={{color:colors[axis]}}><strong>{['X','Y','Z'][axis]}</strong> {name} <small>{axisValue(transformed.transform.minimum[axis])} … {axisValue(transformed.transform.maximum[axis])}</small></span>)}

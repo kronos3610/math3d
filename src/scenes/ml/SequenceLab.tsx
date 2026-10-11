@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useMemo, useState } from 'react';
 import { SpatialScene, type SpatialPath, type SpatialPoint, type SpatialVector } from '../../components/3d/SpatialScene';
 import { LabPlayback, LabRange, LabSelect, VisualLab } from '../../components/layout/VisualLab';
@@ -11,7 +12,7 @@ import {
 
 export type SequenceMode = 'hmm' | 'rnn' | 'lstm' | 'gru' | 'gradients';
 export interface SequenceLabProps { mode?: SequenceMode; }
-const STATE_COLORS = ['#60a5fa', '#2dd4bf', '#fb7185'];
+const STATE_COLORS = [VIZ.data, VIZ.truth, VIZ.error];
 const STATE_NAMES = ['Calm', 'Active', 'Alert'];
 const SENSOR_NAMES = ['low', 'medium', 'high'];
 const SENSOR_SEQUENCES: Record<string, number[]> = {
@@ -45,10 +46,10 @@ function HiddenMarkovLab() {
             points.push({ position: [time + (step === 0 ? 0 : 1), state, probability], color: STATE_COLORS[state], radius: 0.05 + probability * 0.14,
                 label: time === rows.length - 1 ? `${STATE_NAMES[state]} ${(100 * probability).toFixed(1)}%` : undefined });
             if (time > 0) for (let previous = 0; previous < 3; previous++) {
-                paths.push({ points: [[time, previous, rows[time - 1][previous]], [time + 1, state, probability]], color: '#475569', width: 0.5 + model.transition[previous][state] });
+                paths.push({ points: [[time, previous, rows[time - 1][previous]], [time + 1, state, probability]], color: VIZ.muted, width: 0.5 + model.transition[previous][state] });
             }
         }));
-        if (viterbi.path.length > 1) paths.push({ points: viterbi.path.map((state, time) => [time + 1, state, rows[time][state]] as State3), color: '#fbbf24', width: 3 });
+        if (viterbi.path.length > 1) paths.push({ points: viterbi.path.map((state, time) => [time + 1, state, rows[time][state]] as State3), color: VIZ.focus, width: 3 });
         return { points, paths };
     }, [model, result, viterbi, step]);
     const simplex = useMemo(() => {
@@ -57,10 +58,10 @@ function HiddenMarkovLab() {
         return {
             points: [
                 ...corners.map((position, state) => ({ position, color: STATE_COLORS[state], label: `100% ${STATE_NAMES[state]}` })),
-                ...trajectory.map((position, index) => ({ position, color: index === trajectory.length - 1 ? '#fbbf24' : '#a78bfa', radius: 0.06,
+                ...trajectory.map((position, index) => ({ position, color: index === trajectory.length - 1 ? VIZ.focus : VIZ.output, radius: 0.06,
                     label: index === trajectory.length - 1 ? `Belief after ${step} readings` : undefined })),
             ],
-            paths: [{ points: [...corners, corners[0]], color: '#64748b' }, { points: trajectory, color: '#a78bfa', width: 2 }],
+            paths: [{ points: [...corners, corners[0]], color: '#64748b' }, { points: trajectory, color: VIZ.output, width: 2 }],
         };
     }, [model, result, step]);
     const controls = <>
@@ -140,14 +141,14 @@ function RecurrentLab({ mode }: { mode: 'rnn' | 'lstm' | 'gru' }) {
         if (view === 'contributions' && contributions) {
             const origin: State3 = [0, 0, 0];
             const vectors: SpatialVector[] = [
-                { from: origin, to: contributions.retained, color: '#60a5fa', label: 'Retained' },
-                { from: origin, to: contributions.written, color: '#fb7185', label: mode === 'lstm' ? 'New write' : 'Weighted candidate' },
-                { from: contributions.retained, to: contributions.combined, color: '#fb7185' },
-                { from: origin, to: contributions.combined, color: '#a78bfa', label: mode === 'lstm' ? 'Cell sum' : 'Hidden sum' },
-                ...(mode === 'lstm' ? [{ from: origin, to: contributions.exposed, color: '#fbbf24', label: 'Exposed hidden' }] : []),
+                { from: origin, to: contributions.retained, color: VIZ.data, label: 'Retained' },
+                { from: origin, to: contributions.written, color: VIZ.error, label: mode === 'lstm' ? 'New write' : 'Weighted candidate' },
+                { from: contributions.retained, to: contributions.combined, color: VIZ.error },
+                { from: origin, to: contributions.combined, color: VIZ.output, label: mode === 'lstm' ? 'Cell sum' : 'Hidden sum' },
+                ...(mode === 'lstm' ? [{ from: origin, to: contributions.exposed, color: VIZ.focus, label: 'Exposed hidden' }] : []),
             ];
             return { points: [{ position: origin, color: '#64748b', label: 'Zero' }], vectors,
-                paths: [{ points: [contributions.written, contributions.combined], color: '#60a5fa', dashed: true }] };
+                paths: [{ points: [contributions.written, contributions.combined], color: VIZ.data, dashed: true }] };
         }
         const values = view === 'cell' ? visibleSteps.map(row => row.cell!) : visibleSteps.map(row => row.hidden);
         if (view === 'unrolled') {
@@ -158,9 +159,9 @@ function RecurrentLab({ mode }: { mode: 'rnn' | 'lstm' | 'gru' }) {
             };
         }
         return {
-            points: [{ position: [0, 0, 0] as State3, color: '#64748b', label: 'Start' }, ...values.map((position, time) => ({ position, color: time === values.length - 1 ? '#fbbf24' : '#2dd4bf', radius: time === values.length - 1 ? 0.1 : 0.06,
+            points: [{ position: [0, 0, 0] as State3, color: '#64748b', label: 'Start' }, ...values.map((position, time) => ({ position, color: time === values.length - 1 ? VIZ.focus : VIZ.truth, radius: time === values.length - 1 ? 0.1 : 0.06,
                 label: time === 0 ? 'Cue' : time === values.length - 1 ? `t=${time + 1}` : undefined }))],
-            paths: [{ points: [[0, 0, 0] as State3, ...values], color: '#2dd4bf', width: 2 }],
+            paths: [{ points: [[0, 0, 0] as State3, ...values], color: VIZ.truth, width: 2 }],
         };
     }, [view, visibleSteps, contributions, mode]);
     const title = mode === 'rnn' ? 'Recurrent neural network' : mode === 'lstm' ? 'Long short-term memory' : 'Gated recurrent unit';
@@ -251,21 +252,21 @@ function GradientLab() {
         if (view === 'parameters') {
             return {
                 points: truncated.gradient.flatMap((value, index) => [
-                    { position: [index, value, 0] as State3, color: '#fb7185', radius: 0.06 },
-                    { position: [index, clipped.gradient[index], 1] as State3, color: '#2dd4bf', radius: 0.06 },
+                    { position: [index, value, 0] as State3, color: VIZ.error, radius: 0.06 },
+                    { position: [index, clipped.gradient[index], 1] as State3, color: VIZ.truth, radius: 0.06 },
                 ]),
-                paths: [{ points: truncated.gradient.map((value, index) => [index, value, 0] as State3), color: '#fb7185' },
-                    { points: clipped.gradient.map((value, index) => [index, value, 1] as State3), color: '#2dd4bf' }],
+                paths: [{ points: truncated.gradient.map((value, index) => [index, value, 0] as State3), color: VIZ.error },
+                    { points: clipped.gradient.map((value, index) => [index, value, 1] as State3), color: VIZ.truth }],
             };
         }
         const height = (value: number) => Math.log10(Math.max(1e-12, value));
         return {
             points: full.stateGradientNorms.flatMap((value, time) => [
-                { position: [time + 1, height(value), 0] as State3, color: '#a78bfa', radius: 0.06 },
-                ...(truncated.stateGradientNorms[time] > 0 ? [{ position: [time + 1, height(truncated.stateGradientNorms[time]), 1] as State3, color: '#2dd4bf', radius: 0.06 }] : []),
+                { position: [time + 1, height(value), 0] as State3, color: VIZ.output, radius: 0.06 },
+                ...(truncated.stateGradientNorms[time] > 0 ? [{ position: [time + 1, height(truncated.stateGradientNorms[time]), 1] as State3, color: VIZ.truth, radius: 0.06 }] : []),
             ]),
-            paths: [{ points: full.stateGradientNorms.map((value, time) => [time + 1, height(value), 0] as State3), color: '#a78bfa', width: 2 },
-                { points: truncated.stateGradientNorms.flatMap((value, time) => value > 0 ? [[time + 1, height(value), 1] as State3] : []), color: '#2dd4bf', width: 2 }],
+            paths: [{ points: full.stateGradientNorms.map((value, time) => [time + 1, height(value), 0] as State3), color: VIZ.output, width: 2 },
+                { points: truncated.stateGradientNorms.flatMap((value, time) => value > 0 ? [[time + 1, height(value), 1] as State3] : []), color: VIZ.truth, width: 2 }],
         };
     }, [view, full, truncated, clipped]);
     const controls = <>

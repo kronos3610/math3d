@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useLayoutEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -79,7 +80,7 @@ export function BayesPopulation({ parameters, view }: BayesPopulationProps) {
     const pose = useMemo(() => new THREE.Object3D(), []);
     const matrix = useMemo(() => new THREE.Matrix4(), []);
     const colors = useMemo(() => ({
-        spam: new THREE.Color('#fbbf24'), ordinary: new THREE.Color('#60a5fa'),
+        spam: new THREE.Color(VIZ.focus), ordinary: new THREE.Color(VIZ.data),
         dimSpam: new THREE.Color('#806327'), dimOrdinary: new THREE.Color('#24405c'),
     }), []);
     const moving = useSceneMotion();
@@ -159,8 +160,8 @@ export function BayesPopulation({ parameters, view }: BayesPopulationProps) {
         <Label text={`${view === 'conditional' ? 'Not flagged' : 'All emails'} · ${formatCount(sourceCount)}`}
             position={layout.sourceBoard.labelPosition} fontSize={0.8} color="#cbd5e1" />
         {layout.selectedBoard && <Label text={`Flagged group · ${formatCount(layout.result.evidenceCount)}`}
-            position={layout.selectedBoard.labelPosition} fontSize={0.8} color="#f8fafc" />}
+            position={layout.selectedBoard.labelPosition} fontSize={0.8} color={VIZ.white} />}
         {!layout.selectedBoard && view === 'conditional' && <Label text="No emails are flagged"
-            position={[0, -layout.sourceBoard.height / 2 - 0.75, 0]} fontSize={0.75} color="#f8fafc" />}
+            position={[0, -layout.sourceBoard.height / 2 - 0.75, 0]} fontSize={0.75} color={VIZ.white} />}
     </group>;
 }

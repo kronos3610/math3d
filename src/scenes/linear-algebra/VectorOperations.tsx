@@ -1,10 +1,10 @@
-import { useId, useMemo, useState } from 'react';
-import { OrbitControls, Line } from '@react-three/drei';
+import { useMemo, useState } from 'react';
+import { Line } from '@react-three/drei';
 import { Arrow } from '../../components/3d/Arrow';
 import { Label } from '../../components/3d/Label';
-import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { SceneContainer } from '../../components/layout/SceneContainer';
-import { GlassPane } from '../../components/layout/GlassPane';
+import { SpatialScene } from '../../components/3d/SpatialScene';
+import { VIZ } from '../../data/palette';
+import { VisualLab, LabRange } from '../../components/layout/VisualLab';
 import { ExplanationSection, SceneExplanation, VisualLegend } from '../../components/layout/SceneExplanation';
 import { useParams } from 'react-router-dom';
 import { RefreshCcw } from 'lucide-react';
@@ -16,7 +16,7 @@ interface VectorAdditionSceneProps {
     vecB: VectorCoordinates;
 }
 
-const COLORS = { a: '#a78bfa', b: '#60a5fa', sum: '#34d399', translated: '#94a3b8' };
+const COLORS = { a: VIZ.data, b: VIZ.focus, sum: VIZ.output, translated: VIZ.axis };
 const AXES = ['X', 'Y', 'Z'] as const;
 
 function addVectors(a: VectorCoordinates, b: VectorCoordinates): VectorCoordinates {
@@ -65,7 +65,6 @@ export function VectorAdditionScene({ vecA, vecB }: VectorAdditionSceneProps) {
 
 export default function VectorOperations() {
     const { topicId } = useParams();
-    const controlsId = useId();
     const [vecA, setVecA] = useState<VectorCoordinates>([2, 1, 0]);
     const [vecB, setVecB] = useState<VectorCoordinates>([0, 2, 1]);
     const sum = useMemo(() => addVectors(vecA, vecB), [vecA, vecB]);
@@ -74,56 +73,15 @@ export default function VectorOperations() {
         { name: 'B', value: vecB, change: setVecB, color: COLORS.b },
     ];
 
-    const controls = (
-        <GlassPane className="scene-controls" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div>
-                <h2 style={{ fontSize: 18, marginBottom: 8 }}>Vector Addition</h2>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                    A vector describes a move in space. A + B is the move you get by following A, then B.
-                    Its X, Y, and Z coordinates are added separately.
-                </p>
-            </div>
-
-            {vectors.map(vector => (
-                <fieldset key={vector.name} style={{ border: 0, minWidth: 0 }}>
-                    <legend style={{ color: vector.color, fontWeight: 600, fontSize: 13, marginBottom: 10 }}>Vector {vector.name}</legend>
-                    {AXES.map((axis, index) => {
-                        const id = `${controlsId}-${vector.name}-${axis}`;
-                        return (
-                            <div key={axis} style={{ display: 'grid', gridTemplateColumns: '45px minmax(0, 1fr) 35px', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                                <label htmlFor={id} style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{vector.name} {axis}</label>
-                                <input id={id} type="range" min="-3" max="3" step="0.1" value={vector.value[index]}
-                                    onChange={event => {
-                                        const next: VectorCoordinates = [...vector.value];
-                                        next[index] = Number(event.target.value);
-                                        vector.change(next);
-                                    }}
-                                    style={{ width: '100%', accentColor: vector.color, minHeight: 24 }} />
-                                <output htmlFor={id} style={{ fontSize: 12, textAlign: 'right', color: 'var(--text-primary)' }}>{vector.value[index].toFixed(1)}</output>
-                            </div>
-                        );
-                    })}
-                </fieldset>
-            ))}
-
-            <div className="lab-stat">
-                <span>Result: add matching coordinates</span>
-                <output aria-label="Vector sum A plus B" aria-live="polite" style={{ display: 'block', marginTop: 8, color: COLORS.sum, fontFamily: 'monospace', fontSize: 15 }}>
-                    A + B = {formatVector(sum)}
-                </output>
-                {isZero(sum) && <p className="lab-note">The vectors cancel: their combined move is zero.</p>}
-            </div>
-
-            <p className="lab-note">
-                Change a coordinate and watch the endpoint move. Dashed segments show a copy of B starting at the tip of A
-                and a copy of A starting at the tip of B. The green arrow reaches their shared endpoint.
-            </p>
-            <button type="button" className="lab-button" onClick={() => { setVecA([2, 1, 0]); setVecB([0, 2, 1]); }}>
-                <RefreshCcw size={14} aria-hidden="true" /> Reset Vectors
-            </button>
-            <p className="lab-note">Drag the scene to rotate. Scroll or pinch to zoom. Sliders also work with arrow keys.</p>
-        </GlassPane>
-    );
+    const controls = <>
+        {vectors.map(vector => AXES.map((axis, index) => <LabRange key={`${vector.name}-${axis}`} label={`${vector.name} ${axis}`}
+            value={vector.value[index]} min={-3} max={3} step={0.1} decimals={1} onChange={value => {
+                const next: VectorCoordinates = [...vector.value]; next[index] = value; vector.change(next);
+            }} />))}
+        <button type="button" className="lab-button" onClick={() => { setVecA([2, 1, 0]); setVecB([0, 2, 1]); }}>
+            <RefreshCcw size={14} aria-hidden="true" /> Reset Vectors
+        </button>
+    </>;
 
     const explanation = (
         <SceneExplanation title="Vector Addition" summary="Add moves by placing the second arrow at the tip of the first. The result joins the starting point to the final endpoint.">
@@ -147,16 +105,20 @@ export default function VectorOperations() {
         </SceneExplanation>
     );
 
-    return (
-        <SceneContainer backUrl={`/${topicId || 'linear-algebra'}`} controls={controls} explanation={explanation}>
-            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} camera={{ position: [6, 5, 6], fov: 50 }}
-                aria-label="3D vector addition: arrows A and B, their sum, and dashed translated copies forming a parallelogram">
-                <gridHelper args={[16, 16, '#475569', '#1e293b']} position={[0, -0.01, 0]} />
-                <axesHelper args={[6]} />
-                <VectorAdditionScene vecA={vecA} vecB={vecB} />
-                <OrbitControls makeDefault enableDamping dampingFactor={0.08} minDistance={3} maxDistance={35} />
-                <color attach="background" args={['#0b0f19']} />
-            </SceneCanvas>
-        </SceneContainer>
-    );
+    return <VisualLab title="Vector addition" backUrl={`/${topicId || 'linear-algebra'}`} controls={controls} explanation={explanation}
+        subtitle="Place the second move at the tip of the first. Their shared endpoint is the sum."
+        metrics={[{ label: 'A', value: formatVector(vecA) }, { label: 'B', value: formatVector(vecB) }, { label: 'A + B', value: formatVector(sum) }]}
+        legend={[{ label: 'A', meaning: 'given first move', color: COLORS.a, shape: 'line' },
+            { label: 'B', meaning: 'second move you can change', color: COLORS.b, shape: 'line' },
+            { label: 'A + B', meaning: 'combined output', color: COLORS.sum, shape: 'line' },
+            { label: 'Dashed', meaning: 'translated copies', color: COLORS.translated, shape: 'line' }]}
+        insight={<><output aria-label="Vector sum A plus B">A + B = {formatVector(sum)}</output> {isZero(sum) && 'The vectors cancel: their combined move is zero.'}</>}
+        challenge="Find a B that cancels A. Then reverse the moves: does the shared endpoint change?">
+        <SpatialScene axes={['X coordinate', 'Y coordinate', 'Z coordinate']} equalScale
+            description="3D vector addition: arrows A and B, their sum, and dashed translated copies forming a parallelogram"
+            vectors={[{ from: [0,0,0], to: vecA, color: COLORS.a, label: isZero(vecA) ? 'A = 0' : 'A' },
+                { from: [0,0,0], to: vecB, color: COLORS.b, label: isZero(vecB) ? 'B = 0' : 'B' },
+                { from: [0,0,0], to: sum, color: COLORS.sum, label: isZero(sum) ? 'A + B = 0' : 'A + B' }]}
+            paths={[{ points: [vecA,sum], color: COLORS.translated, dashed: true }, { points: [vecB,sum], color: COLORS.translated, dashed: true }]} />
+    </VisualLab>;
 }

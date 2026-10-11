@@ -1,3 +1,5 @@
+import { SceneKey } from '../../components/3d/SceneKey';
+import { VIZ } from '../../data/palette';
 import { useId, useMemo, useState } from 'react';
 import type { KeyboardEvent, MouseEvent } from 'react';
 import Latex from '../../components/Latex';
@@ -133,6 +135,7 @@ export default function LinearModels() {
                         <p className="linear-models-eyebrow">Algorithms · Binary classification lab</p>
                         <h1 id={id + '-title'}>Linear Models for Classification</h1>
                         <p>Compare logistic regression, least squares, and the perceptron on the same two-feature dataset.</p>
+                        <SceneKey inline aria-label="Plot key" entries={[{label:'C₁ ●',meaning:'given class with target 1',color:VIZ.data},{label:'C₂ ▲',meaning:'given class with target 0',color:VIZ.error,shape:'square'},{label:'White line',meaning:'computed decision threshold',color:VIZ.white,shape:'line'},{label:'Gold cursor',meaning:'position for a new point',color:VIZ.focus}]} />
                     </header>
                     <p className="linear-models-current">{briefing.title} · {briefing.rule}</p>
                     <svg className="linear-models-plot" viewBox={'0 0 ' + PLOT.width + ' ' + PLOT.height} preserveAspectRatio="xMidYMid meet"

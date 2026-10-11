@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
 import { useSceneFrame as useFrame } from '../../hooks/useSceneFrame';
@@ -149,7 +150,7 @@ export default function BanachTarski() {
         <GlassPane className="scene-controls" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div>
                 <h1 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: 'white' }}>Banach-Tarski Paradox</h1>
-                <p style={{ fontSize: '12px', color: '#94a3b8', lineHeight: 1.6 }}>
+                <p style={{ fontSize: '12px', color: VIZ.axis, lineHeight: 1.6 }}>
                     A schematic illustration of a theorem about non-measurable sets.
                 </p>
             </div>
@@ -158,21 +159,21 @@ export default function BanachTarski() {
                 <button
                     onClick={() => setIsSplit(false)}
                     disabled={!isSplit}
-                    style={{ padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: !isSplit ? '#1e293b' : '#334155', color: !isSplit ? '#94a3b8' : 'white', fontSize: '13px', fontWeight: 600, cursor: isSplit ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isSplit ? 1 : 0.5 }}
+                    style={{ padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: !isSplit ? VIZ.grid : '#334155', color: !isSplit ? VIZ.axis : 'white', fontSize: '13px', fontWeight: 600, cursor: isSplit ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isSplit ? 1 : 0.5 }}
                 >
                     <Combine size={16} /> Unify Sphere
                 </button>
                 <button
                     onClick={() => setIsSplit(true)}
                     disabled={isSplit}
-                    style={{ padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: isSplit ? '#1e293b' : '#3b82f6', color: 'white', fontSize: '13px', fontWeight: 600, cursor: !isSplit ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: !isSplit ? 1 : 0.5 }}
+                    style={{ padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: isSplit ? VIZ.grid : '#3b82f6', color: 'white', fontSize: '13px', fontWeight: 600, cursor: !isSplit ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: !isSplit ? 1 : 0.5 }}
                 >
                     <Split size={16} /> Decompose & Double
                 </button>
             </div>
 
             <GlassPane style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '14px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#a5b4fc', marginBottom: '6px' }}>How is this possible?</h4>
+                <h4 style={{ fontSize: '13px', fontWeight: 700, color: VIZ.variation, marginBottom: '6px' }}>How is this possible?</h4>
                 <p style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: 1.6, margin: 0 }}>
                     The theorem uses the <strong>Axiom of Choice</strong> to partition a ball into finitely many non-measurable sets that can be rearranged by rigid motions into two equal balls. The rendered patches are ordinary surfaces drawn in two copies to illustrate the conclusion. This animation does not construct those sets or physically duplicate a ball.
                 </p>
@@ -181,7 +182,7 @@ export default function BanachTarski() {
     );
 
     return (
-        <SceneContainer backUrl={`/${topicId}`} controls={controls}>
+        <SceneContainer backUrl={`/${topicId}`} controls={controls} legend={[{ label: 'Colored patches', meaning: 'ordinary rendered pieces in a schematic', color: VIZ.variation, shape: 'square' }, { label: 'Two balls', meaning: 'illustrated conclusion; no physical duplication', color: VIZ.data }]}>
             <SceneCanvas frameloop="always" camera={{ position: [0, 2, 12], fov: 60 }} style={{ width: '100%', height: '100%' }} aria-label="Schematic animation of the Banach-Tarski conclusion using duplicated ordinary surface patches; not a construction of the theorem">
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[5, 10, 7.5]} intensity={0.8} />
@@ -191,8 +192,8 @@ export default function BanachTarski() {
                 <AnimationController isSplit={isSplit} progressRef={animationProgressRef} />
 
                 <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
-                <fog attach="fog" args={['#0b0f19', 8, 25]} />
-                <color attach="background" args={['#0b0f19']} />
+                <fog attach="fog" args={[VIZ.background, 8, 25]} />
+                <color attach="background" args={[VIZ.background]} />
             </SceneCanvas>
         </SceneContainer>
     );

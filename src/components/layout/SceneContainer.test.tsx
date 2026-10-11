@@ -6,6 +6,15 @@ import { SceneContainer } from './SceneContainer';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
+test('the plot key is visible before opening controls', () => {
+    render(<MemoryRouter><SceneContainer controls={<p>Settings</p>} legend={[
+        { label: 'Dots', meaning: 'observations', color: 'blue' },
+        { label: 'Line', meaning: 'prediction', color: 'gold', shape: 'line' },
+    ]}><div>Plot</div></SceneContainer></MemoryRouter>);
+    expect(screen.getByRole('list', { name: 'Plot key' }).textContent).toContain('observations');
+    expect(screen.queryByRole('tab')).toBeNull();
+});
+
 test('scene tabs support keyboard navigation and expose the selected panel', () => {
     render(<MemoryRouter><SceneContainer controls={<p>Settings</p>} explanation={<p>Explanation text</p>}>
         <div>Scene</div>

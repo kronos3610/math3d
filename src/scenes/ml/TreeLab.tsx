@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useCallback, useMemo, useState } from 'react';
 import { VisualLab, LabRange, LabSelect, LabPlayback } from '../../components/layout/VisualLab';
 import { SpatialScene } from '../../components/3d/SpatialScene';
@@ -15,7 +16,7 @@ interface TreeLabProps { mode?: TreeLabMode }
 type View = 'partition' | 'prediction' | 'structure' | 'loss' | 'variance' | 'bundle';
 const TITLES: Record<TreeLabMode, string> = { tree: 'Decision Trees', bagging: 'Bagging & Random Forests',
     boosting: 'Boosting', xgboost: 'XGBoost: Newton Tree Boosting', lightgbm: 'LightGBM: Histogram & Leafwise Growth' };
-const COLORS = { positive: '#fbbf24', negative: '#60a5fa', selected: '#f9fafb', correction: '#2dd4bf' };
+const COLORS = { positive: VIZ.focus, negative: VIZ.data, selected: '#f9fafb', correction: VIZ.truth };
 const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / (values.length || 1);
 const variance = (values: number[]) => values.reduce((sum, value) => sum + (value - average(values)) ** 2, 0) / Math.max(1, values.length - 1);
 const format = (value: number) => Math.abs(value) >= 1000 || (value !== 0 && Math.abs(value) < 0.001) ? value.toExponential(2) : value.toFixed(3);
@@ -90,16 +91,16 @@ export default function TreeLab({ mode = 'tree' }: TreeLabProps) {
 
     const geometry = useMemo<SpatialSceneProps>(() => {
         if (view === 'partition' || view === 'structure') {
-            const colors = train.map((row, i) => selectedBag && selectedBag.inBag[i] === 0 ? '#64748b'
-                : selectedRound?.sampling ? selectedRound.sampling.large.includes(i) ? COLORS.positive : selectedRound.sampling.small.includes(i) ? COLORS.correction : '#64748b'
+            const colors = train.map((row, i) => selectedBag && selectedBag.inBag[i] === 0 ? VIZ.axis
+                : selectedRound?.sampling ? selectedRound.sampling.large.includes(i) ? COLORS.positive : selectedRound.sampling.small.includes(i) ? COLORS.correction : VIZ.axis
                     : effectiveTask === 'classification' ? row.y ? COLORS.positive : COLORS.negative : treeValueColor(row.y, 'regression', Math.min(...train.map(sample => sample.y)), Math.max(...train.map(sample => sample.y))));
             const radii = train.map((_, i) => selectedBag ? 0.075 + 0.025 * Math.sqrt(selectedBag.inBag[i])
                 : mode === 'boosting' && algorithm === 'adaboost' && selectedRound ? 0.07 + 0.06 * Math.sqrt(selectedRound.weights[i] * train.length) : 0.09);
             if (selectedTree) return treePartitionGeometry({ tree: selectedTree, query: probe, step: decisionStep, samples: train,
                 task: model.boost ? 'regression' : effectiveTask, colors, radii, title: TITLES[mode] });
             return { points: [...train.map((row, i) => ({ position: [row.x[0], dimensions === 3 ? row.x[2] : 0.05, row.x[1]] as LabVector,
-                color: colors[i], radius: radii[i] })), { position: [probeX, dimensions === 3 ? probeY : 0.08, probeZ] as LabVector, color: '#ffffff', label: 'query' }],
-                boxes: dimensions === 2 ? [{ position: [0, 0, 0] as LabVector, size: [2, 0.015, 2] as LabVector, color: '#64748b', opacity: 0.15 }] : [],
+                color: colors[i], radius: radii[i] })), { position: [probeX, dimensions === 3 ? probeY : 0.08, probeZ] as LabVector, color: VIZ.white, label: 'query' }],
+                boxes: dimensions === 2 ? [{ position: [0, 0, 0] as LabVector, size: [2, 0.015, 2] as LabVector, color: VIZ.axis, opacity: 0.15 }] : [],
                 axes: dimensions === 3 ? ['Feature x₁', 'Feature x₃', 'Feature x₂'] : ['Feature x₁', 'Illustrative height', 'Feature x₂'],
                 description: 'Input feature space before any tree is included. Step to add a fitted tree and inspect its exact threshold partitions.' };
         }
@@ -127,15 +128,15 @@ export default function TreeLab({ mode = 'tree' }: TreeLabProps) {
                 description: 'Measured training loss after each actual additive update. Held-out error is evaluated separately; training improvement does not guarantee generalization. Axes scale separately for readability.' };
         }
         const points: SpatialPoint[] = train.map((row, i) => ({ position: [row.x[0], row.y, row.x[1]],
-            color: selectedBag && selectedBag.inBag[i] === 0 ? '#64748b'
-                : selectedRound?.sampling ? selectedRound.sampling.large.includes(i) ? COLORS.positive : selectedRound.sampling.small.includes(i) ? COLORS.correction : '#64748b'
-                    : effectiveTask === 'classification' ? row.y ? COLORS.positive : COLORS.negative : '#a5b4fc',
+            color: selectedBag && selectedBag.inBag[i] === 0 ? VIZ.axis
+                : selectedRound?.sampling ? selectedRound.sampling.large.includes(i) ? COLORS.positive : selectedRound.sampling.small.includes(i) ? COLORS.correction : VIZ.axis
+                    : effectiveTask === 'classification' ? row.y ? COLORS.positive : COLORS.negative : VIZ.variation,
             radius: selectedBag ? 0.025 + 0.02 * Math.sqrt(selectedBag.inBag[i])
                 : mode === 'boosting' && algorithm === 'adaboost' && selectedRound ? 0.025 + 0.045 * Math.sqrt(selectedRound.weights[i] * train.length) : 0.045,
             label: i === closest ? `row ${i + 1}` : undefined }));
         points.push({ position: [probeX, predict(probe), probeZ], color: COLORS.selected, radius: 0.09, label: `query ${format(predict(probe))}` });
         const residuals: SpatialPath[] = train.map((row, i) => ({ points: [[row.x[0], trainPredictions[i], row.x[1]], [row.x[0], row.y, row.x[1]]],
-            color: '#64748b', width: 1 }));
+            color: VIZ.axis, width: 1 }));
         const vertices = Array.from({ length: 17 * 17 }, (_, i): LabVector => {
             const x = -1 + (i % 17) / 8; const z = -1 + Math.floor(i / 17) / 8;
             return [x, predict(dimensions === 3 ? [x, z, probeY] : [x, z]), z];

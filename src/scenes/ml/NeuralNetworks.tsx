@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useMemo, useState } from 'react';
 import { SpatialScene, type SpatialPath, type SpatialPoint } from '../../components/3d/SpatialScene';
 import { LabPlayback, LabRange, LabSelect, VisualLab } from '../../components/layout/VisualLab';
@@ -30,19 +31,19 @@ export default function NeuralNetworks() {
     const values = packFeedforward(weights);
     const network = useMemo(() => {
         const inputPoints: SpatialPoint[] = [first, second].map((value, index) => ({
-            position: [-2, value, index === 0 ? -0.7 : 0.7], color: '#fbbf24', radius: 0.13,
+            position: [-2, value, index === 0 ? -0.7 : 0.7], color: VIZ.focus, radius: 0.13,
             label: `x${index + 1} = ${value.toFixed(2)}`,
         }));
         const hiddenPoints: SpatialPoint[] = result.hidden.map((value, index) => ({
-            position: [0, value, index - 1], color: stage >= 1 ? (value >= 0 ? '#2dd4bf' : '#fb7185') : '#475569',
+            position: [0, value, index - 1], color: stage >= 1 ? (value >= 0 ? VIZ.truth : VIZ.error) : VIZ.muted,
             radius: 0.12 + 0.08 * Math.abs(value), label: stage >= 1 ? `h${index + 1} = ${value.toFixed(2)}` : `h${index + 1}`,
         }));
         const output: SpatialPoint = {
-            position: [2, result.probability, 0], color: stage >= 2 ? '#a78bfa' : '#475569', radius: 0.18,
+            position: [2, result.probability, 0], color: stage >= 2 ? VIZ.output : VIZ.muted, radius: 0.18,
             label: stage >= 2 ? `P(XOR=1) = ${result.probability.toFixed(3)}` : 'Output',
         };
         const paths: SpatialPath[] = [];
-        const edgeColor = (value: number, active: boolean) => active ? value >= 0 ? '#2dd4bf' : '#fb7185' : '#334155';
+        const edgeColor = (value: number, active: boolean) => active ? value >= 0 ? VIZ.truth : VIZ.error : '#334155';
         for (let hidden = 0; hidden < 3; hidden++) for (let input = 0; input < 2; input++) {
             const weight = weights.hidden[hidden][input];
             paths.push({ points: [inputPoints[input].position, hiddenPoints[hidden].position], color: edgeColor(weight, stage >= 1), width: 0.7 + Math.min(4, Math.abs(weight)) });
@@ -59,7 +60,7 @@ export default function NeuralNetworks() {
             const x = -1 + column / 10; const y = -1 + row / 10;
             vertices.push([x, y, feedforward([x, y], weights).probability]);
         }
-        return { vertices, columns: 21, color: '#a78bfa', opacity: 0.65 };
+        return { vertices, columns: 21, color: VIZ.output, opacity: 0.65 };
     }, [weights]);
     const controls = <>
         <LabRange label="Input 1" value={first} min={-1} max={1} step={0.05} decimals={2} onChange={setFirst} />
@@ -111,8 +112,8 @@ export default function NeuralNetworks() {
         {view === 'network' ? <SpatialScene {...network} cameraPosition={[8, 6, 9]} equalScale={false} axes={['layer', 'activation', 'unit layout']}
             description="Computed 2-input, 3-hidden-unit, 1-output feedforward network. Node height is its actual activation; connection color and width encode weight sign and magnitude." />
             : <SpatialScene surfaces={[surface]} points={[
-                ...XOR_EXAMPLES.map(example => ({ position: [...example.input, example.target] as [number, number, number], color: example.target ? '#2dd4bf' : '#fb7185', label: `target ${example.target}` })),
-                { position: [first, second, result.probability], color: '#fbbf24', radius: 0.15, label: 'Current prediction' },
+                ...XOR_EXAMPLES.map(example => ({ position: [...example.input, example.target] as [number, number, number], color: example.target ? VIZ.truth : VIZ.error, label: `target ${example.target}` })),
+                { position: [first, second, result.probability], color: VIZ.focus, radius: 0.15, label: 'Current prediction' },
             ]} axes={['input 1', 'input 2', 'output probability']}
                 description="Actual sigmoid output over the two input coordinates. Four corner points show XOR training targets; the yellow point shows the selected prediction." />}
     </VisualLab>;

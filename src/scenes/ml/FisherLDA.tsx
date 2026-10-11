@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { SceneContainer } from '../../components/layout/SceneContainer';
@@ -471,14 +472,14 @@ export default function FisherLDA() {
                 <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'white', marginBottom: '3px' }}>
                     Fisher's Linear Discriminant
                 </h2>
-                <p style={{ fontSize: '11px', color: '#94a3b8' }}>
+                <p style={{ fontSize: '11px', color: VIZ.axis }}>
                     Step-by-step interactive derivation
                 </p>
             </div>
 
             {/* Step tabs */}
             <div>
-                <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                <div style={{ color: VIZ.axis, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
                     Steps
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
@@ -490,7 +491,7 @@ export default function FisherLDA() {
                                 padding: '4px 10px', borderRadius: '20px', border: 'none', cursor: 'pointer',
                                 fontSize: '11px', fontWeight: step === i ? 700 : 400, transition: 'all 0.2s',
                                 background: step === i ? '#f0c040' : 'rgba(255,255,255,0.07)',
-                                color: step === i ? '#0d0f1a' : '#94a3b8',
+                                color: step === i ? '#0d0f1a' : VIZ.axis,
                             }}
                         >
                             {i + 1}. {s.label}
@@ -536,7 +537,7 @@ export default function FisherLDA() {
                     <div style={{ fontWeight: 700, color: testYVal >= y0 ? '#63b3ed' : '#ef4444', marginBottom: '4px', fontSize: '12px' }}>
                         → {testYVal >= y0 ? 'Class 2 (Blue)' : 'Class 1 (Red)'}
                     </div>
-                    <div style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
+                    <div style={{ color: VIZ.axis, fontFamily: 'monospace' }}>
                         y = {testYVal.toFixed(1)} &nbsp;|&nbsp; y₀ = {y0.toFixed(1)}
                     </div>
                 </div>
@@ -548,15 +549,15 @@ export default function FisherLDA() {
                     onClick={() => goTo(step - 1)} disabled={step === 0}
                     style={{
                         flex: 1, padding: '8px', borderRadius: '8px',
-                        border: '1px solid #334155', background: '#1e293b',
-                        color: step === 0 ? '#334155' : '#94a3b8',
+                        border: '1px solid #334155', background: VIZ.grid,
+                        color: step === 0 ? '#334155' : VIZ.axis,
                         cursor: step === 0 ? 'not-allowed' : 'pointer',
                         fontSize: '12px', fontWeight: 600,
                     }}
                 >
                     ← Prev
                 </button>
-                <span style={{ color: '#475569', fontSize: '12px', alignSelf: 'center', flexShrink: 0 }}>
+                <span style={{ color: VIZ.muted, fontSize: '12px', alignSelf: 'center', flexShrink: 0 }}>
                     {step + 1}/{STEPS.length}
                 </span>
                 <button
@@ -565,7 +566,7 @@ export default function FisherLDA() {
                         flex: 1, padding: '8px', borderRadius: '8px',
                         border: '1px solid rgba(240,192,64,0.3)',
                         background: step === STEPS.length - 1 ? 'rgba(240,192,64,0.1)' : '#f0c040',
-                        color: step === STEPS.length - 1 ? '#475569' : '#0d0f1a',
+                        color: step === STEPS.length - 1 ? VIZ.muted : '#0d0f1a',
                         cursor: step === STEPS.length - 1 ? 'not-allowed' : 'pointer',
                         fontSize: '12px', fontWeight: 700,
                     }}
@@ -580,14 +581,14 @@ export default function FisherLDA() {
                 </p>
             )}
 
-            <p style={{ fontSize: '11px', color: '#475569', textAlign: 'center', fontStyle: 'italic' }}>
+            <p style={{ fontSize: '11px', color: VIZ.muted, textAlign: 'center', fontStyle: 'italic' }}>
                 Step through to build intuition
             </p>
         </GlassPane>
     );
 
     return (
-        <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls}>
+        <SceneContainer backUrl={`/${topicId || 'ml'}`} controls={controls} legend={[{ label: 'Blue / red', meaning: 'given classes', color: VIZ.data }, { label: 'Projection', meaning: 'Fisher direction', color: VIZ.focus, shape: 'line' }]}>
             <div style={{
                 width: '100%', height: '100%',
                 display: 'flex', flexDirection: 'column',

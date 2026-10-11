@@ -1,9 +1,10 @@
+import { VIZ } from '../../data/palette';
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
 import { FitSceneCamera } from '../../components/3d/FitSceneCamera';
 import { SceneAxisKey } from '../../components/3d/SceneAxisKey';
 import { constraintViewGeometry, type ConstraintView } from './constraintViewModel';
 import { useState, useMemo, useEffect } from 'react';
-import { Html, OrbitControls } from '@react-three/drei';
+import { Html, OrbitControls, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { useParams } from 'react-router-dom';
 import { SceneContainer } from '../../components/layout/SceneContainer';
@@ -52,7 +53,7 @@ function ConstraintShape({ mode, budgetT }: { mode: 'ridge' | 'lasso'; budgetT: 
 function DashedLine({ start, end }: { start: THREE.Vector3; end: THREE.Vector3 }) {
     const lineObj = useMemo(() => {
         const geo = new THREE.BufferGeometry().setFromPoints([start, end]);
-        const mat = new THREE.LineDashedMaterial({ color: '#94a3b8', dashSize: 0.2, gapSize: 0.1 });
+        const mat = new THREE.LineDashedMaterial({ color: VIZ.axis, dashSize: 0.2, gapSize: 0.1 });
         const line = new THREE.Line(geo, mat);
         line.computeLineDistances();
         return line;
@@ -74,28 +75,31 @@ function Scene({ mode, budgetT, view, fitRevision }: { mode: 'ridge' | 'lasso'; 
     return (
         <>
             <FitSceneCamera bounds={bounds} padding={48} verticalPadding={150} fitRevision={fitRevision} fitTarget={target} />
-            <color attach="background" args={['#0b0f19']} />
+            <color attach="background" args={[VIZ.background]} />
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
 
             <OrbitControls makeDefault />
 
             <gridHelper args={[axisExtent * 2, 10, 0x334155, 0x1e293b]} />
-            <axesHelper args={[axisExtent]} />
+            <group>{[0,1,2].map(axis => {
+                const endpoint: [number,number,number] = [0,0,0]; endpoint[axis] = axisExtent;
+                return <Line key={axis} points={[[0,0,0],endpoint]} color={VIZ.axis} lineWidth={1} transparent opacity={0.4} />;
+            })}</group>
 
             {/* Axis labels */}
             <Html position={[axisLabelPosition, 0, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
-                <div style={{ color: '#ef4444', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
+                <div style={{ color: VIZ.basis1, fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
                     β₁
                 </div>
             </Html>
             <Html position={[0, axisLabelPosition, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
-                <div style={{ color: '#22c55e', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
+                <div style={{ color: VIZ.basis2, fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
                     β₂
                 </div>
             </Html>
             <Html position={[0, 0, axisLabelPosition]} center zIndexRange={[40, 0]} pointerEvents="none">
-                <div style={{ color: '#3b82f6', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
+                <div style={{ color: VIZ.basis3, fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', pointerEvents: 'none' }}>
                     β₃
                 </div>
             </Html>
@@ -103,10 +107,10 @@ function Scene({ mode, budgetT, view, fitRevision }: { mode: 'ridge' | 'lasso'; 
             {/* The full view locates the objective's actual unconstrained minimum. */}
             {view === 'objective' && <><mesh position={OLS_POS}>
                 <sphereGeometry args={[0.12, 32, 32]} />
-                <meshPhongMaterial color="#60a5fa" emissive="#001133" />
+                <meshPhongMaterial color={VIZ.data} emissive="#001133" />
             </mesh>
             <Html position={[OLS_POS.x, OLS_POS.y + 0.45, OLS_POS.z]} center zIndexRange={[40, 0]} pointerEvents="none">
-                <div style={{ color: '#60a5fa', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', background: 'rgba(15,23,42,0.75)', borderRadius: '4px', padding: '2px 6px', pointerEvents: 'none' }}>
+                <div style={{ color: VIZ.data, fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap', textShadow: '1px 1px 2px black', background: 'rgba(15,23,42,0.75)', borderRadius: '4px', padding: '2px 6px', pointerEvents: 'none' }}>
                     {loss <= 1e-12 ? 'Coincident minimum' : 'Unconstrained minimum'}
                 </div>
             </Html></>}
@@ -117,7 +121,7 @@ function Scene({ mode, budgetT, view, fitRevision }: { mode: 'ridge' | 'lasso'; 
             {/* Error contour ellipsoid centered at OLS */}
             {loss > 1e-12 && <mesh position={OLS_POS} scale={contourRadii}>
                 <sphereGeometry args={[1, 96, 64]} />
-                <meshPhongMaterial color="#60a5fa" wireframe transparent opacity={0.35} depthWrite={false} clippingPlanes={view === 'detail' ? clippingPlanes : null} />
+                <meshPhongMaterial color={VIZ.data} wireframe transparent opacity={0.35} depthWrite={false} clippingPlanes={view === 'detail' ? clippingPlanes : null} />
             </mesh>}
 
             {/* Constrained solution (red dot) */}
@@ -151,7 +155,7 @@ export default function LagrangeConstraints() {
         ? `\\beta_1^2 + \\beta_2^2 + \\beta_3^2 \\leq ${(budgetT ** 2).toFixed(2)}`
         : `|\\beta_1| + |\\beta_2| + |\\beta_3| \\leq ${budgetT.toFixed(2)}`;
 
-    const shapeColor = mode === 'ridge' ? '#34d399' : '#fbbf24';
+    const shapeColor = mode === 'ridge' ? '#34d399' : VIZ.focus;
     const shapeBg = mode === 'ridge' ? 'rgba(16,185,129,0.4)' : 'rgba(245,158,11,0.4)';
     const shapeBorder = mode === 'ridge' ? '#10b981' : '#f59e0b';
 
@@ -161,14 +165,14 @@ export default function LagrangeConstraints() {
                 <h2 style={{ color: 'white', fontSize: '18px', fontWeight: 700, marginBottom: '4px' }}>
                     Ridge & Lasso Constraints
                 </h2>
-                <p style={{ color: '#94a3b8', fontSize: '11px' }}>
+                <p style={{ color: VIZ.axis, fontSize: '11px' }}>
                     Minimize a stated quadratic error under a weight budget.
                 </p>
             </div>
 
             {/* Mode toggle */}
             <div>
-                <div style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                <div style={{ color: VIZ.axis, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
                     Penalty Type
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -178,8 +182,8 @@ export default function LagrangeConstraints() {
                             flex: 1, padding: '8px 12px', borderRadius: '8px',
                             border: '1px solid #334155',
                             cursor: 'pointer', fontSize: '12px', fontWeight: 600,
-                            background: mode === 'ridge' ? '#2563eb' : '#1e293b',
-                            color: mode === 'ridge' ? 'white' : '#94a3b8',
+                            background: mode === 'ridge' ? '#2563eb' : VIZ.grid,
+                            color: mode === 'ridge' ? 'white' : VIZ.axis,
                             transition: 'all 0.2s',
                         }}
                     >
@@ -191,8 +195,8 @@ export default function LagrangeConstraints() {
                             flex: 1, padding: '8px 12px', borderRadius: '8px',
                             border: '1px solid #334155',
                             cursor: 'pointer', fontSize: '12px', fontWeight: 600,
-                            background: mode === 'lasso' ? '#d97706' : '#1e293b',
-                            color: mode === 'lasso' ? 'white' : '#94a3b8',
+                            background: mode === 'lasso' ? '#d97706' : VIZ.grid,
+                            color: mode === 'lasso' ? 'white' : VIZ.axis,
                             transition: 'all 0.2s',
                         }}
                     >
@@ -204,7 +208,7 @@ export default function LagrangeConstraints() {
             {/* Budget slider */}
             <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <span style={{ color: VIZ.axis, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Allowed Budget (t)
                     </span>
                     <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>
@@ -232,7 +236,7 @@ export default function LagrangeConstraints() {
                     <strong style={{ color: shapeColor }}>Feasible Area:</strong>{' '}
                     Your Allowance or Budget. We want to reach the center of the blue bubble, but we are mathematically trapped inside this solid shape.
                 </div>
-                <div style={{ background: '#0f172a', borderRadius: '6px', padding: '8px 12px', textAlign: 'center', color: '#fcd34d' }}>
+                <div style={{ background: VIZ.surface, borderRadius: '6px', padding: '8px 12px', textAlign: 'center', color: '#fcd34d' }}>
                     <Latex formula={latexEq} display />
                 </div>
                 <div>
@@ -260,7 +264,7 @@ export default function LagrangeConstraints() {
                 </div>
             </div>
 
-            <p style={{ fontSize: '11px', color: '#475569', textAlign: 'center', fontStyle: 'italic' }}>
+            <p style={{ fontSize: '11px', color: VIZ.muted, textAlign: 'center', fontStyle: 'italic' }}>
                 The camera fits the current view as the budget changes; weight coordinates stay unchanged. Fit view recenters after panning or zooming. Drag to rotate; focus the view for keyboard camera controls.
             </p>
         </GlassPane>
@@ -284,7 +288,7 @@ export default function LagrangeConstraints() {
                     <p>{mode === 'ridge' ? `L2 radius ${budgetT.toFixed(2)} · t² budget ${(budgetT ** 2).toFixed(2)}` : `L1 budget ${budgetT.toFixed(2)}`} · axes +{viewGeometry.axisExtent.toFixed(2)} weight units.</p>
                     <p className="constraint-minimum-readout">{inactive ? 'Coincident minimum' : 'Red minimum'}: ({solution.map(value => value.toFixed(2)).join(', ')}); loss {lossText}.</p>
                 </div>
-                <SceneAxisKey axes={[{ label: 'β₁', meaning: 'weight 1', color: '#ef4444' }, { label: 'β₂', meaning: 'weight 2', color: '#22c55e' }, { label: 'β₃', meaning: 'weight 3', color: '#3b82f6' }]} />
+                <SceneAxisKey axes={[{ label: 'β₁', meaning: 'weight 1', color: VIZ.basis1 }, { label: 'β₂', meaning: 'weight 2', color: VIZ.basis2 }, { label: 'β₃', meaning: 'weight 3', color: VIZ.basis3 }]} />
             </div>
         </SceneContainer>
     );

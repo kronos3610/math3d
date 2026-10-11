@@ -27,8 +27,8 @@
   --color-calculus: #00cec9;
   --color-probability: #fd79a8;
   --color-ml: #fdcb6e;
-  --bayes-spam: #fbbf24;
-  --bayes-ordinary: #60a5fa;
+  --bayes-spam: var(--viz-focus);
+  --bayes-ordinary: var(--viz-data);
 
   /* Spacing */
   --sidebar-width: 260px;
@@ -1045,8 +1045,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, canvas:focus-visible
 
 /* Learning experiments */
 :root {
+  --viz-data: #60a5fa;
+  --viz-focus: #fbbf24;
+  --viz-output: #8b5cf6;
+  --viz-axis-line: #94a3b8;
+  --viz-basis-1: #f87171;
+  --viz-basis-2: #34d399;
+  --viz-basis-3: #60a5fa;
   --lab-truth: #64d9c6;
-  --lab-fit: #fdcb6e;
+  --lab-fit: var(--viz-focus);
+  --lab-test: var(--lab-noise);
   --lab-variation: #a5b4fc;
   --lab-noise: #fb7185;
   --lab-panel: rgba(15, 23, 42, 0.72);
@@ -1531,8 +1539,8 @@ figure > .lab-chart + figcaption { margin-top: 12px; }
 
 /* Linear classification lab: controls and guidance remain visible above its interactive plot. */
 .linear-models-lab {
-  --linear-class-blue: #60a5fa;
-  --linear-class-red: #fb7185;
+  --linear-class-blue: var(--viz-data);
+  --linear-class-red: var(--lab-noise);
   height: 100%;
   overflow-y: auto;
   padding: 80px 28px 36px;
@@ -1868,3 +1876,48 @@ figure > .lab-chart + figcaption { margin-top: 12px; }
   .linear-models-plot text, .experiment-layout .lab-chart[viewBox='0 0 800 350'] text { font-size: 28px; }
   .linear-models-plot { height: auto; }
 }
+
+/* The key occupies its own header row in labs and a small overlay in legacy views. */
+.scene-key { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 20; pointer-events: none; }
+.scene-key summary { display: none; cursor: pointer; pointer-events: auto; }
+.scene-key .scene-axis-key { position: static; font-size: 12px; }
+.scene-key-inline { position: static; flex-basis: 100%; }
+.scene-key .scene-key-line { width: 16px; height: 3px; border-radius: 0; }
+.scene-key .scene-key-square { width: 8px; height: 8px; border-radius: 0; }
+.constraint-view .scene-key { top: auto; bottom: 12px; }
+.lab-panel { padding: 16px; background: var(--lab-panel); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); min-width: 0; }
+.lab-control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.lab-readout { color: var(--text-primary); font-size: 13px; font-variant-numeric: tabular-nums; line-height: 1.6; }
+.lab-explanation { display: grid; gap: 14px; line-height: 1.7; font-size: 13px; color: var(--text-secondary); }
+.lab-checkbox { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-secondary); }
+.lab-matrix-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; max-width: 300px; }
+.lab-matrix-grid input { width: 100%; min-width: 0; padding: 8px; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); }
+.lab-equation { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; overflow-x: auto; }
+.predict-prompt { margin-top: 12px; padding: 12px; border: 1px solid var(--border-glass-hover); border-radius: var(--radius-sm); }
+.predict-prompt h2 { font-size: 13px; line-height: 1.5; margin: 0 0 10px; }
+.predict-options { display: flex; flex-wrap: wrap; gap: 8px 16px; border: 0; padding: 0 0 10px; }
+.predict-options label { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; cursor: pointer; }
+.predict-feedback { font-size: 12px; line-height: 1.7; }
+.predict-feedback .lab-button { margin-left: 8px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (max-width: 768px) {
+  .scene-key { left: 8px; right: 8px; }
+  .scene-key summary { display: flex; gap: 10px; align-items: center; background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 12px; }
+  .scene-key summary span { color: var(--text-secondary); font-size: 10px; }
+  .scene-key .scene-axis-key { font-size: 11px; }
+}
+.lab-split-stage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); height: 100%; min-height: 0; }
+.lab-split-stage > * { min-width: 0; min-height: 0; }
+.lab-svg-stage { width: 100%; height: 100%; display: block; color: var(--text-secondary); }
+.spatial-axis-label { font-size: 12px; color: var(--viz-axis-line); }
+.lesson-card-art { width: 100%; height: 100%; display: grid; place-items: center; overflow: hidden; background: radial-gradient(ellipse at 45% 50%, color-mix(in srgb, var(--preview-color) 12%, transparent), transparent 70%), var(--bg-secondary); }
+.lesson-preview { width: 85%; height: 90%; max-width: 280px; }
+@media (max-width: 768px) { .lab-split-stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(2,minmax(250px,1fr)); min-height: 500px; } .visual-lab:has(.lab-split-stage) { grid-template-rows: auto minmax(500px,1fr) auto; } }
+
+.lab-native-canvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+.spatial-point-label { white-space: normal; width: max-content; max-width: 160px; overflow-wrap: anywhere; }
+@media (max-width: 768px) { .spatial-point-label { max-width: 105px; font-size: 10px; } }
+
+.scene-key summary > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viz-data-text { color: var(--viz-data); }
+.experiment-header .scene-key-inline { margin-top: 12px; }

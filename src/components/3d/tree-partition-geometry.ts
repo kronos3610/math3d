@@ -1,3 +1,4 @@
+import { VIZ } from '../../data/palette';
 import type { SpatialSceneProps, LabVector, SpatialPath, SpatialSurface, SpatialPoint } from './spatial-model';
 import type { TreeSample, TreeTask } from '../../utils/ml-trees';
 import type { TreeCell, TreeDecision } from '../../utils/ml-tree-space';
@@ -26,9 +27,9 @@ function cut(decision: TreeDecision, dimensions: 2 | 3): { surface: SpatialSurfa
         if (dimensions === 3) point[other[1]] = index & 2 ? cell.max[other[1]] : cell.min[other[1]];
         return featurePosition(point, index & 2 ? 0.65 : 0.02);
     });
-    return { surface: { vertices: corners, columns: 2, color: '#2dd4bf', opacity: dimensions === 3 ? 0.16 : 0.2 },
-        outline: { points: [corners[0], corners[1], corners[3], corners[2], corners[0]], color: '#2dd4bf', width: 2 },
-        floor: { points: [corners[0], corners[1]], color: '#2dd4bf', width: 3 } };
+    return { surface: { vertices: corners, columns: 2, color: VIZ.truth, opacity: dimensions === 3 ? 0.16 : 0.2 },
+        outline: { points: [corners[0], corners[1], corners[3], corners[2], corners[0]], color: VIZ.truth, width: 2 },
+        floor: { points: [corners[0], corners[1]], color: VIZ.truth, width: 3 } };
 }
 
 interface PartitionOptions {
@@ -50,13 +51,13 @@ export function treePartitionGeometry({ tree, query, step, samples, task, colors
     const dimensions: 2 | 3 = query.length === 3 ? 3 : 2;
     const values = trace.leaves.map(cell => cell.node.value);
     const min = Math.min(...values); const max = Math.max(...values);
-    const paths: SpatialPath[] = cellEdges(trace.path[0], 0.005).map(points => ({ points, color: '#64748b', width: 1 }));
-    paths.push(...cellEdges(current, 0.025).map(points => ({ points, color: '#f8fafc', width: 3 })));
+    const paths: SpatialPath[] = cellEdges(trace.path[0], 0.005).map(points => ({ points, color: VIZ.axis, width: 1 }));
+    paths.push(...cellEdges(current, 0.025).map(points => ({ points, color: VIZ.white, width: 3 })));
     const surfaces: SpatialSurface[] = [];
     for (const decision of trace.decisions.slice(0, currentIndex)) {
         const geometry = cut(decision, dimensions);
-        if (dimensions === 2) paths.push({ ...geometry.floor, color: '#94a3b8', width: 1, dashed: true });
-        else { surfaces.push({ ...geometry.surface, opacity: 0.04 }); paths.push({ ...geometry.outline, color: '#64748b', width: 1 }); }
+        if (dimensions === 2) paths.push({ ...geometry.floor, color: VIZ.axis, width: 1, dashed: true });
+        else { surfaces.push({ ...geometry.surface, opacity: 0.04 }); paths.push({ ...geometry.outline, color: VIZ.axis, width: 1 }); }
     }
     const decision = trace.decisions[currentIndex];
     if (decision) { const geometry = cut(decision, dimensions); surfaces.push(geometry.surface); paths.push(geometry.outline, geometry.floor); }
@@ -68,11 +69,11 @@ export function treePartitionGeometry({ tree, query, step, samples, task, colors
     const points: SpatialPoint[] = samples.map((sample, index) => {
         const retained = cellContains(current, sample.x);
         return { position: featurePosition(sample.x, 0.06), radius: retained ? radii?.[index] ?? 0.09 : 0.055,
-            color: retained ? colors?.[index] ?? treeValueColor(sample.y, task, min, max) : '#475569' };
+            color: retained ? colors?.[index] ?? treeValueColor(sample.y, task, min, max) : VIZ.muted };
     });
-    points.push({ position: featurePosition(query, 0.08), radius: 0.16, color: '#ffffff', label: 'query' });
+    points.push({ position: featurePosition(query, 0.08), radius: 0.16, color: VIZ.white, label: 'query' });
     const vectors = decision ? [{ from: featurePosition(cellCenter(current), 0.12),
-        to: featurePosition(cellCenter(decision.retained), 0.12), color: '#2dd4bf' }] : [];
+        to: featurePosition(cellCenter(decision.retained), 0.12), color: VIZ.truth }] : [];
     return { points, paths, surfaces, boxes, vectors,
         axes: dimensions === 3 ? ['Feature x₁', 'Feature x₃', 'Feature x₂'] : ['Feature x₁', 'Threshold wall height (illustration)', 'Feature x₂'],
         cameraPosition: dimensions === 3 ? [8, 6, -9] : [7, 9, -9],
