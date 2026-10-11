@@ -142,10 +142,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: "The dome is a manually controlled data-space Gaussian illustration, not a likelihood-parameter surface or optimizer. Height is rescaled as 15/σ times the Gaussian shape and clipped below at 0.05; it is not calibrated density. Data-floor units are equal and height scales separately. The score uses exact normalized Gaussian log-density for all nine observations.",
         },
         'probability-vs-likelihood': {
-            meaning: 'The same model f(b | x) can predict data for a fixed parameter or score parameters for fixed observed data.',
-            steps: ['Choose Forward / Probability: x is fixed and the curve varies over b.', 'Choose Inverse / Likelihood: b is fixed and the curve varies over x.'],
-            observe: 'The forward peak is at b = 1.5. For observed b = 4.5, the likelihood is maximized at x = 3.',
-            limitations: 'A likelihood is not automatically a probability distribution over parameters. A posterior requires a prior and Bayesian normalization. The visual height is 5 times the density.',
+            meaning: "Probability varies possible data for a fixed parameter. Likelihood varies the parameter for fixed observed data, using the same model in the other direction.",
+            steps: ["Choose Probability under View and inspect the fixed parameter, varied data axis, and peak location.", "Choose Likelihood and compare the perpendicular section with the fixed observation and maximum-likelihood parameter."],
+            observe: "The model b = 1.5x plus standard Gaussian noise has its probability peak at b = 1.5 when x = 1. With observed b = 4.5, likelihood peaks at x = 3.",
+            limitations: "The surface height is five times Gaussian density for visibility, while the metric reports unscaled density. Only one parameter or one observation is fixed in each preset. Likelihood is not a probability distribution over parameters; its integral over x is 1/1.5 for this model. No posterior or parameter prior is computed.",
         },
         'variational-inference': {
             meaning: 'Variational inference approximates a posterior with a simpler distribution. For fixed evidence, increasing the ELBO reduces the KL gap.',
