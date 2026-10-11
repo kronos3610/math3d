@@ -114,10 +114,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
     },
     probability: {
         distributions: {
-            meaning: 'A probability density describes how observations are distributed. Gaussian data cluster around a central region and thin out toward the tails.',
-            steps: ['Compare the yellow sample positions with the pink bell-shaped surface.', 'Rotate the scene to inspect the spread around the center.'],
-            observe: 'Sample concentration is greater near the center than far out in the tails.',
-            limitations: 'Horizontal samples come from the same standard two-dimensional Gaussian as the surface. Heights equal 4π times density and are not a third random variable; density at a point is not that point’s probability.',
+            meaning: "A two-dimensional Gaussian density has adjustable marginal spread and correlation. Its one-sigma ellipse contains about 39.3% of probability, while wider spread lowers the peak at fixed remaining parameters.",
+            steps: ["Change Standard deviation σx or σy and compare the surface width, scaled peak, and sample standard deviations.", "Move Correlation ρ and switch to Top view to inspect the tilted one-sigma ellipse and its sample membership.", "Increase Sample count N or Resample, then compare the empirical inside fraction with the 39.3% theoretical value."],
+            observe: "At fixed σy and ρ, doubling σx halves the peak. The two-dimensional one-sigma fraction is 1−exp(−1/2), about 39.3%, independent of spread and correlation; it is not the one-dimensional 68% interval rule.",
+            limitations: "The density surface is shown over [−4.2,4.2]² with heights equal to 4π times density. Samples have two random input coordinates; displayed surface heights are not a third random variable. Samples outside the surface window remain in statistics and the plot. The full density, including unseen tails, integrates to one. Sample standard deviations use divisor N.",
         },
         'bayes-theorem': {
             meaning: 'A filter flag is a clue, not certainty. Bayes’ theorem tells you how likely an email is spam after you learn the filter flagged it.',
