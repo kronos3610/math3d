@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { gradientDescentPath, nonconvexGradient, nonconvexLoss, quadraticGradient, quadraticLoss } from './optimization';
+import { gradientDescentPath, gradientDescentTrace, nonconvexGradient, nonconvexLoss, quadraticGradient, quadraticLoss } from './optimization';
 
 describe('gradient descent mathematics', () => {
     test('nonconvex analytic gradient agrees with finite differences', () => {
@@ -29,4 +29,34 @@ describe('gradient descent mathematics', () => {
         for (const [x, y] of path) expect(x / y).toBeCloseTo(1.5);
         expect(quadraticLoss(...path[path.length - 1])).toBeLessThan(1e-10);
     });
+});
+
+test('η=1 reaches the quadratic minimum in one update; η=1.5 alternates and converges', () => {
+    expect(gradientDescentTrace(quadraticGradient, [3, 2], { learningRate: 1 })).toEqual({ path: [[3, 2], [0, 0]], status: 'converged' });
+    const trace = gradientDescentTrace(quadraticGradient, [3, 2], { learningRate: 1.5 });
+    expect(trace.status).toBe('converged');
+    trace.path.slice(1).forEach(([x, y], index) => {
+        expect(x * trace.path[index][0]).toBeLessThan(0);
+        expect(y * trace.path[index][1]).toBeLessThan(0);
+        expect(quadraticLoss(x, y)).toBeLessThan(quadraticLoss(...trace.path[index]));
+    });
+});
+
+test('divergence stops before an escaping/nonfinite iterate enters renderable geometry', () => {
+    const trace = gradientDescentTrace(quadraticGradient, [3, 2], { learningRate: 2.2, bound: 6 });
+    expect(trace.status).toBe('diverged');
+    expect(trace.path.length).toBeGreaterThan(1);
+    trace.path.flat().forEach(value => { expect(Number.isFinite(value)).toBe(true); expect(Math.abs(value)).toBeLessThanOrEqual(6); });
+    const last = trace.path.at(-1)!;
+    expect(Math.abs(last[0] * -1.2)).toBeGreaterThan(6);
+    expect(gradientDescentTrace(() => [NaN, Infinity], [1, 1], { learningRate: 1 })).toEqual({ path: [[1, 1]], status: 'diverged' });
+});
+
+test('small learning rates decrease loss; η=2 alternates without convergence', () => {
+    const slow = gradientDescentTrace(quadraticGradient, [3, 2], { learningRate: 0.1 });
+    slow.path.slice(1).forEach((point, index) => expect(quadraticLoss(...point)).toBeLessThan(quadraticLoss(...slow.path[index])));
+    const neutral = gradientDescentTrace(quadraticGradient, [3, 2], { learningRate: 2, maxSteps: 10 });
+    expect(neutral.status).toBe('max-steps');
+    neutral.path.forEach(point => expect(quadraticLoss(...point)).toBe(6.5));
+    expect(gradientDescentTrace(quadraticGradient, [0, 0], { learningRate: 2.4 }).status).toBe('converged');
 });

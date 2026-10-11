@@ -1,100 +1,59 @@
-import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useMemo, useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { VisualLab, LabRange } from '../../components/layout/VisualLab';
+import { PredictPrompt } from '../../components/layout/PredictPrompt';
+import { SpatialScene, type LabVector } from '../../components/3d/SpatialScene';
+import { sampleHeightField } from '../../components/3d/height-field-geometry';
+import { VIZ } from '../../data/palette';
+import { gradientDescentTrace, quadraticGradient, quadraticLoss } from '../../utils/optimization';
+import { useSceneMotion } from '../../hooks/useSceneMotion';
 
-import { OrbitControls } from '@react-three/drei';
-import * as THREE from 'three';
-import { Play, Pause, RefreshCcw } from 'lucide-react';
-import { SceneContainer } from '../../components/layout/SceneContainer';
-import { GlassPane } from '../../components/layout/GlassPane';
-import { useParams } from 'react-router-dom';
-
-import { DescentTrajectory } from '../../components/3d/DescentTrajectory';
-import { gradientDescentPath, quadraticLoss as calculateLoss, quadraticGradient } from '../../utils/optimization';
-
-const descentPath = gradientDescentPath(quadraticGradient, [3, 2]);
-
-// --- Scene Components ---
-
-function LossSurface() {
-    const geometry = useMemo(() => {
-        const geo = new THREE.PlaneGeometry(8, 8, 64, 64);
-        const pos = geo.attributes.position;
-        for (let i = 0; i < pos.count; i++) {
-            const x = pos.getX(i);
-            const y = pos.getY(i);
-            const z = calculateLoss(x, y); // Map loss to Z (up)
-            pos.setZ(i, z);
-        }
-        geo.computeVertexNormals();
-        return geo;
-    }, []);
-
-    useEffect(() => () => geometry.dispose(), [geometry]);
-    return (
-        <group rotation={[-Math.PI / 2, 0, 0]}>
-            <mesh geometry={geometry}>
-                <meshStandardMaterial
-                    color="#00cec9"
-                    roughness={0.4}
-                    metalness={0.5}
-                    side={THREE.DoubleSide}
-                    transparent
-                    opacity={0.6}
-                />
-            </mesh>
-            <mesh geometry={geometry}>
-                <meshBasicMaterial color="#00cec9" wireframe transparent opacity={0.1} />
-            </mesh>
-        </group>
-    );
-}
-
-// --- Main Component ---
+const surface = { ...sampleHeightField(quadraticLoss, 12, 36), color: VIZ.data, opacity: 0.3 };
+const options = ['Converge without crossing the minimum', 'Reach the minimum in one update', 'Oscillate and converge', 'Oscillate without getting closer', 'Diverge', 'Stay at the minimum'] as const;
 
 export default function GradientDescent() {
-    const { topicId } = useParams();
-    const [isPlaying, setIsPlaying] = useState(true);
-    const [resetCount, setResetCount] = useState(0);
-
-    const controls = (
-        <GlassPane className="scene-controls" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: 'white', margin: 0 }}>Gradient Descent</h3>
-                <p style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'monospace' }}>Loss = 0.5 * (x² + y²)</p>
-            </div>
-
-            <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5' }}>
-                Gradient descent updates the parameters by subtracting 0.1 times the gradient at each step. The line shows the computed trajectory to the global minimum; the ball follows those iterates.
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                <button onClick={() => setIsPlaying(!isPlaying)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: isPlaying ? '#ec4899' : '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                    {isPlaying ? <Pause size={14} /> : <Play size={14} />}
-                    {isPlaying ? 'Pause' : 'Resume'}
-                </button>
-                <button onClick={() => setResetCount(c => c + 1)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: 'white', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                    <RefreshCcw size={14} />
-                    Reset
-                </button>
-            </div>
-        </GlassPane>
-    );
-
-    return (
-        <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas frameloop="always" camera={{ position: [5, 5, 5], fov: 50 }} style={{ width: '100%', height: '100%' }} aria-label="3D visualization of gradient descent on a quadratic loss surface">
-                <ambientLight intensity={0.4} />
-                <directionalLight position={[5, 10, 5]} intensity={1.0} />
-                <pointLight position={[-3, 5, 3]} intensity={0.5} color="#00cec9" />
-
-                <LossSurface />
-                <DescentTrajectory key={resetCount} path={descentPath} loss={calculateLoss} playing={isPlaying} color="#fdcb6e" />
-
-                <gridHelper args={[10, 20, '#475569', '#1e293b']} position={[0, -0.01, 0]} />
-                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
-                <fog attach="fog" args={['#0b0f19', 5, 15]} />
-                <color attach="background" args={['#0b0f19']} />
-            </SceneCanvas>
-        </SceneContainer>
-    );
+    const [rate, setRate] = useState(0.1);
+    const [startX, setStartX] = useState(3);
+    const [startY, setStartY] = useState(2);
+    const [step, setStep] = useState(0);
+    const [playing, setPlaying] = useState(false);
+    const [revealed, setRevealed] = useState(false);
+    const moving = useSceneMotion();
+    const trace = useMemo(() => gradientDescentTrace(quadraticGradient, [startX, startY], { learningRate: rate }), [rate, startX, startY]);
+    const currentStep = Math.min(step, trace.path.length - 1);
+    const current = trace.path[currentStep];
+    const active = playing && moving && currentStep < trace.path.length - 1;
+    useEffect(() => {
+        if (!active) return;
+        const timer = window.setTimeout(() => setStep(value => Math.min(value + 1, trace.path.length - 1)), 300);
+        return () => window.clearTimeout(timer);
+    }, [active, currentStep, trace.path.length]);
+    const factor = 1 - rate;
+    const correct = startX === 0 && startY === 0 ? 5 : rate < 1 ? 0 : rate === 1 ? 1 : rate < 2 ? 2 : rate === 2 ? 3 : 4;
+    const regime = options[correct];
+    const paths = useMemo(() => [{ points: trace.path.slice(0, currentStep + 1).map(([x, y]): LabVector => [x, quadraticLoss(x, y), y]), color: VIZ.focus, width: 3 }], [trace.path, currentStep]);
+    const status = currentStep < trace.path.length - 1 ? 'Ready for next update' : trace.status === 'diverged' ? 'Stopped: next update leaves ±6' : trace.status === 'max-steps' ? 'Step limit reached' : 'Converged';
+    function resetRun() { setStep(0); setPlaying(false); setRevealed(false); }
+    function changeRate(value: number) { setRate(value); resetRun(); }
+    const controls = <>
+        <LabRange label="Learning rate" value={rate} min={0.02} max={2.4} step={0.02} decimals={2} onChange={changeRate} />
+        <LabRange label="Start x" value={startX} min={-4} max={4} step={0.1} decimals={1} onChange={value => { setStartX(value); resetRun(); }} />
+        <LabRange label="Start y" value={startY} min={-4} max={4} step={0.1} decimals={1} onChange={value => { setStartY(value); resetRun(); }} />
+        <div className="lab-control-row" role="group" aria-label="Learning rate presets">{[{ label: 'Too small', rate: 0.04 }, { label: 'Just right (η=1)', rate: 1 }, { label: 'Overshoots', rate: 1.5 }, { label: 'Diverges', rate: 2.2 }].map(preset => <button type="button" className="lab-button" key={preset.label} onClick={() => changeRate(preset.rate)}>{preset.label}</button>)}</div>
+        <div className="visual-lab-playback" role="group" aria-label="Experiment playback">
+            <button type="button" className="lab-button" disabled={currentStep >= trace.path.length - 1} onClick={() => { setPlaying(false); setStep(value => Math.min(value + 1, trace.path.length - 1)); }}>Step</button>
+            <button type="button" className="lab-button" disabled={!moving} aria-pressed={active} onClick={() => { if (active) setPlaying(false); else { if (currentStep >= trace.path.length - 1) setStep(0); setPlaying(true); } }}>{active ? 'Pause' : 'Play'}</button>
+            <button type="button" className="lab-button" onClick={() => { setStep(0); setPlaying(true); setRevealed(true); }}>Replay</button>
+            <button type="button" className="lab-button" onClick={resetRun}>Reset</button>
+            <span>Step {currentStep} / {trace.path.length - 1}</span>{!moving && <span>Motion paused · Step remains available</span>}
+        </div>
+    </>;
+    return <VisualLab title="Gradient descent" subtitle="Move the starting point; choose how far each update travels down the quadratic bowl." backUrl="/calculus" controls={controls}
+        metrics={[{ label: 'Step k', value: currentStep }, { label: 'Position (x, y)', value: `(${current[0].toFixed(3)}, ${current[1].toFixed(3)})` }, { label: 'Loss f', value: quadraticLoss(...current).toFixed(4) }, { label: 'Gradient norm', value: Math.hypot(...current).toFixed(4) }, { label: 'Status', value: status }]}
+        legend={[{ label: 'Bowl', meaning: 'f(x,y)=½(x²+y²)', color: VIZ.data, shape: 'square' }, { label: 'Current', meaning: 'selected iterate and visited path', color: VIZ.focus }, { label: 'Minimum', meaning: 'zero loss at the origin', color: VIZ.truth }]}
+        insight={revealed || currentStep > 0 ? `${regime}. Each coordinate is multiplied by ${factor.toFixed(2)} per update; distance is multiplied by ${Math.abs(factor).toFixed(2)}.` : `Choose a rate and predict, skip, or Step to inspect the update. Each coordinate will be multiplied by 1−η=${factor.toFixed(2)}.`}
+        challenge="Set η=1, then Step. Try η=1.5 and η=2.2 from the same start to see overshooting converge or escape."
+        prediction={<PredictPrompt question={`With η=${rate.toFixed(2)} from (${startX.toFixed(1)}, ${startY.toFixed(1)}), what will happen?`} options={options} correct={correct} contextKey={`${rate}/${startX}/${startY}`} persistenceKey="calculus-gradient-descent" explanation={`The update is (x,y) ← ${factor.toFixed(2)}(x,y). ${regime}.`} onReveal={() => { setRevealed(true); setStep(Math.min(1, trace.path.length - 1)); setPlaying(true); }} />}
+        explanation={<div className="lab-explanation"><p>For f(x,y)=½(x²+y²), the gradient is (x,y). Subtracting η times that gradient multiplies each coordinate by 1−η. Between 0 and 1 the point approaches without crossing; at 1 it lands in one update; between 1 and 2 it alternates and approaches; at 2 its distance stays unchanged; above 2 it escapes unless it starts at the minimum.</p><p>Only actual finite iterates are drawn. A run stops before leaving the plotted input domain ±6, or after 160 updates. Step remains usable when global motion is paused. Height and input axes are scaled separately; X/Z preserve the same input units.</p></div>}>
+        <SpatialScene surfaces={[surface]} paths={paths} points={[{ position: [0, 0, 0], color: VIZ.truth, label: 'Minimum' }, { position: [current[0], quadraticLoss(...current), current[1]], color: VIZ.focus, label: `k=${currentStep}`, radius: 0.13 }]} axes={['input x', 'loss f(x,y)', 'input y']} equalScale={false} equalAxes={[0, 2]} description={`Quadratic loss bowl and ${currentStep} gradient descent updates. Current position (${current[0].toFixed(3)}, ${current[1].toFixed(3)}), loss ${quadraticLoss(...current).toFixed(4)}. ${status}.`} />
+    </VisualLab>;
 }
