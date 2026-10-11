@@ -174,10 +174,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'The network and XOR task are deliberately small. This lesson computes activations and trains weights; it does not imply performance on unrelated data.',
         },
         'decision-boundaries': {
-            meaning: 'A decision boundary separates regions assigned to different classes. A linear classifier uses a plane in three-dimensional feature space.',
-            steps: ['Compare the yellow and purple clusters with the cyan plane.', 'Rotate the view to inspect the two sides of the plane.'],
-            observe: 'A boundary partitions feature space; its geometric role is separate from how a learning algorithm chooses it.',
-            limitations: 'The plane is fixed for this illustration. Use Linear Models for Classification to fit boundaries to editable training data.',
+            meaning: "A decision boundary partitions feature coordinates into predicted classes. Moving a plane or sphere changes predictions while given labels stay fixed, revealing actual misclassification errors.",
+            steps: ["Move Plane tilt, Plane turn, or Plane offset and compare the error rings with accuracy and misclassified counts.", "Choose XOR-like quadrants and try to eliminate errors using one plane; inspect which given labels remain on the wrong side.", "Choose Concentric shells, switch Boundary to Sphere, and change Sphere radius to compare a curved separator with a plane."],
+            observe: "A plane predicts by a signed linear score; a centered sphere predicts by distance from the origin. A sphere can enclose the inner shell group, but it is not a universal nonlinear solution for XOR or overlapping labels.",
+            limitations: "These boundaries are manually chosen on seeded synthetic data; no training or held-out generalization is claimed. The gold plane patch is clipped to [−3,3]³; all original three-feature points contribute to error counts. SVG is an oblique projection of those coordinates and uses the same three-dimensional predictions.",
         },
         'gradient-descent-ml': {
             meaning: "Gradient descent updates model parameters by subtracting a step along the gradient. A non-convex objective can have multiple stationary points.",
