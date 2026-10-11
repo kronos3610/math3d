@@ -130,10 +130,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'These fictional rates give expected counts, so fractions are possible. If no emails are flagged, the chance of spam among flagged emails is undefined.',
         },
         'monte-carlo': {
-            meaning: 'Monte Carlo estimates quantities using random samples. The fraction of cube samples inside a sphere estimates its volume ratio and therefore π.',
-            steps: ['Watch pink and gray points appear automatically.', 'Compare the sample count, inside fraction, and π estimate as the run progresses.'],
-            observe: 'The estimate fluctuates. More samples usually improve precision but do not make every update closer to π.',
-            limitations: 'This run stops at 500 samples. Its result is an estimate, not an exact geometric calculation.',
+            meaning: "Uniform samples in a cube estimate the fraction inside a sphere. Multiplying that fraction by six estimates π; the error plot reveals fluctuation and the typical 1/√n scale.",
+            steps: ["Increase Samples revealed or press Play, and compare the counted points with the π estimate.", "Choose a larger Sample budget, then Restart same seed to reproduce its prefix or Run again to change the seed.", "Compare the solid actual-error line with the dashed typical-error scale; check whether every added sample improves the estimate."],
+            observe: "100 times more independent samples reduces the theoretical standard error about tenfold. A single estimate can move away from π even while its typical uncertainty shrinks.",
+            limitations: "Seeded pseudorandom samples are a reproducible simulation, not a proof of π. The dashed curve uses the known sphere probability π/6 to show theoretical standard error, not a guaranteed bound. All samples contribute to statistics; the SVG projection draws at most 1,200 evenly selected points, and errors below 0.0001 are shown at the chart floor.",
         },
         'log-likelihood': {
             meaning: 'Log-likelihood scores how well a proposed probability model explains the observed data. Independent observations contribute additive log-density terms.',
