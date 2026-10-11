@@ -64,10 +64,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             observe: 'Positive and negative slopes indicate uphill and downhill directions. The gradient combines both input directions.',
         },
         'jacobian-hessian': {
-            meaning: 'The Jacobian describes first-order change. The Hessian describes second-order curvature, including how the slopes change together.',
-            steps: ['Toggle Show Jacobian and Show Hessian to inspect each overlay.', 'Move the X and Y sliders and compare the displayed derivatives and curvature.'],
-            observe: 'A small gradient does not imply flat curvature. The Hessian can reveal a bowl, hill, or saddle near a point.',
-            limitations: 'The overlays are local approximations around the selected point, not descriptions of the entire surface.',
+            meaning: "The Jacobian gives the local slope and the Hessian gives curvature. For f(x,y) = sin(x)cos(y), a gradient arrow and a local quadratic patch show these two roles.",
+            steps: ["Move Coordinate X and Coordinate Y; compare the selected surface point with the gradient and Hessian entries.", "Toggle Show Jacobian and Show Hessian to isolate slope and the second-order patch, then Reset to restore the initial point and camera."],
+            observe: "The arrow follows the true input-space gradient; the patch uses the full second-order Taylor expression, including mixed derivatives. At (0,0), the Hessian vanishes even though the gradient is nonzero.",
+            limitations: "The arrow lies horizontally in the input plane at the point’s height, not tangent to the embedded surface. The quadratic patch covers offsets within ±0.75 and is lifted by 0.05 to separate overlaps. It is a local approximation, not the actual function away from the selected point. World Y is height and world Z carries input y.",
         },
         integrals: {
             meaning: "Integration accumulates signed area. The accumulated function A(x) has slope equal to the height of the original function f(x).",

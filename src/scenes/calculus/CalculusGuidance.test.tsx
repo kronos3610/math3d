@@ -60,7 +60,7 @@ test('switching from sine to logarithm resets an invalid expansion center and re
 
 test.each([{ id: 'partial-derivatives', Scene: PartialDerivatives }, { id: 'jacobian-hessian', Scene: JacobianHessian }])('$id keeps its axis meaning visible without GPU rendering or an open guide', ({ id, Scene }) => {
     render(<MemoryRouter initialEntries={[`/calculus/${id}`]}><Routes><Route path="/:topicId/:subtopicId" element={<Scene />} /></Routes></MemoryRouter>);
-    const key = within(screen.getByRole('list', { name: 'Plot axis meanings' }));
+    const key = within(screen.getByRole('list', { name: id === 'jacobian-hessian' ? 'Plot key' : 'Plot axis meanings' }));
     expect(key.getByText(/input x/)).toBeDefined();
     expect(key.getByText(/input y on the floor/)).toBeDefined();
     expect(key.getByText(/f\(x, y\)/)).toBeDefined();
