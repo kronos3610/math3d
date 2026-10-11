@@ -106,10 +106,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: "Both examples are smooth and integrable. The Lebesgue estimate uses a fixed 40×40 lower-left floor grid; its lower height sum is not a guaranteed lower bound on the continuous integral. The 200×200 midpoint reference is also numerical; coarse sampling can miss peaks. Drawing gaps do not remove mathematical area.",
         },
         'lebesgue-measure': {
-            meaning: 'Lebesgue measure extends length, area, and volume. Coverings connect irregular shapes to simple boxes and reveal sets of zero volume.',
-            steps: ['In Outer Measure, increase Box Resolution and compare covering volume with the exact ellipsoid volume.', 'In Null Sets, increase Cover Thickness control toward its limit to shrink the slab; compare nonzero area with decreasing volume.'],
-            observe: 'A flat plane can have positive area while its three-dimensional volume approaches zero.',
-            limitations: 'The outer-measure scene selects all grid boxes intersecting a fixed ellipsoid, giving a real covering-volume upper bound. Nested grid refinement tightens this bound; outer measure takes an infimum over all suitable countable covers.',
+            meaning: "Lebesgue measure extends length, area, and volume. Coverings connect irregular shapes to simple boxes and reveal sets of zero volume.",
+            steps: ["Choose Building Blocks and change Dimension to compare length, area, and volume from the active side lengths.", "Choose Outer Measure and refine Box Resolution, then choose Null Sets and shrink Cover Thickness while comparing covering volume."],
+            observe: "The guaranteed ellipsoid cover approaches the exact solid volume as its nested grid is refined. A square retains area 16 while a slab covering it has volume 16ε, approaching zero as its thickness shrinks.",
+            limitations: "A finite grid cover gives an upper bound, not the infimum defining outer measure. The selected cells use an exact intersection test for the stated ellipsoid. The WebGL-free view shows only a central section of the same 3D cover; the metrics sum all cells. A bounded square is pictured; an unbounded plane requires countably many covers.",
         },
     },
     probability: {
