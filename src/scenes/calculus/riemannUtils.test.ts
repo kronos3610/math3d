@@ -1,6 +1,6 @@
-import { test } from 'vitest';
+import { expect, test } from 'vitest';
 import assert from 'node:assert';
-import { calculateRiemannBoxes } from './riemannUtils.ts';
+import { calculateRiemannBoxes, integrationFields, integrationTotals, LAYER_HEIGHT, FLOOR_GRID, partitionVolumeCells, midpointVolume } from './riemannUtils.ts';
 
 test('calculateRiemannBoxes with simple constant function', () => {
     // Function f(x) = 1
@@ -58,4 +58,40 @@ test('calculateRiemannBoxes with zero partitions', () => {
 test('calculateRiemannBoxes with negative partitions', () => {
     const boxes = calculateRiemannBoxes(0, 4, -5, () => 1);
     assert.strictEqual(boxes.length, 0);
+});
+
+test('both smooth-function estimates approach a fine midpoint reference under refinement', () => {
+    const f = integrationFields.smooth;
+    const reference = midpointVolume(f, 400);
+    const coarse = integrationTotals(f, 4, reference);
+    const fine = integrationTotals(f, 32, reference);
+    expect(Math.abs(fine.riemannError)).toBeLessThan(Math.abs(coarse.riemannError));
+    expect(Math.abs(fine.lebesgueError)).toBeLessThan(Math.abs(coarse.lebesgueError));
+    let gap = Infinity;
+    for (const resolution of [4, 8, 16, 32, 64]) {
+        const totals = integrationTotals(f, resolution, reference);
+        expect(totals.lebesgue).toBeLessThanOrEqual(totals.sampledFloor + 1e-10);
+        expect(totals.sampledFloor - totals.lebesgue).toBeLessThan(gap);
+        gap = totals.sampledFloor - totals.lebesgue;
+    }
+});
+
+test.each(['smooth', 'spiky'] as const)('%s estimates equal full mathematical volumes of the rendered cells', functionType => {
+    const f = integrationFields[functionType]; const resolution = 12;
+    const totals = integrationTotals(f, resolution);
+    const columns = partitionVolumeCells('riemann', f, resolution);
+    const columnVolume = columns.reduce((total, cell) => total + cell.scale[1] * (20 / resolution) ** 2, 0);
+    expect(totals.riemann).toBeCloseTo(columnVolume, 10);
+    const layers = partitionVolumeCells('lebesgue', f, resolution);
+    expect(totals.lebesgue).toBeCloseTo(layers.length * (20 / FLOOR_GRID) ** 2 * LAYER_HEIGHT / resolution, 9);
+    const minFloor = Math.min(...layers.map(cell => cell.position[0] - cell.scale[0] / 2));
+    const maxFloor = Math.max(...layers.map(cell => cell.position[0] + cell.scale[0] / 2));
+    expect(minFloor).toBeGreaterThanOrEqual(-10); expect(maxFloor).toBeLessThanOrEqual(10);
+});
+
+test('small positive midpoint heights are retained instead of silently discarded', () => {
+    const cells = partitionVolumeCells('riemann', () => 0.05, 10);
+    expect(cells).toHaveLength(100);
+    expect(cells.every(cell => cell.scale[1] === 0.05)).toBe(true);
+    expect(integrationTotals(() => 0.05, 10).riemann).toBeCloseTo(20, 10);
 });

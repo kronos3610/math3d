@@ -2,6 +2,7 @@ import { create } from '@react-three/test-renderer';
 import * as THREE from 'three';
 import { expect, test, vi } from 'vitest';
 import { IntegrationVisualization } from './RiemannVsLebesgue';
+import { VIZ } from '../../data/palette';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
@@ -16,22 +17,23 @@ function expectTransform(mesh: THREE.InstancedMesh, index: number, expectedPosit
     expectedScale.forEach((coordinate, axis) => expect(scale.getComponent(axis)).toBeCloseTo(coordinate, 5));
 }
 
-test('thousands of Lebesgue cells share one mesh while keeping the original layer geometry and colors', async () => {
+test('thousands of Lebesgue cells share one mesh and tile the stated floor with unchanged layer samples', async () => {
     const renderer = await create(<IntegrationVisualization mode="lebesgue" functionType="smooth" resolution={12} />);
     try {
         const mesh = renderer.scene.findByProps({ name: 'integration-cells' }).instance as THREE.InstancedMesh<THREE.BoxGeometry, THREE.MeshPhongMaterial>;
         expect(renderer.scene.children).toHaveLength(1);
         expect(mesh.isInstancedMesh).toBe(true);
-        // Golden count and cells from the original finite grid/layer discretization.
+        // Keep the original lower-left samples; centers tile [-10,10]² exactly.
         expect(mesh.count).toBe(5170);
-        expectTransform(mesh, 0, [-10, 0.375, -10], [0.5, 0.73, 0.5]);
-        expectTransform(mesh, 2585, [6, 1.125, 1.5], [0.5, 0.73, 0.5]);
-        expectTransform(mesh, mesh.count - 1, [9.5, 4.125, 9.5], [0.5, 0.73, 0.5]);
+        expectTransform(mesh, 0, [-9.75, 0.375, -9.75], [0.5, 0.7425, 0.5]);
+        expectTransform(mesh, 2585, [6.25, 1.125, 1.75], [0.5, 0.7425, 0.5]);
+        expectTransform(mesh, mesh.count - 1, [9.75, 4.125, 9.75], [0.5, 0.7425, 0.5]);
         const color = new THREE.Color();
         mesh.getColorAt(0, color);
-        expect(color.r).toBeCloseTo(0.54, 6);
-        expect(color.g).toBeCloseTo(0.204, 6);
-        expect(color.b).toBeCloseTo(0.06, 6);
+        const paletteColor = new THREE.Color(VIZ.variation);
+        expect(color.r).toBeCloseTo(paletteColor.r, 6);
+        expect(color.g).toBeCloseTo(paletteColor.g, 6);
+        expect(color.b).toBeCloseTo(paletteColor.b, 6);
         expect(mesh.material.opacity).toBe(0.7);
         expect(mesh.material.transparent).toBe(true);
         expect(mesh.geometry.parameters).toMatchObject({ width: 1, height: 1, depth: 1 });
