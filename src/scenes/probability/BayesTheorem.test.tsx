@@ -30,6 +30,8 @@ async function renderLesson() {
 }
 
 function posteriorPercent(): number {
+    const prediction = screen.queryByRole('button', { name: 'Skip prediction' });
+    if (screen.getByLabelText('Chance of spam after a flag').textContent === 'Predict or reveal' && prediction) fireEvent.click(prediction);
     return Number.parseFloat(screen.getByLabelText('Chance of spam after a flag').textContent ?? '');
 }
 
@@ -46,13 +48,13 @@ function openExplanation() {
 test('the actual Bayes route starts with a primary 3D visual and keeps the worked explanation closed', { timeout: 10000 }, async () => {
     await renderLesson();
     const visual = screen.getByRole('img', { name: '3D Bayes email population: unflagged emails and the selected flagged group' });
-    expect(visual.getAttribute('data-population-view')).toBe('conditional');
+    expect(visual.getAttribute('data-population-view')).toBe('population');
     expect(visual.getAttribute('data-frameloop')).toBe('demand');
-    expect(posteriorPercent()).toBe(50);
     expect(screen.queryByRole('figure', { name: 'How the filter splits 1,000 emails' })).toBeNull();
     expect(screen.queryByRole('tabpanel')).toBeNull();
     expect(screen.queryAllByRole('term')).toHaveLength(0);
-    expect(screen.getByRole('button', { name: 'Only flagged' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'All emails' }).getAttribute('aria-pressed')).toBe('true');
+    expect(posteriorPercent()).toBe(50);
     expect(screen.getByRole('link', { name: 'Back' }).getAttribute('href')).toBe('/probability');
 });
 
@@ -62,7 +64,7 @@ test('all three visual stages expose their selected state without changing the s
     const highlight = screen.getByRole('button', { name: 'Highlight flags' });
     const onlyFlagged = screen.getByRole('button', { name: 'Only flagged' });
     const visual = screen.getByRole('img', { name: '3D Bayes email population: unflagged emails and the selected flagged group' });
-    expect(allEmails.getAttribute('aria-pressed')).toBe('false');
+    expect(allEmails.getAttribute('aria-pressed')).toBe('true');
     expect(highlight.getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(allEmails);
     expect(allEmails.getAttribute('aria-pressed')).toBe('true');
@@ -168,9 +170,17 @@ test('small positive chances retain precision instead of being presented as impo
     changeControl(controlNames[2], 0);
     expect(posteriorPercent()).toBe(100);
     changeControl(controlNames[2], 100);
+    fireEvent.click(screen.getByRole('button', { name: 'Skip prediction' }));
     expect(screen.getByLabelText('Chance of spam after a flag').textContent).toMatch(/0\.01%|<0\.1%/);
     changeControl(controlNames[2], 0);
     const panel = openExplanation();
     const evidenceTerm = within(panel).getAllByRole('term').find(term => term.textContent?.startsWith('Evidence'));
     expect(evidenceTerm?.nextElementSibling?.textContent).toMatch(/0\.01%|<0\.1%/);
+});
+
+test('a prediction reveals the flagged group using current computed counts', async () => {
+    await renderLesson();
+    fireEvent.click(screen.getByRole('button', { name: 'Skip prediction' }));
+    expect(screen.getAllByRole('status').some(element => element.textContent?.includes('90 of the 180 flagged emails'))).toBe(true);
+    expect(screen.getByRole('button', { name: 'Only flagged' }).getAttribute('aria-pressed')).toBe('true');
 });

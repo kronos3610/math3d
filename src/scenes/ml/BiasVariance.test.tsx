@@ -20,6 +20,8 @@ test('experiment controls are labeled and charts have accessible descriptions', 
     expect(screen.getByRole('slider', { name: /Noise standard deviation/ })).toBeDefined();
     expect(screen.getByRole('slider', { name: /Training sample size/ })).toBeDefined();
     expect(screen.getByRole('img', { name: /Fitted curves across independent training sets/ })).toBeDefined();
+    expect(screen.queryByRole('img', { name: /Training and test error versus model complexity/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Skip prediction' }));
     expect(screen.getByRole('img', { name: /Training and test error versus model complexity/ })).toBeDefined();
     expect(screen.getByRole('img', { name: /Prediction error decomposition for selected degree/ })).toBeDefined();
     expect(screen.queryByRole('tab', { name: 'Explain' })).toBeNull();
@@ -28,9 +30,9 @@ test('experiment controls are labeled and charts have accessible descriptions', 
 test('changing degree and noise updates the measured results and selected chart', () => {
     renderLab();
     const initialBias = metricValue('Squared bias');
-    fireEvent.change(screen.getByRole('slider', { name: /Model complexity/ }), { target: { value: '1' } });
+    fireEvent.change(screen.getByRole('slider', { name: /Model complexity/ }), { target: { value: '2' } });
     expect(metricValue('Squared bias')).not.toBe(initialBias);
-    expect(screen.getByRole('img', { name: /Fitted curves across independent training sets/ }).textContent).toContain('degree 1');
+    expect(screen.getByRole('img', { name: /Fitted curves across independent training sets/ }).textContent).toContain('degree 2');
     fireEvent.change(screen.getByRole('slider', { name: /Noise standard deviation/ }), { target: { value: '0' } });
     expect(metricValue('Irreducible noise (σ²)')).toBe('0.000');
 });

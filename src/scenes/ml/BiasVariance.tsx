@@ -1,3 +1,4 @@
+import { PredictPrompt } from '../../components/layout/PredictPrompt';
 import { useId, useMemo, useState } from 'react';
 import { SceneContainer } from '../../components/layout/SceneContainer';
 import { ExperimentLayout } from '../../components/layout/ExperimentLayout';
@@ -10,15 +11,15 @@ import {
 import type { BiasVarianceExperiment } from '../../utils/bias-variance';
 
 const COLORS = {
-    signal: 'var(--lab-truth, #34d399)',
-    fit: 'var(--lab-fit, #60a5fa)',
-    mean: 'var(--lab-variation, #c4b5fd)',
-    sample: 'var(--lab-noise, #fbbf24)',
-    bias: 'var(--lab-variation, #c4b5fd)',
-    variance: 'var(--lab-fit, #60a5fa)',
-    noise: 'var(--lab-noise, #fbbf24)',
-    training: 'var(--lab-truth, #34d399)',
-    test: 'var(--lab-test, #fb7185)',
+    signal: 'var(--lab-truth)',
+    fit: 'var(--lab-variation)',
+    mean: 'var(--viz-focus)',
+    sample: 'var(--viz-data)',
+    bias: 'var(--lab-variation)',
+    variance: 'var(--lab-variation)',
+    noise: 'var(--lab-noise)',
+    training: 'var(--lab-truth)',
+    test: 'var(--lab-test)',
 };
 
 function formatError(value: number): string {
@@ -189,7 +190,8 @@ function ErrorDecomposition({ experiment }: { experiment: BiasVarianceExperiment
 
 export default function BiasVariance() {
     const controlsId = useId();
-    const [degree, setDegree] = useState(3);
+    const [showComplexity, setShowComplexity] = useState(false);
+    const [degree, setDegree] = useState(1);
     const [noiseStd, setNoiseStd] = useState(0.3);
     const [sampleSize, setSampleSize] = useState(40);
     const [seed, setSeed] = useState(2718);
@@ -197,7 +199,7 @@ export default function BiasVariance() {
     const experiment = experiments[degree - 1];
     const bestTestDegree = experiments.reduce((best, current) => current.testMSE < best.testMSE ? current : best).degree;
     const fields = [
-        { id: 'degree', label: 'Model complexity (polynomial degree)', value: degree, min: 1, max: BIAS_VARIANCE_MAX_DEGREE, step: 1, change: setDegree, text: String(degree) },
+        { id: 'degree', label: 'Model complexity (polynomial degree)', value: degree, min: 1, max: BIAS_VARIANCE_MAX_DEGREE, step: 1, change: (value: number) => { setDegree(value); setShowComplexity(true); }, text: String(degree) },
         { id: 'noise', label: 'Noise standard deviation (σ)', value: noiseStd, min: 0, max: 1, step: 0.05, change: setNoiseStd, text: noiseStd.toFixed(2) },
         { id: 'samples', label: 'Training sample size', value: sampleSize, min: 16, max: 128, step: 8, change: setSampleSize, text: String(sampleSize) },
     ];
@@ -233,7 +235,7 @@ export default function BiasVariance() {
 
     return (
         <SceneContainer backUrl="/ml" explanation={explanation} defaultPanel="closed">
-            <ExperimentLayout title="Bias–Variance Tradeoff" subtitle="Refit the same learning method on independent datasets and see where prediction error comes from.">
+            <ExperimentLayout legend={[{label:'Dots',meaning:'given training observations',color:'var(--viz-data)'},{label:'Dashed',meaning:'true signal',color:'var(--lab-truth)',shape:'line'},{label:'Thin lines',meaning:'individual fitted models',color:'var(--lab-variation)',shape:'line'},{label:'Mean',meaning:'average prediction',color:'var(--viz-focus)',shape:'line'}]} title="Bias–Variance Tradeoff" subtitle="Refit the same learning method on independent datasets and see where prediction error comes from.">
                 <div className="learning-lab">
                     <PredictionChart experiment={experiment} noiseStd={noiseStd} />
                     <div className="lab-controls" role="group" aria-label="Bias–variance experiment settings">
@@ -256,7 +258,12 @@ export default function BiasVariance() {
                         {metrics.map(metric => <div className="lab-stat" key={metric.label}><dt>{metric.label}</dt><dd>{formatError(metric.value)}</dd></div>)}
                     </dl>
                     <ErrorDecomposition experiment={experiment} />
-                    <ComplexityChart experiments={experiments} selectedDegree={degree} />
+                    <PredictPrompt question="Raise degree 1 to 9: what happens to independent test error in this run?"
+                        options={['Falls','Rises','Stays about the same']}
+                        correct={Math.abs(experiments[8].testMSE-experiments[0].testMSE)<0.01 ? 2 : experiments[8].testMSE<experiments[0].testMSE ? 0 : 1}
+                        contextKey={`${noiseStd}-${sampleSize}-${seed}`} persistenceKey="bias-variance"
+                        onReveal={() => { setDegree(9); setShowComplexity(true); }} explanation={`Measured test MSE: degree 1 = ${formatError(experiments[0].testMSE)}; degree 9 = ${formatError(experiments[8].testMSE)}. Inspect the complete curve: its shape depends on this signal, noise and finite samples.`} />
+                    {showComplexity ? <ComplexityChart experiments={experiments} selectedDegree={degree} /> : <p className="lab-note">Predict or change the degree to reveal the complete test-error curve.</p>}
                     <p className="lab-note">These are measured results from a finite ensemble. Noise describes the observations; bias and variance describe the fitted estimator across training sets. Open Explain for the sampling assumptions.</p>
                 </div>
             </ExperimentLayout>
