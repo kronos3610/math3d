@@ -1,0 +1,23 @@
+{
+  "productionUrl": "http://127.0.0.1:4280",
+  "cases": 52,
+  "tenFamilyCases": 40,
+  "viewports": ["1440x1000", "390x900"],
+  "renderers": ["WebGL via ANGLE SwiftShader", "WebGL disabled"],
+  "gradingNote": "R1 requires semantic object meanings at first paint; an axis-only key earns half. R3 earns half when the numerical readout works but is hidden in the drawer. R6 earns half when a meaningful fallback exists but loses labels at 390px. R4 assesses cross-lesson semantic grammar, not only colors within one scene.",
+  "scorecard": [
+    {"lesson":"ml/regression-* (fit representative)","scores":[0.5,1,1,0.5,1,1],"total":5,"note":"Controls/readouts/challenge work. Axis names are visible, but no always-visible observed/fit/residual key; axis hues collide with role colors. Fit geometry occupies a small region on portrait."},
+    {"lesson":"probability/bayes-theorem","scores":[1,1,1,0.5,0,1],"total":4.5,"note":"Population colors, natural-frequency counts and levers visible on both renderers; initial flagged view already reveals answer and has no prediction step."},
+    {"lesson":"linear-algebra/matrix-transformations","scores":[0.5,1,1,0.5,0.5,0.5],"total":4,"note":"Live determinant/output and controls visible. Mobile 3D labels are clipped at left; SVG labels collide with the computed-matrix overlay; always-visible semantic key missing."},
+    {"lesson":"linear-algebra/vector-operations","scores":[0.5,1,0.5,0.5,0,0],"total":2.5,"note":"A/B/A+B identify arrows, but meanings and readouts are in the drawer; input/output role colors inconsistent. No graphical fallback."},
+    {"lesson":"linear-algebra/eigenvalues","scores":[0.5,1,0.5,0,0,1],"total":3,"note":"x/Ax labels and axes visible; numerical relationship is hidden in drawer. Initial vectors are not aligned; Reset pre-solves with identity. SVG is meaningful."},
+    {"lesson":"calculus/riemann-vs-lebesgue","scores":[0,1,0,0,0,0],"total":1,"note":"Refinement lever works in drawer, but no first-paint semantic key or displayed sums; no graphical fallback."},
+    {"lesson":"probability/monte-carlo","scores":[0,0,0.5,0,0,0],"total":0.5,"note":"Dark sphere/cube have no first-paint key; statistics are hidden, no budget/restart lever, only one run. No graphical fallback."},
+    {"lesson":"calculus/gradient-descent-calc","scores":[0,0,0,0,0,0],"total":0,"note":"Fixed start/rate and no loss/step metrics. Portrait bowl extends far outside the stage. No graphical fallback."},
+    {"lesson":"calculus/derivatives","scores":[0,0,0,0,0,0],"total":0,"note":"Surface/tangent with no curve, point lever or slope readout; no semantic key or graphical fallback."},
+    {"lesson":"calculus/integrals","scores":[0,0,0,0,0,0],"total":0,"note":"Animated bars lack a curve, total, lever and semantic key; no graphical fallback."}
+  ],
+  "additionalOwnedLessonBaseline": ["probability/distributions", "ml/decision-boundaries", "linear-algebra/fundamental-subspaces-lite"],
+  "evidence": ["/tmp/math-plan-p0-webgl.json", "/tmp/math-plan-p0-no-webgl.json", "/tmp/math-plan-p0-webgl-desktop-contact.jpg", "/tmp/math-plan-p0-webgl-mobile-contact.jpg", "/tmp/math-plan-p0-no-webgl-desktop-contact.jpg", "/tmp/math-plan-p0-no-webgl-mobile-contact.jpg"],
+  "planFileEdited": false
+}
