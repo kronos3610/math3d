@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { decomposePredictionEnsemble, runBiasVarianceExperiment } from './bias-variance';
+import { BIAS_VARIANCE_MAX_DEGREE, decomposePredictionEnsemble, runBiasVarianceExperiment } from './bias-variance';
 
 describe('bias–variance mathematics', () => {
     test('known predictions yield population ensemble variance and the exact decomposition', () => {
@@ -60,7 +60,7 @@ describe('bias–variance mathematics', () => {
     });
 
     test('the highest-complexity smallest-sample setting remains finite and decomposes correctly', () => {
-        const result = runBiasVarianceExperiment({ degree: 8, sampleSize: 16, noiseStd: 1, seed: 2718 });
+        const result = runBiasVarianceExperiment({ degree: BIAS_VARIANCE_MAX_DEGREE, sampleSize: 16, noiseStd: 1, seed: 2718 });
         expect(result.predictions.every(fit => fit.every(Number.isFinite))).toBe(true);
         expect(Number.isFinite(result.testMSE)).toBe(true);
         expect(result.ensembleSignalMSE).toBeCloseTo(result.squaredBias + result.variance, 10);

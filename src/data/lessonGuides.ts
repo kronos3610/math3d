@@ -156,10 +156,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
     },
     ml: {
         'bias-variance': {
-            meaning: 'Bias measures systematic prediction error; variance measures how much a fitted model changes across training samples. Both contribute to generalization error.',
-            steps: ['Increase Polynomial degree and compare the fitted curves and mean prediction.', 'Change sample size or noise, then Resample training sets to inspect another ensemble.'],
-            observe: 'The displayed decomposition separates squared bias, estimator variance, and irreducible noise. Training error alone does not measure generalization.',
-            limitations: 'The shaded band is fit variability, not a confidence interval. Finite repeated fits estimate bias and variance; the tiny stabilizing penalty is part of the estimator.',
+            meaning: "Bias measures systematic prediction error; variance measures how much a fitted model changes across training samples. Both contribute to generalization error.",
+            steps: ["Predict the degree-1 to degree-9 test-error change, then reveal the measured comparison.", "Change sample size or noise and resample training sets; compare the decomposition and complete complexity curve."],
+            observe: "The decomposition separates squared bias, estimator variance and irreducible noise. Independent test error can rise while training error falls, but a U-shape is not guaranteed in every finite run.",
+            limitations: "The shaded band is fit variability, not a confidence interval. Finite repeated fits estimate bias and variance; the tiny stabilizing penalty is part of the estimator.",
         },
         'signal-to-noise': {
             meaning: 'SNR compares signal variance with noise variance. It describes the data-generating process rather than the complexity of the chosen model.',

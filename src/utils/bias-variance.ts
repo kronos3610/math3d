@@ -2,7 +2,7 @@ import { evaluatePolynomial, fitPolynomial, sampleNormal, seededRandom } from '.
 import type { Sample } from './regression';
 
 export const BIAS_VARIANCE_ENSEMBLE_SIZE = 48;
-export const BIAS_VARIANCE_MAX_DEGREE = 8;
+export const BIAS_VARIANCE_MAX_DEGREE = 9;
 
 /** The regression function is the conditional mean E[Y | X = x]. */
 export function biasVarianceSignal(x: number): number {

@@ -1,3 +1,6 @@
+import { SceneKey } from '../../components/3d/SceneKey';
+import { PredictPrompt } from '../../components/layout/PredictPrompt';
+import { VIZ } from '../../data/palette';
 import { useId, useState, type ReactNode } from 'react';
 import { OrbitControls } from '@react-three/drei';
 import { SceneCanvas } from '../../components/3d/SceneCanvas';
@@ -35,13 +38,14 @@ function RateControl({ label, value, onChange, children }: RateControlProps) {
 export default function BayesTheorem() {
     const id = useId();
     const [parameters, setParameters] = useState<BayesParameters>(DEFAULTS);
-    const [view, setView] = useState<BayesView>('conditional');
+    const [view, setView] = useState<BayesView>('population');
+    const [revealed, setRevealed] = useState(false);
     const [has3D, setHas3D] = useState(false);
     const result = calculateBayes({ ...parameters, population: 1000 });
     const { eventCount: spam, complementCount: ordinary, eventAndEvidenceCount: flaggedSpam,
         nonEventAndEvidenceCount: flaggedOrdinary, evidenceCount: flagged, posteriorProbability: posterior } = result;
     const updateRate = (key: 'prior' | 'likelihood' | 'falsePositiveRate', value: number) =>
-        setParameters(current => ({ ...current, [key]: value }));
+        { setParameters(current => ({ ...current, [key]: value })); setRevealed(false); };
     const applyPreset = (next: BayesParameters) => { setParameters(next); setView('conditional'); };
     const fractional = Math.abs(flagged - Math.round(flagged)) > 1e-8
         || Math.abs(flaggedSpam - Math.round(flaggedSpam)) > 1e-8;
@@ -57,7 +61,7 @@ export default function BayesTheorem() {
                 <div className="bayes-visual-chance" aria-live="polite">
                     <span>Spam among flagged</span>
                     <output aria-label="Chance of spam after a flag" data-undefined={posterior === null}>
-                        {posterior === null ? 'Undefined — no flagged emails' : percent(posterior)}
+                        {posterior === null ? 'Undefined — no flagged emails' : revealed ? percent(posterior) : 'Predict or reveal'}
                     </output>
                     <span>Before filtering: {percent(parameters.prior)}</span>
                 </div>
@@ -68,7 +72,7 @@ export default function BayesTheorem() {
                     role="img" aria-label="3D Bayes email population: unflagged emails and the selected flagged group" aria-describedby={`${id}-description`}
                     onCreated={() => setHas3D(true)}
                     fallback={<BayesPopulationFallback parameters={parameters} result={result} view={view} />}>
-                    <color attach="background" args={['#0b0f19']} />
+                    <color attach="background" args={[VIZ.background]} />
                     <ambientLight intensity={0.7} />
                     <directionalLight position={[5, 12, 8]} intensity={1.5} />
                     <BayesPopulation parameters={parameters} view={view} />
@@ -77,8 +81,7 @@ export default function BayesTheorem() {
                         minAzimuthAngle={-Math.PI / 3} maxAzimuthAngle={Math.PI / 3} target={[0, 0, 0]} />
                 </SceneCanvas>
                 <div className="bayes-visual-legend" aria-label="Email colors">
-                    <span><i className="bayes-spam-swatch" aria-hidden="true" />Spam</span>
-                    <span><i className="bayes-ordinary-swatch" aria-hidden="true" />Ordinary</span>
+                    <SceneKey inline aria-label="Email colors" entries={[{label:'Spam',meaning:'target event',color:VIZ.focus,shape:'square'},{label:'Ordinary',meaning:'other given emails',color:VIZ.data,shape:'square'}]} />
                 </div>
                 <p className="bayes-visual-caption">{caption}{has3D ? ' Drag to rotate; scroll or pinch to zoom.' : ''}</p>
                 <p id={`${id}-description`} className="bayes-visually-hidden">
@@ -93,7 +96,7 @@ export default function BayesTheorem() {
             <div className="bayes-visual-console">
                 <div className="bayes-visual-toolbar">
                     <div className="bayes-visual-views" role="group" aria-label="Population view">
-                        {VIEWS.map((stage, index) => <button key={stage.id} type="button" aria-pressed={view === stage.id} onClick={() => setView(stage.id)}>
+                        {VIEWS.map((stage, index) => <button key={stage.id} type="button" aria-pressed={view === stage.id} onClick={() => { setView(stage.id); if (stage.id === 'conditional') setRevealed(true); }}>
                             <span aria-hidden="true">{index + 1}</span>{stage.label}
                         </button>)}
                     </div>
@@ -114,6 +117,12 @@ export default function BayesTheorem() {
                         {count(flaggedOrdinary)} of the {count(ordinary)} ordinary emails get flagged by mistake.
                     </RateControl>
                 </div>
+                <PredictPrompt question="Of the flagged emails, about what share are spam?"
+                    options={posterior === null ? ['No conditional group','All spam','All ordinary'] :
+                        [Math.max(0,posterior * 0.5), posterior, Math.min(1,posterior + (1-posterior)*0.5)].map((value,index) => `${percent(value)}${index===0 && posterior===0 ? ' (lower guess)' : index===2 && posterior===1 ? ' (upper guess)' : ''}`)}
+                    correct={posterior === null ? 0 : 1} contextKey={`${parameters.prior}-${parameters.likelihood}-${parameters.falsePositiveRate}`}
+                    persistenceKey="bayes" onReveal={() => { setRevealed(true); setView('conditional'); }}
+                    explanation={posterior === null ? 'No emails are flagged, so the conditional probability is undefined.' : `${count(flaggedSpam)} of the ${count(flagged)} flagged emails are spam: ${percent(posterior)}. The denominator is the flagged group, not the entire inbox.`} />
                 <div className="bayes-visual-totals">
                     <span>Flagged group: <strong>{count(flaggedSpam)} spam + {count(flaggedOrdinary)} ordinary = {count(flagged)}</strong></span>
                     <span>{has3D ? fractional ? 'Partial tiles show expected fractional emails.' : '1 tile = 1 email.' : 'Area shows email proportions.'} Full explanation in the scene panel.</span>
