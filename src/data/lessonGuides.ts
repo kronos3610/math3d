@@ -94,10 +94,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'The displayed curve is smooth. The text discusses non-integrable functions, but the scene does not simulate those pathological examples.',
         },
         'sigma-algebra': {
-            meaning: 'A σ-algebra is a collection of measurable sets closed under complements and countable unions. It specifies which events can receive probabilities.',
-            steps: ['Compare Universe Rule, Complement Rule, and Countable Union.', 'Choose Information Resolution and change Granularity Level.'],
-            observe: 'Finer atoms distinguish more events; complements and unions remain within the allowed collection.',
-            limitations: 'Finite pictures illustrate closure rules. They cannot display all sets in an infinite σ-algebra.',
+            meaning: "A σ-algebra is a collection of measurable sets closed under complements and countable unions. A finite partition shows which events can be distinguished before a measure assigns their sizes.",
+            steps: ["Change Granularity Level and Select atom A to see which numbered outcomes belong to the same indivisible event.", "Choose Universe, Complement, or Union under Closure rule and compare the highlighted outcomes with the live counts."],
+            observe: "A partition with k atoms has 2ᵏ measurable unions. Complement recovers the remaining outcomes; a union still contains whole atoms. An individual outcome becomes selectable only when the partition resolves it.",
+            limitations: "This is a finite universe of 16 outcomes; its diagrams illustrate closure, not countably infinite union behavior or non-measurable sets. B is the next atom after A, wrapping around. A σ-algebra chooses events; a separate measure assigns sizes. No rendered patch demonstrates the Banach–Tarski pieces.",
         },
         'riemann-vs-lebesgue': {
             meaning: "Riemann sums group contributions by input location. Lebesgue integration groups them by function value and the size of the corresponding sets.",
