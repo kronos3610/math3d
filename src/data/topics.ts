@@ -2,11 +2,14 @@ import { type ComponentType } from 'react';
 import { lazyWithPreload, type PreloadableComponent } from '../utils/lazy';
 import { mlVisualLessons } from './mlVisualLessons';
 
+export type PreviewMotif = 'surface' | 'vectors' | 'bars' | 'bell' | 'scatter' | 'tree' | 'network' | 'curve' | 'cube' | 'sequence';
+
 export interface Subtopic {
     id: string;
     title: string;
     description: string;
     visualization?: '3d' | 'experiment';
+    preview?: PreviewMotif;
     component: PreloadableComponent<ComponentType>;
 }
 
@@ -99,7 +102,8 @@ export const topics: Topic[] = [
             {
                 id: 'integrals',
                 title: 'Integrals',
-                description: 'See area accumulation and volume computation through integration.',
+                visualization: 'experiment',
+                description: 'Move the integration endpoint and see signed area accumulate into a function whose slope matches the integrand.',
                 component: lazyWithPreload(() => import('../scenes/calculus/Integrals')),
             },
             {

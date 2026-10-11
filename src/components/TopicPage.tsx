@@ -3,6 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { getTopicById, type Topic, type Subtopic } from '../data/topics';
 import { lessonUrl, mlFoundations, mlSections, resolveLesson } from '../data/mlCurriculum';
 import LearningPaths from './LearningPaths';
+import { previewForLesson } from '../data/lessonPreviews';
 import SubtopicCardPreview from './SubtopicCardPreview';
 
 const ML_SEARCH_ALIASES: Readonly<Record<string, string>> = {
@@ -34,7 +35,7 @@ function LessonCard({ topic, subtopic, index }: LessonCardProps) {
             onFocus={() => subtopic.component.preload()}
         >
             <div className="subtopic-card-preview">
-                <SubtopicCardPreview color={topic.color} />
+                <SubtopicCardPreview color={topic.color} preview={subtopic.preview ?? previewForLesson(subtopic.id)} />
             </div>
             <div className="subtopic-card-body">
                 <Heading className="subtopic-card-title">{subtopic.title}</Heading>
