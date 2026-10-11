@@ -222,10 +222,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'Least-squares scores are not calibrated probabilities and need not lie between 0 and 1. The solver uses full-rank normal equations, not a general rank-deficient pseudoinverse.',
         },
         'lagrange-multipliers': {
-            meaning: 'At a regular constrained optimum, the objective gradient aligns with the constraint gradient because there is no downhill motion along the allowed path.',
-            steps: ['Move Position on Path and compare the objective value and floor gradients.', 'Use Snap to Optimal Solution to inspect x = y = 2.'],
-            observe: 'At the minimum, f = 8 and the two gradients are parallel. Hide or Show Floor Gradients isolates the geometry.',
-            limitations: 'This lesson uses one equality constraint and one quadratic objective; gradient alignment alone is not a universal guarantee of a minimum.',
+            meaning: "A constrained optimum balances objective and constraint gradients. On x + y = 4, the minimum of x² + y² occurs when those two gradient directions align.",
+            steps: ["Move Position on Path and compare the objective, constraint value, and derivative along the path.", "Toggle Show Floor Gradients and find their alignment before using Snap to Optimal Solution."],
+            observe: "The path remains feasible. At (2,2), its objective is 8, its path derivative vanishes, and ∇f = 4∇g. Moving either way raises this convex objective.",
+            limitations: "The bowl height is 0.15 times the objective. The floor arrows show normalized directions with equal displayed length, rather than gradient magnitudes. Stationarity is generally necessary; convexity of this particular quadratic makes the stationary point a global constrained minimum.",
         },
         'fisher-lda': {
             meaning: 'Fisher’s discriminant finds a projection with large separation between class means relative to the spread within each class.',
