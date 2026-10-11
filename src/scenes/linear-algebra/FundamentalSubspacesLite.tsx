@@ -1,84 +1,43 @@
-import { SceneCanvas } from '../../components/3d/SceneCanvas';
+import { useMemo, useState } from 'react';
+import { SpatialScene, type LabVector, type SpatialVector } from '../../components/3d/SpatialScene';
+import { LabRange, VisualLab } from '../../components/layout/VisualLab';
+import { VIZ } from '../../data/palette';
+import { decomposeSubspaceInput } from './subspaceLiteMath';
+import type { Vector3Tuple } from './legacyLinearMath';
 
-import { OrbitControls } from '@react-three/drei';
-import { Arrow } from '../../components/3d/Arrow';
-import { Label } from '../../components/3d/Label';
-import { SceneContainer } from '../../components/layout/SceneContainer';
-import { GlassPane } from '../../components/layout/GlassPane';
-import { useParams } from 'react-router-dom';
+const format = (vector: readonly number[]) => `(${vector.map(value => Math.abs(value) < 1e-10 ? '0.00' : value.toFixed(2)).join(', ')})`;
+const ZERO: Vector3Tuple = [0, 0, 0];
+const ROW_U: Vector3Tuple = [1 / Math.sqrt(5), 2 / Math.sqrt(5), 0];
+const ROW_V: Vector3Tuple = [-2 / Math.sqrt(30), 1 / Math.sqrt(30), 5 / Math.sqrt(30)];
 
-/* Simplified data */
-import { SUBSPACE_EXAMPLE as DATA } from './legacyLinearMath';
-
-/* Domain view - simplified */
-function DomainView() {
-    return (
-        <group>
-            {/* Input vector x */}
-            <Arrow direction={DATA.x} color="#eab308" lineWidth={3} />
-            <Label text="x=[3,3,3]" position={[3.5, 3.5, 3]} color="#facc15" />
-
-            {/* Row space component */}
-            <Arrow direction={DATA.x_row} color="#86efac" lineWidth={3} />
-            <Label text="x_r=[1,4,2]" position={[1, 5, 2]} color="#86efac" />
-
-            {/* Null space component */}
-            <Arrow direction={DATA.x_null} color="#fca5a5" lineWidth={3} />
-            <Label text="x_n=[2,-1,1]" position={[3, -1.5, 1]} color="#fca5a5" />
-        </group>
-    );
-}
-
-/* Scene base */
-function SceneBase() {
-    return (
-        <>
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[10, 10, 10]} intensity={0.5} />
-            <axesHelper args={[5]} />
-        </>
-    );
-}
-
-/* Main component */
-export default function FundamentalSpacesOptimized() {
-    const { topicId } = useParams();
-
-    const controls = (
-        <GlassPane className="scene-controls" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: 'white', margin: 0 }}>Fundamental Subspaces</h3>
-                <p style={{ fontSize: '12px', color: '#94a3b8', lineHeight: 1.6 }}>
-                    Lite Version (Reduced GPU Load)
-                </p>
-            </div>
-
-            <GlassPane style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid #334155', borderRadius: '12px', padding: '16px' }}>
-                <p style={{ fontSize: '12px', fontFamily: 'JetBrains Mono', color: '#e2e8f0', margin: 0, lineHeight: 1.8 }}>
-                    <span style={{ color: '#facc15' }}>x</span> = [3,3,3]<br />
-                    <span style={{ color: '#86efac' }}>x_r</span> = [1,4,2] (row space)<br />
-                    <span style={{ color: '#fca5a5' }}>x_n</span> = [2,-1,1] (null space)
-                </p>
-            </GlassPane>
-
-            <p style={{ color: '#cbd5e1', fontSize: '12px' }}>x = xᵣ + xₙ and xᵣ·xₙ = 0. This fixed example shows the domain decomposition; the full lesson adds the codomain view.</p>
-        </GlassPane>
-    );
-
-    return (
-        <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas frameloop="demand"
-                camera={{ position: [8, 8, 8], fov: 50 }}
-                dpr={[1, 1.5]}
-                gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
-                aria-label="Fundamental Subspaces Lite"
-            >
-                <SceneBase />
-                <DomainView />
-                <OrbitControls makeDefault />
-                <fog attach="fog" args={['#0b0f19', 10, 30]} />
-                <color attach="background" args={['#0b0f19']} />
-            </SceneCanvas>
-        </SceneContainer>
-    );
+export default function FundamentalSubspacesLite() {
+    const [input, setInput] = useState<Vector3Tuple>([3, 3, 3]);
+    const decomposition = useMemo(() => decomposeSubspaceInput(input), [input]);
+    const scene = useMemo(() => {
+        const vectors: SpatialVector[] = [
+            { from: ZERO, to: input, color: VIZ.data, label: 'input x' },
+            { from: ZERO, to: decomposition.rowPart, color: VIZ.output, label: 'row part' },
+            { from: ZERO, to: decomposition.nullPart, color: VIZ.variation, label: 'null part' },
+            { from: decomposition.rowPart, to: input, color: VIZ.variation },
+        ];
+        const vertices: LabVector[] = [-1, 1].flatMap(v => [-1, 1].map(u => ROW_U.map((value, axis) => 4 * (u * value + v * ROW_V[axis])) as LabVector));
+        return { vectors, surfaces: [{ vertices, columns: 2, color: VIZ.output, opacity: 0.22 }], paths: [
+            { points: [[-4, 2, -2], [4, -2, 2]] as LabVector[], color: VIZ.variation, dashed: true },
+            { points: [vertices[0], vertices[1], vertices[3], vertices[2], vertices[0]], color: VIZ.output, width: 1.5 },
+        ] };
+    }, [input, decomposition]);
+    return <VisualLab backUrl="/linear-algebra" title="Row space + null space" subtitle="Move the input vector. Its perpendicular parts add back to the same vector."
+        legend={[
+            { label: 'x', meaning: 'input vector', color: VIZ.data, shape: 'line' },
+            { label: 'Row part', meaning: 'component visible to A', color: VIZ.output, shape: 'square' },
+            { label: 'Null part', meaning: 'component erased by A; dashed axis', color: VIZ.variation, shape: 'line' },
+        ]}
+        metrics={[{ label: 'Row part xᵣ', value: format(decomposition.rowPart) }, { label: 'Null part xₙ', value: format(decomposition.nullPart) }, { label: 'xᵣ · xₙ', value: Math.abs(decomposition.dot) < 1e-9 ? '0.000' : decomposition.dot.toFixed(3) }, { label: 'Reconstruction error', value: decomposition.reconstructionError.toFixed(3) }, { label: 'Ax', value: format(decomposition.output) }]}
+        controls={<>{input.map((value, axis) => <LabRange key={axis} label={`Input x${axis + 1}`} value={value} min={-5} max={5} step={0.1} decimals={1} onChange={next => setInput(current => current.map((entry, i) => i === axis ? next : entry) as Vector3Tuple)} />)}
+            <button type="button" className="lab-button" onClick={() => setInput([3, 3, 3])}>Reset input</button><button type="button" className="lab-button" onClick={() => setInput([2, -1, 1])}>Reveal a null direction</button></>}
+        insight={`x = xᵣ + xₙ = ${format(input)}. The row plane is perpendicular to the dashed null line; A xₙ = ${format(decomposition.nullOutput)}. ${Math.hypot(...input) === 0 ? 'At zero, both parts and their arrows vanish.' : 'The translated null arrow completes the head-to-tail sum.'}`}
+        challenge="Try to make the row part disappear without making x zero. Before revealing a null direction, predict what happens to Ax."
+        explanation={<div className="lab-explanation"><h2>What the map can see</h2><p>A = [[1,2,0],[0,1,1],[1,3,1]]. Its null space is the line along n=(2,−1,1). Projecting x onto that line gives xₙ = ((x·n)/6)n. The remainder xᵣ=x−xₙ belongs to the row space. The two parts are perpendicular and their sum is exactly x.</p><p>Applying A erases the null part: Axₙ=0, so Ax=Axᵣ. Distinct inputs that differ only along the null line have the same output. This is why a rank-deficient system cannot recover every input coordinate from its output.</p><p>The shaded row plane and dashed null line are finite pieces of infinite subspaces; arrow positions use the original coordinate units with equal scaling. This lite scene focuses on the domain. The full Fundamental Subspaces lesson adds the column space and left null space in the codomain.</p></div>}>
+        <SpatialScene {...scene} cameraPosition={[8, 4, -2]} axes={['input coordinate x₁', 'input coordinate x₂', 'input coordinate x₃']} description={`Input x ${format(input)} splits into row component ${format(decomposition.rowPart)} and null component ${format(decomposition.nullPart)}. Their dot product is zero; the shifted null arrow completes the sum.`} />
+    </VisualLab>;
 }
