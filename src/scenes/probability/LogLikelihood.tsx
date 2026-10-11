@@ -1,11 +1,9 @@
-import { SceneCanvas } from '../../components/3d/SceneCanvas';
-import { useState, useMemo, useEffect } from 'react';
-import { OrbitControls, Html } from '@react-three/drei';
+import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
-import { Maximize, Tent, Move3d } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { SceneContainer } from '../../components/layout/SceneContainer';
-import { GlassPane } from '../../components/layout/GlassPane';
+import { SpatialScene, type LabVector } from '../../components/3d/SpatialScene';
+import { VisualLab, LabRange } from '../../components/layout/VisualLab';
+import { VIZ } from '../../data/palette';
 
 // --- Types ---
 interface Camper {
@@ -28,8 +26,6 @@ const calculateScore = (mx: number, mz: number, s: number) => {
         return acc + logLikelihood;
     }, 0);
 };
-
-// --- Sub-Components ---
 
 export function ProbabilityDome({ muX, muZ, sigma }: { muX: number, muZ: number, sigma: number }) {
     const geometry = useMemo(() => {
@@ -56,7 +52,7 @@ export function ProbabilityDome({ muX, muZ, sigma }: { muX: number, muZ: number,
         <group>
             <mesh geometry={geometry}>
                 <meshPhongMaterial
-                    color="#3b82f6"
+                    color={VIZ.output}
                     transparent
                     opacity={0.5}
                     side={THREE.DoubleSide}
@@ -66,7 +62,7 @@ export function ProbabilityDome({ muX, muZ, sigma }: { muX: number, muZ: number,
             </mesh>
             <mesh geometry={geometry}>
                 <meshBasicMaterial
-                    color="#2563eb"
+                    color={VIZ.output}
                     wireframe
                     transparent
                     opacity={0.1}
@@ -76,168 +72,34 @@ export function ProbabilityDome({ muX, muZ, sigma }: { muX: number, muZ: number,
     );
 }
 
-function Campers({ muX, muZ, sigma }: { muX: number, muZ: number, sigma: number }) {
-    return (
-        <group>
-            {CAMPERS.map((p, i) => {
-                const distSq = Math.pow(p.x - muX, 2) + Math.pow(p.z - muZ, 2);
-                const mahalanobisSq = distSq / Math.pow(sigma, 2);
-                const isOutlier = mahalanobisSq > 6.25;
-                const color = isOutlier ? "#ef4444" : "#94a3b8";
-
-                return (
-                    <mesh key={i} position={[p.x, 0.2, p.z]} castShadow>
-                        <sphereGeometry args={[0.2, 16, 16]} />
-                        <meshPhongMaterial color={color} />
-                    </mesh>
-                );
-            })}
-        </group>
-    );
-}
-
-function Labels() {
-    // Screen-space Html projects its outer element during layout. Transform Html
-    // waits for portal refs in a later DOM commit, which can miss a demand frame.
-    return (
-        <group>
-            <Html position={[3.5, 0.3, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
-                <div style={{ color: '#f87171', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', userSelect: 'none', pointerEvents: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>X (data x)</div>
-            </Html>
-            <Html position={[0, 0.3, 3.5]} center zIndexRange={[40, 0]} pointerEvents="none">
-                <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', userSelect: 'none', pointerEvents: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>Z (data z)</div>
-            </Html>
-            <Html position={[0, 5, 0]} center zIndexRange={[40, 0]} pointerEvents="none">
-                <div style={{ color: '#4ade80', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', userSelect: 'none', pointerEvents: 'none', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>Height (rescaled)</div>
-            </Html>
-        </group>
-    );
-}
-
-// --- Main Scene ---
-
 export default function LogLikelihood() {
     const { topicId } = useParams();
     const [muX, setMuX] = useState(0);
     const [muZ, setMuZ] = useState(0);
     const [sigma, setSigma] = useState(2);
-
     const currentScore = calculateScore(muX, muZ, sigma);
-
-    const controls = (
-        <GlassPane className="scene-controls" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '320px' }}>
-            <p style={{ fontSize: '12px', color: '#cbd5e1' }}>The dome height is visually rescaled with σ and clipped at 0.05; its height is not a calibrated density axis. The log-likelihood score uses the exact Gaussian density for all nine observations.</p>
-            <div>
-                <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Tent size={20} /> Log-Likelihood Visualizer
-                </h2>
-                <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
-                    Each observation contributes its Gaussian log-density to the total score.
-                </p>
-            </div>
-
-            <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ background: 'rgba(59, 130, 246, 0.2)', padding: '8px', borderRadius: '8px', color: '#60a5fa' }}>
-                    <Maximize size={20} />
-                </div>
-                <div>
-                    <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Log-Likelihood</div>
-                    <div style={{ fontSize: '24px', fontFamily: 'monospace', fontWeight: 900, lineHeight: 1, color: currentScore < -50 ? '#ef4444' : '#60a5fa' }}>
-                        {currentScore.toFixed(2)}
-                    </div>
-                </div>
-            </div>
-
-            {/* Position Controls */}
-            <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>
-                    <Move3d size={14} color="#94a3b8" />
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: 'white' }}>Position Parameters</span>
-                </div>
-
-                <div style={{ marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' }}>X-Position (μx)</span>
-                        <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{muX.toFixed(2)}</span>
-                    </div>
-                    <input aria-label="X-Position"
-                        type="range" min="-5" max="5" step="0.1" value={muX}
-                        onChange={e => setMuX(parseFloat(e.target.value))}
-                        style={{ width: '100%', accentColor: '#3b82f6' }}
-                    />
-                </div>
-
-                <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' }}>Z-Position (μz)</span>
-                        <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{muZ.toFixed(2)}</span>
-                    </div>
-                    <input aria-label="Z-Position"
-                        type="range" min="-5" max="5" step="0.1" value={muZ}
-                        onChange={e => setMuZ(parseFloat(e.target.value))}
-                        style={{ width: '100%', accentColor: '#3b82f6' }}
-                    />
-                </div>
-            </div>
-
-            {/* Shape Controls */}
-            <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: 'white' }}>Shape Parameters</span>
-                </div>
-                <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' }}>Spread (σ)</span>
-                        <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: 'white' }}>{sigma.toFixed(2)}</span>
-                    </div>
-                    <input aria-label="Spread"
-                        type="range" min="0.1" max="4" step="0.1" value={sigma}
-                        onChange={e => setSigma(parseFloat(e.target.value))}
-                        style={{ width: '100%', accentColor: '#6366f1' }}
-                    />
-                    <p style={{ fontSize: '10px', color: '#64748b', marginTop: '8px', lineHeight: 1.4 }}>
-                        Try Spread = 0.1. The narrow dome concentrates around its center, while distant observations contribute more negative log-density terms.
-                    </p>
-                </div>
-            </div>
-
-            <div style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '12px', padding: '12px' }}>
-                <h3 style={{ fontSize: '11px', fontWeight: 'bold', color: '#818cf8', textTransform: 'uppercase', marginBottom: '4px' }}>The Rule</h3>
-                <p style={{ fontSize: '11px', color: '#a5b4fc', lineHeight: 1.4 }}>
-                    All nine observations contribute to the score. Red marks a standardized
-                    distance greater than 2.5, not zero density. A Gaussian has positive density
-                    at every finite point; distant observations contribute smaller log densities.
-                </p>
-            </div>
-
-        </GlassPane>
-    );
-
-    return (
-        <SceneContainer backUrl={`/${topicId}`} controls={controls}>
-            <SceneCanvas frameloop="demand" dpr={[1, 1.5]} shadows camera={{ position: [12, 10, 12], fov: 45 }} aria-label="Gaussian data-space dome with rescaled height and an exact log-likelihood score">
-                <color attach="background" args={['#0b0f19']} />
-                <fog attach="fog" args={['#0b0f19', 15, 30]} />
-
-                <ambientLight intensity={0.6} />
-                <directionalLight position={[5, 10, 5]} intensity={1.0} castShadow />
-
-                {/* Floor */}
-                <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-                    <planeGeometry args={[16, 16]} />
-                    <meshPhongMaterial color="#0f172a" side={THREE.DoubleSide} />
-                </mesh>
-                <gridHelper args={[16, 16, 0x334155, 0x1e293b]} position={[0, 0.01, 0]} />
-
-                {/* Axes */}
-                <axesHelper args={[3]} position={[0, 0.05, 0]} />
-                <Labels />
-
-                <ProbabilityDome muX={muX} muZ={muZ} sigma={sigma} />
-                <Campers muX={muX} muZ={muZ} sigma={sigma} />
-
-                <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
-            </SceneCanvas>
-        </SceneContainer>
-    );
+    const vertices = useMemo(() => Array.from({ length: 61 * 61 }, (_, index): LabVector => {
+        const x = -6 + 12 * (index % 61) / 60; const z = -6 + 12 * Math.floor(index / 61) / 60;
+        const distanceSquared = (x - muX) ** 2 + (z - muZ) ** 2;
+        return [x, Math.max(0.05, 15 / sigma * Math.exp(-distanceSquared / (2 * sigma ** 2))), z];
+    }), [muX, muZ, sigma]);
+    const outliers = CAMPERS.filter(point => ((point.x - muX) ** 2 + (point.z - muZ) ** 2) / sigma ** 2 > 6.25).length;
+    const points = CAMPERS.map((point, index) => ({ position: [point.x, 0.2, point.z] as LabVector,
+        color: ((point.x - muX) ** 2 + (point.z - muZ) ** 2) / sigma ** 2 > 6.25 ? VIZ.error : VIZ.data, radius: 0.16, label: String(index + 1) }));
+    return <VisualLab title="Log-likelihood" subtitle="Move and resize the Gaussian model. Every observation adds one log-density to the score."
+        backUrl={`/${topicId || 'probability'}`} metrics={[{ label: 'Exact log-likelihood', value: currentScore.toFixed(2) },
+            { label: 'Observations', value: CAMPERS.length }, { label: 'Beyond 2.5σ', value: outliers }, { label: 'Mean (μx, μz)', value: `(${muX.toFixed(1)}, ${muZ.toFixed(1)})` }]}
+        legend={[{ label: 'Dome', meaning: 'Gaussian model with rescaled height', color: VIZ.output, shape: 'square' },
+            { label: 'Observations', meaning: 'given data', color: VIZ.data }, { label: 'Red observations', meaning: 'standardized distance > 2.5', color: VIZ.error }, { label: 'μ', meaning: 'current mean', color: VIZ.focus }]}
+        controls={<><LabRange label="X-Position" value={muX} min={-5} max={5} step={0.1} decimals={1} onChange={setMuX} />
+            <LabRange label="Z-Position" value={muZ} min={-5} max={5} step={0.1} decimals={1} onChange={setMuZ} />
+            <LabRange label="Spread" value={sigma} min={0.1} max={4} step={0.1} decimals={1} onChange={setSigma} /></>}
+        insight={`All nine points contribute to log-likelihood ${currentScore.toFixed(2)}. ${outliers} ${outliers === 1 ? 'point is' : 'points are'} beyond 2.5σ; none has zero Gaussian density.`}
+        challenge="Make the dome very narrow. Its peak rises, but does the total score improve when it misses most observations?"
+        explanation={<div className="lab-explanation"><p>The score is Σ[−ln(2π) − 2 ln σ − ‖xᵢ−μ‖²/(2σ²)] for an isotropic two-dimensional Gaussian. Higher is better for these fixed observations.</p>
+            <p>The dome lives in data space, with height rescaled as 15/σ times the Gaussian shape and clipped below at 0.05. Height is not calibrated density. The displayed height axis is scaled separately from the equal-unit data floor. This is a manually controlled model, not an optimizer or a surface over likelihood parameters.</p></div>}>
+        <SpatialScene axes={['data x', 'rescaled height', 'data z']} equalScale={false} equalAxes={[0, 2]}
+            description="A Gaussian data-space dome, nine fixed observations, and the current mean. Red observations are farther than 2.5 standard deviations; all contribute to the exact log score."
+            surfaces={[{ vertices, columns: 61, color: VIZ.output, opacity: 0.28 }]} points={[...points, { position: [muX, 0.3, muZ], color: VIZ.focus, radius: 0.18, label: 'μ' }]} />
+    </VisualLab>;
 }
