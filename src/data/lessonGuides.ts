@@ -39,10 +39,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
             limitations: 'This is one fixed matrix example. The dimensions shown are specific to its rank.',
         },
         'fundamental-subspaces-lite': {
-            meaning: 'The input vector splits into an orthogonal row-space component and a null-space component.',
-            steps: ['Compare the yellow input with the green and red component arrows.', 'Rotate the scene to see their directions and compare the displayed coordinates.'],
-            observe: 'The two components add to [3, 3, 3], and their dot product is zero.',
-            limitations: 'This smaller scene shows only the input decomposition. Use the full lesson for the codomain and all four subspaces.',
+            meaning: "Every input splits into perpendicular row-space and null-space components. The matrix detects the row component and erases the null component, so Ax equals A applied to the row part.",
+            steps: ["Move the three Input coordinate sliders and compare the changing input, row part, and null part arrows.", "Check that the component dot product and reconstruction error stay zero as the input changes.", "Try to make the row part vanish without setting the input to zero, then reveal a null direction and inspect Ax."],
+            observe: "For this rank-two matrix, the null line is along (2,−1,1). Inputs that differ by a vector on this line have the same output; the row and null components remain perpendicular.",
+            limitations: "This lab uses one fixed 3×3 rank-two matrix and manipulates its input, with [3,3,3] as the starting example. Finite pieces depict infinite subspaces; equal coordinate scaling preserves angles. The full lesson adds the column and left null spaces in the codomain.",
         },
         'banach-tarski': {
             meaning: 'The Banach–Tarski theorem concerns non-measurable sets that can be rearranged into two balls of the original size.',
