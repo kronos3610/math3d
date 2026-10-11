@@ -53,10 +53,10 @@ export const lessonGuides: Readonly<Record<string, Readonly<Record<string, Lesso
     },
     calculus: {
         derivatives: {
-            meaning: 'A derivative describes local change. On z = 0.8 sin(x) cos(y), the pink tangent shows the slope in the x direction.',
-            steps: ['Follow the yellow point and pink tangent as they travel over the surface.', 'Rotate the view to compare the tangent with nearby uphill and downhill regions.'],
-            observe: 'The tangent tilts with the local x-direction slope and becomes horizontal when that slope is zero.',
-            limitations: 'This scene follows one directional slope. Use Partial Derivatives to control the point and compare both input directions.',
+            meaning: "A derivative gives the slope of one slice of a surface. A secant through two nearby points approaches the tangent as their separation shrinks.",
+            steps: ["Move Point x while holding Slice y fixed and follow the highlighted curve.", "Reduce Secant step h and compare the secant slope, tangent slope and their difference."],
+            observe: "The x-direction secant slope approaches ∂f/∂x. The tangent touches the visible fixed-y curve at the chosen point.",
+            limitations: "This studies one slice of z = 0.8 sin(x) cos(y). Use Partial Derivatives to compare both input directions. Automatic tracing is optional; the numerical derivative is analytic.",
         },
         'partial-derivatives': {
             meaning: 'A partial derivative measures change along one input axis while holding the other input fixed. Together, the slopes form the gradient.',
